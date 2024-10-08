@@ -1,4 +1,5 @@
 #include "cGameSettings.h"
+
 #include "RPG_Engine.h"
 
 //// Function to snap the console window to the primary screen
@@ -51,7 +52,8 @@ LRESULT CALLBACK ConsoleWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 int main()
 {
 
-	
+    // Инициализация генератора случайных чисел на основе текущего времени
+    srand(static_cast<unsigned int>(time(0)));
 	// Load the settings singleton
 	cGameSettings config;
 	if (!config.LoadConfigFile("assets/config.lua"))
@@ -74,12 +76,13 @@ int main()
 
     srand(static_cast<unsigned int>(time(nullptr))); // Seed random number generator
 	RPG_Engine game;
+
     game.fscale = 1.0f / config.nPixelWidth;
 	ShowWindow(GetConsoleWindow(),1);
 	if (game.Construct(config.nScreenWidth, config.nScreenHeight, config.nPixelWidth, config.nPixelHeight, true,false))
 		game.Start();
   
-   
+  
 
 	return 0;
 }

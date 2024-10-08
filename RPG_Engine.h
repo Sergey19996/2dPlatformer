@@ -1,5 +1,9 @@
 #pragma once
 #include "olcPixelGameEngine.h"
+//#include "olcPGEX_Sound.h"
+
+//#define OLC_SOUNDWAVE
+
 #include "RPG_Assets.h"
 #include "RPG_Dynamic.h"
 #include "RPG_Maps.h"
@@ -10,6 +14,9 @@
 #include "cGameSettings.h"
 #include <cstdio>
 #include <windows.h> // Include the Windows header for RECT and GetWindowRect
+
+#include <mutex>
+//#include "stb_image.h"
 //#include "ParallaxManager.h"
 
 struct TileInfo {
@@ -17,7 +24,53 @@ struct TileInfo {
 	olc::vf2d sourceRect;
 	int textureIndex;
 	int textureLayer;
-	olc::vf2d size{ 64,64 };
+	olc::vi2d size{ 64,64 };
+};
+
+struct InventaryItem
+{
+	cItem* Item = nullptr;
+
+	
+	uint8_t Uiindex = 0;
+	uint8_t index = 0;  // Index in inventory
+
+
+	// Переменная для хранения всех флагов
+	unsigned int InventaryFlags = 0;
+	// Объявляем флаги через enum
+	enum InventaryFlagsEnum {
+		Breserved = 1 << 0,  // 1-й бит
+		Babsorbed = 1 << 1,  // 2-й бит
+		Grabitem = 1 << 2,  // 3-й бит
+		Highlighted = 1 << 3,  // 4-й бит
+		binWarehouse = 1 << 4,  // 5-й бит
+		bEquiped = 1 << 5,  // 6-й бит
+		Objectselected = 1 << 6,
+		
+	};
+
+	// Методы для установки и проверки флагов
+	void setFlag(InventaryFlagsEnum flag) {
+		InventaryFlags |= flag;  // Устанавливаем флаг
+	}
+
+	void clearFlag(InventaryFlagsEnum flag) {
+		InventaryFlags &= ~flag;  // Сбрасываем флаг //revers number
+	}
+
+	bool checkFlag(InventaryFlagsEnum flag) const {
+		return InventaryFlags & flag;  // Проверяем флаг
+	}
+	void resetsocket()
+	{
+		currStacks = 1;
+		Gold = 0;
+		Item = nullptr;
+	}
+	uint8_t currStacks = 1;
+	uint8_t Gold = 0;
+
 };
 
 class RPG_Engine : public olc::PixelGameEngine
@@ -26,25 +79,57 @@ class RPG_Engine : public olc::PixelGameEngine
 public:
 	RPG_Engine();
 
+
+
+	// Переменные для мультипоточности
+	std::thread physicsThread;
+	std::mutex gameMutex;
+	bool running = true;  // Для контроля потока физики
+
+
 	float fCameraPosX = 0.0f;
 	float fCameraPosY = 0.0f;
-	bool blockCamera = false;
+	int blockCamera : 1;
 
 	bool bSmoothAppearScreen = false;
 	int AlphaAppearScreen = 255;
 	float fscale = 1.0f;
+
+	uint8_t absorbCounter = 0;
+
+	uint8_t goldcount = 0;
+
+	
+	sf::Sound* currsound;
+	sf::Sound* WalkSound = new sf::Sound();
+	std::vector<sf::Sound*> sounds;  // Контейнер для проигрываемых звуков
+	
+	void AddText(float px, float py, std::string text) {
+
+		cDynamic_TextDamage* Text = new cDynamic_TextDamage(px, py, text);
+
+		m_vecFightText.push_back(Text);
+	}
+
+	olc::Decal* D_Ui = nullptr;   // full ui 
+
 private:
 
-	std::vector<cDynamic*> enemysPool;
+	
+	
+
+	
+	std::vector<sf::Sound*> m_vecSoundsPool;  // Контейнер для пула
 	std::vector<Environment*> EnvironmentPool;
 	//std::vector<cDynamic*> wolfPool;
 
-	bool bOpenTravelAsk = false; // Map Logic
+	int bOpenTravelAsk : 1; // Map Logic
+	int bPause : 1;
+
 	int SelectedTeleport = 0;
 	//
 
 
-	bool bPause = false;
 
 
 	int SparedFacDir = 0;
@@ -76,10 +161,10 @@ private:
 	float fCameraVy = 0.0f;
 
 
-	int lvl =1;
+	uint8_t lvl =1;
 	int ExpRequred = 0;     //Amount
 	int currExp =0;     
-	int Money = 0;
+	uint16_t  Money = 0;
 
 
 	float framespeed = 0.1f;
@@ -105,23 +190,55 @@ private:
 	float targetpointVx = 0.0f;
 	float targetpointVy = 0.0f;
 
-	float speed = 6000;
+	//float speed = 6000;
 
 	//
 
 	//bool bFinishLoading = false;
-	bool bUibackstub = false;
-	bool PressF = false;
-	int layer = 0;
+	int bUibackstub : 1;
+	int PressF : 1;
+	uint32_t layer = 0;
+	uint32_t layerOne = 1;
+	uint32_t layerTwo = 2;
 	cMap* m_pCurrentMap = nullptr;
 	olc::Decal* m_sprFont = nullptr;
-	olc::Decal* m_sprGameCursor = nullptr;
-	olc::Decal* m_sprPressF = nullptr;
+	olc::Decal* m_Items = nullptr;
 
-	std::vector<cDynamic*> m_vecVisibleDynamics;
+	//olc::Decal* m_sprPressF = nullptr;
+
+
+	olc::Decal* Inventoryback = nullptr;
+	olc::Sprite* spMask = nullptr;
+	//olc::Decal* testDecal = nullptr;
+	
+	std::vector<float> angles;
+	std::vector<float> Sinnum;
+	olc::vf2d maskcenter;
+	float maskanim = 0.0f;
+
+
+	std::vector<TileInfo > batchZeroCharsLayer; // (position, source rectangle) pairs // bool represent static or dynamic layer
+
+	std::vector<cDynamic*> m_vecVisibleDynamics;  // vector that keep only that dyn object that in our screen
 
 	cDynamic_creature_Pantir* m_pPlayer = nullptr;                // before was cDynamic_creature
+	//
+	InventaryItem* highlighted = nullptr;
+	InventaryItem* GrabItem = nullptr;
+	//
 	std::vector<cDynamic*> m_vecDynamics;    // Fixed
+
+	std::vector<cDynamic*> enemysPool;
+	std::vector<cDynamic*> BanditsPool;
+	std::vector<cDynamic*> BanditsArcherPool;
+	std::vector<cDynamic*> DireWolfsPool;
+	std::vector<cDynamic*> BoarPool;
+	std::vector<cDynamic*> WereWolfsPool;
+	std::vector<cDynamic*> ItemPool;
+	std::vector<cDynamic*> TextPool;
+	std::vector<cDynamic*> ProjectilePool;
+
+
 	std::vector<Environment*>m_vecCloseWeather; // Vector to store raindrops and clouds
 	std::vector<Environment*>m_vecFarWeather; // Vector to store raindrops and clouds
 	std::vector<cDynamic*> m_vecProjectiles;  //Transient
@@ -130,7 +247,6 @@ private:
 
 	std::vector<cDynamic*> m_vecParticles;
 
-
 	std::vector<cUI*> m_vecUiBars;  //Transient
 	std::vector<cUI*> m_vecTalentsBars;  //Transient
 	std::vector<int > m_vecSaveTalents;
@@ -138,11 +254,13 @@ private:
 	
 	cScriptProcessor m_script;
 
+	std::vector<InventaryItem*> m_vecEquip;
+	std::vector<InventaryItem*> m_vecUi;
 
-	std::list<cItem*> m_listStoreItems;
-	std::list<cItem*> m_listBlackSmithItems;
-	std::list<cItem*> m_listItems;
-	std::list<cItem*> m_listWarehouseItems;
+	std::vector<InventaryItem*> m_listStoreItems;
+	std::vector<InventaryItem*> m_listBlackSmithItems;
+	std::vector<InventaryItem*> m_listItems;
+	std::vector<InventaryItem*> m_listWarehouseItems;
 
 	std::list<cQuest*> m_listQusets;
 
@@ -174,13 +292,17 @@ private:
 
 	 int nFrames = 0;
 
+	 void Drawcursor(olc::vi2d mouse);
+
 public:
 	
+	void LoadBaseUiSettings();
+
 	bool OnUserCreate() override;
 	bool OnUserUpdate(float fElapsedTime) override;
 
-	
-
+	void LoadSoundPool(size_t poolSize);
+	void PlaySounds(std::string buffername);
 
 	void SetGameMode(int set) {  n_nGameMode = set; };
 	int GetGameMode() { return n_nGameMode; }
@@ -193,34 +315,44 @@ public:
 	bool UpdateTitleScreen(float fElapsedTime);
 	bool UpdateLocalMap(float fElapsedTime);
 	bool UpdateWarehouse(float fElapsedTime);
-	void DrawWarehouse(const float squex, const float squeYm, olc::vf2d mouse, olc::vf2d mousefix, cItem*& highlighted, cItem*& Grabitem,int moneyamount);
+	void DrawWarehouse(const float squex, const float squeYm, olc::vf2d mouse, olc::vf2d mousefix, InventaryItem*& highlighted, InventaryItem*& Grabitem,int moneyamount);
 
-	bool SetMouseTarget(olc::vf2d mouse);
+	bool SetMouseTarget(olc::vi2d mouse);
 
+	void uiCellUpdate(olc::vi2d mouse);
 	bool UpdateInventory(float fElapsedTIme);
-	void DrawInventory(float offestX,float offsetY, olc::vf2d mouse, cItem*& highlighted);
-	void DrawInventory(float offestX, float offsetY, olc::vf2d mouse, olc::vf2d mouseFixed,  cItem*& highlighted, cItem*& Grabitem);
-	void moveteItems(olc::vf2d mouse, float x, float y, cItem*& grabitem, std::list<cItem*> vector);
+	void DrawInventory(float offestX,float offsetY, olc::vi2d mouse, InventaryItem*& highlighted);
+	void DrawInventory(float offestX, float offsetY, olc::vi2d mouse, olc::vi2d mouseFixed,  InventaryItem*& highlighted, InventaryItem*& Grabitem);
+	void moveteItems(olc::vi2d mouse, float x, float y, InventaryItem*& grabitem, std::vector<InventaryItem*>& vector);
+	void moveteItems(olc::vi2d mouse, float x, float y,float eqX, float eqy, InventaryItem*& grabitem, std::vector<InventaryItem*>& vector, std::vector<InventaryItem*>& eqVector);
 
+	bool AttachEq(std::vector<InventaryItem*>& EqVector,int currindex);
 
 	void FillBatch(int TileLayer, int layer, int x, int y,std::vector<TileInfo>& Before, std::vector<TileInfo>& After);
+	
 
-
-
+	void ClearAbsorbedSlots(std::vector<InventaryItem*>& m_listItems);  // find absorbed objects in sockets and change them on empty sockets
 	bool UpdateShop(float fElapsedTime);
-	void DrawStoreInventory(float sX, float sY, olc::vf2d mousefix, cItem*& highlighted);
+	bool SaleItem(int Price,InventaryItem* Sale);
+	void DrawStoreInventory(float sX, float sY, olc::vi2d mousefix, InventaryItem*& highlighted);
 	bool UpdateProfession(float fElapsedTime);
 	bool UpdateMap(float FelapsedTime);
 	bool UpdateBlackSmith(float FelapsedTime);
 
-	void DrawBlacksmithInentory(float offestX, float offsetY, olc::vf2d mouse, cItem*& Selected, cItem*& Highlighted);
-	void DrawCraftedRequires(float offestX, float offsetY, olc::vf2d mouse, cItem*& Selectedm, cItem*& Highlighted);
+	void DrawBlacksmithInentory(float offestX, float offsetY, olc::vi2d mouse, InventaryItem*& Selected, InventaryItem*& Highlighted);
+	void DrawCraftedRequires(float offestX, float offsetY, olc::vi2d mouse, InventaryItem*& Selectedm, InventaryItem*& Highlighted);
 
 
-	void DrawDescriptionPattern(cItem* highlighted, olc::vf2d mouse, olc::vf2d mousefix);
+	void DrawDescriptionPattern(InventaryItem* highlighted, olc::vi2d mouse, olc::vf2d mousefix);
 	void AddMoney(int money) { this->Money += money; };
 	int  CheckMoney() { return Money; };
+
+	std::vector<InventaryItem*>& Getequip() { return m_vecEquip; };
+	float CellSize;
+
 protected:
+
+	
 	std::vector<std::string> m_vecDialogToShow;
 
 	
@@ -230,8 +362,9 @@ protected:
 
 
 
-	int nVisibleTileX = ScreenWidth() / 64;
-	int nVisibleTileY = ScreenHeight() / 64;
+	int nVisibleTileX = ScreenWidth() / CellSize;
+	int nVisibleTileY = ScreenHeight() / CellSize;
+
 
 	float fOffsetX = 0;
 	float fOffsetY = 0;
@@ -241,6 +374,9 @@ protected:
 
 
 public:
+
+	
+
 
 	bool LoadFunction();
 	bool SaveFunction();
@@ -258,25 +394,28 @@ public:
 
 	void defineFacingDirection(float& fTestX, float& fTestT);
 
-	bool GiveItem(cItem* item);
-	bool ByeItem(cItem* item);
+	bool GiveItem(std::string Name,uint8_t count);
+	//bool FillList(cItem* item, int number);
+	bool ByeItem(InventaryItem* item);
 	bool GiveWarehouseItem(cItem* item);
-	bool GiveStoreItem(cItem* item);
-	bool GiveBlackSmithItem(cItem* item);
+	bool GiveStoreItem(std::string item);
+	bool GiveBlackSmithItem(std::string Name);
 	bool GiveNewText(cDynamic_TextDamage* Text) ;
 
 
-	std::list<cItem*> GetListItem() { return  m_listItems; };  // Get invntory
+	std::vector<InventaryItem*> GetListItem() { return  m_listItems; };  // Get invntory
+	std::vector<InventaryItem*> GetListWarehouseItem() { return  m_listWarehouseItems; };  // Get invntory
+	int GetFreespaceInventory();
 	std::list<cQuest*> GetListQuest() {return  m_listQusets;};
 	std::vector<int> GetLearnedTalentVector() { return m_vecSaveTalents; };
-	std::list<cItem*> GetListStoreItem() { return  m_listStoreItems; };  // Get invntory
-	std::list<cItem*> GetListBlackSmithItem() { return  m_listBlackSmithItems; };  // Get invntory
+	std::vector<InventaryItem*> GetListStoreItem() { return  m_listStoreItems; };  // Get invntory
+	std::vector<InventaryItem*> GetListBlackSmithItem() { return  m_listBlackSmithItems; };  // Get invntory
 
 	//std::vector<cDynamic*> GetFightText(){return m_vecFightText; }  //Fight text
-	bool TakeItem(cItem* item);   // take it away if it exist 
+	bool TakeItem(InventaryItem* item, std::vector<InventaryItem*>& m_listItems);   // take it away if it exist 
 	bool TakeItem(int Price);  // Delete money
 	bool TakeItem(std::string Names);  // Delete money
-	bool HasItem(cItem* item);    //Doesn't item exist within the inventory list
+	bool HasItem(std::string item);    //Doesn't item exist within the inventory list
 
 
 	void AddProjectile(cDynamic* proj);
@@ -294,7 +433,8 @@ public:
 
 	
 	int GetRage();
-	int GetEnergy();
+	uint8_t GetEnergy();
+
 	bool GetBackStab();
 	bool GetTarget();
 	bool GetbOnGraund();
@@ -302,9 +442,9 @@ public:
 
 	void CalculateExp();
 	void SetCurrentExp(int DeathExp);
+	
 
-
-	void Attack(cDynamic_Creature* aggressor, cWeapon* weapon);
+	//void Attack(cDynamic_Creature* aggressor, cWeapon* weapon);
 	void Damage(cDynamic_Projectile* projectile, cDynamic_Creature* victim);
 
 	void AddParticle(float px, float py);
@@ -334,16 +474,22 @@ public:
 
 
 	void ReturnToPool(cDynamic* bandit);
+	void ReturnProjectileToPool(cDynamic* Projectile);
 	void ReturnEnvironmentToPool(Environment* entity);
+	void ReturnTextToPool(cDynamic* Text);
+	
+	cDynamic* SpawnBattleText(const olc::vf2d position, std::string Text, olc::Pixel COlor =olc::WHITE);
 	cDynamic* SpawnBandit(const olc::vf2d* position);
-
+	cDynamic* SpawnBanditArcher(const olc::vf2d* position);
 	cDynamic* SpawnWerewolf(const olc::vf2d* position);
-
 	cDynamic* SpawnBoar(const olc::vf2d* position);
-
-	cDynamic* FindpoolEntity( cDynamic* object);
+	cDynamic* SpawnProjectile(const olc::vf2d* position);
 	void SpawnRainDrops();
 	void SpawnClouds();
+
+
+
+	//cDynamic* FindpoolEntity( cDynamic* object);
 	cDynamic* SpawnDireWolf(const olc::vf2d* position);
 
 	void SetMouseFocus(bool enable)
@@ -370,7 +516,19 @@ public:
 		}
 	}
 
+	void removeStoppedSounds();
 
+
+	private:
+
+		void bufferClockMask();
+		void bufferSinusMask(float amplitude, float waves, float position, float phaseoffset);
+		
+
+		void clockwiseMask(float felapsedtime, olc::Sprite* test);
+		void sinusoidMask(float felapsedtime, olc::Sprite* test, float amplitude);
+	//void LoadSound();
+	//void LoadMusc();
 };
 
 void CombineAdjacentTiles(std::vector<Tile>& batchLayer, int layer);

@@ -3,6 +3,10 @@
 #include "RPG_Items.h"
 #include "RPG_UI.h"
 #include "RPG_Quests.h"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 RPG_Assets::RPG_Assets()
 {
 }
@@ -12,21 +16,65 @@ RPG_Assets::~RPG_Assets()
 {
 }
 
+void RPG_Assets::loadSound(const std::string& name, const std::string& filename)
+{
+	sf::SoundBuffer* buffer = new sf::SoundBuffer;
+	if (buffer->loadFromFile(filename)) {
+		soundBuffers[name] = buffer;
+	}
+	else {
+		std::cerr << "Error loading sound: " << filename << std::endl;
+	}
+}
+
+
+void RPG_Assets::playMusic(const std::string& filename, bool loop)
+{
+	if (music.openFromFile(filename)) {
+		music.setLoop(loop);
+		music.setVolume(10);
+		music.play();
+	}
+	else {
+		std::cerr << "Error loading music: " << filename << std::endl;
+	}
+}
+
+void RPG_Assets::SetMusicVolume(float number)
+{
+	music.setVolume(number);
+}
+
+
+
+//void RPG_Assets::UpdateSounds()
+//{
+//	for (auto s: sounds )
+//	{
+//		if (s.getStatus() == sf::Sound::Stopped) {
+//			s.play();  // Если звук не проигрывается, включите его
+//		}
+//	}
+//
+//}
+
 
 
 void RPG_Assets::LoadSprites()
 {
 	auto load = [&](std::string sName, std::string sFileName)
 	{
+		
 		olc::Sprite* s = new olc::Sprite(sFileName);
 		olc::Decal* d = new olc::Decal(s);
 		m_mapSprites[sName] = d;     //map array <key,value>
+
+	
 	};
 
 	
 	//Font
 	load("font", "graphs/UI/Font/font_1.png");
-	load("PressF", "graphs/UI/Font/PressF.png");
 
 	//Pantir 
 	load("PantirRight", "graphs/Pantir/Pantir.png");
@@ -46,129 +94,17 @@ void RPG_Assets::LoadSprites()
 	load("Bandit ThrowDaggerFx", "graphs/PantirFX/BanditFXRightTest.png");
 
 	//inventory
-	load("Pantir's Dagger", "graphs/inventory/Pantir'sDagger.png");
 
-	load("inventory", "graphs/inventory/InventoryMap.png");
-	load("inventorySockets", "graphs/inventory/InventoryShelfs.png");
-
-	load("inventoryName", "graphs/inventory/InventoryShelfsName.png");
+	load("Items", "graphs/inventory/Items.png");
 	load("DescriptionPattern", "graphs/inventory/DescriptionPattern.png");
+	load("inventory", "graphs/inventory/InventoryUiBack.png");
 
-	load("PantirEquipSlots", "graphs/inventory/PantirEquipSlots.png");
-
-	load("StatisticShelf", "graphs/inventory/StatisticShelf.png");
-
-	load("Coin", "graphs/inventory/Coin.png");
-
-	//Warehouse
-	load("WarehouseName", "graphs/inventory/WarehouseShelfsName.png");
-	//Store
-	load("StoreName", "graphs/inventory/StoreShelfsName.png");
-
-	//BlackSmith
-	load("BlackSMithName", "graphs/inventory/BlackSMithShelfsName.png");
-	load("RequiredName", "graphs/inventory/RequiredShelfsName.png");
-	load("SelectedObject", "graphs/inventory/SelectedObject.png");
-
+	
 
 	//StreGoods
-	load("PocketLowEmpty", "graphs/inventory/PocketLowEmpty.png");
-	load("PocketLowFull", "graphs/inventory/PocketLowFull.png");
 
-	//HPbars
-	load("HPBarFull", "graphs/UI/UnitBars/HPBarFull.png");
-	load("HPBarEmprty", "graphs/UI/UnitBars/HPBarEmpty.png");
+	load("FullUi", "graphs/UI/UiPack.png");
 
-
-	//QuestItems
-	load("BrokenSword", "graphs/inventory/BrokenSword.png");
-
-
-	//Energy bar
-	load("EnergyBarFull", "graphs/UI/UnitBars/EnergyBarFull.png");
-	load("EnergyBarEmprty", "graphs/UI/UnitBars/EnergyBarEmpty.png");
-
-	//Rage bar
-	load("RageBarFull", "graphs/UI/UnitBars/AngryBarFull.png");
-	load("RageBarEmprty", "graphs/UI/UnitBars/AngryBarEmpty.png");
-
-	//Expirience Bar
-	load("ExperienceFull", "graphs/UI/UnitBars/ExperienceFull.png");
-	load("ExperienceEmprty", "graphs/UI/UnitBars/ExperienceEmpty.png");
-
-
-	//Level place Ui
-	load("UiLevelPlace", "graphs/UI/UiLvlPlace.png");
-
-
-	//Spell Ui
-	load("SpellUi", "graphs/UI/SpellUi/SpellUi.png");
-
-	load("AttackEasyFullUi", "graphs/UI/SpellUi/AttackEasyFullUi.png");   
-	load("AttackEasyEmptyUi", "graphs/UI/SpellUi/AttackEasyEmptyUi.png");
-
-	load("AttackHighEmptyUi", "graphs/UI/SpellUi/AttackHighEmptyUi.png");
-	load("AttackHighFullUi", "graphs/UI/SpellUi/AttackHighFullUi.png");
-
-	load("AttackMidEmptyUi", "graphs/UI/SpellUi/AttackMidEmptyUi.png");
-	load("AttackMidFullUi", "graphs/UI/SpellUi/AttackMidFullUi.png");
-
-	load("BackStubEmptyUi", "graphs/UI/SpellUi/BackStubEmptyUi.png");
-	load("BackStubFullUi", "graphs/UI/SpellUi/BackStubFullUi.png");
-
-	load("EviscirateDownEmptyUi", "graphs/UI/SpellUi/EviscirateDownEmptyUi.png");
-	load("EviscirateDownFull", "graphs/UI/SpellUi/EviscirateDownFull.png");
-
-	load("EviscirateUpEmptyUi", "graphs/UI/SpellUi/EviscirateUpEmptyUi.png");
-	load("EviscirateUpFullUi", "graphs/UI/SpellUi/EviscirateUpFullUi.png");
-
-	load("JumpEmptyUi", "graphs/UI/SpellUi/JumpEmptyUi.png");
-	load("JumpFullUi", "graphs/UI/SpellUi/JumpFullUi.png");
-
-	load("ShadowStepEmptyUi", "graphs/UI/SpellUi/ShadowStepEmptyUi.png");
-	load("ShadowStepFullUi", "graphs/UI/SpellUi/ShadowStepFullUi.png");
-
-
-	load("VanishEmptyUi", "graphs/UI/SpellUi/VanishEmptyUi.png");
-	load("VanishFullUi", "graphs/UI/SpellUi/VanishFullUi.png");
-
-	load("EviscirateFlightEmptyUi", "graphs/UI/SpellUi/EviscirateFlightEmptyUi.png");
-	load("EviscirateFlightFullUi", "graphs/UI/SpellUi/EviscirateFlightFullUi.png");
-
-
-	load("EviscirateFallLandingEmptyUi", "graphs/UI/SpellUi/EviscirateFallLandingEmptyUi.png");
-	load("EviscirateFallLandingFullUi", "graphs/UI/SpellUi/EviscirateFallLandingFullUi.png");
-
-	load("GrabSwirlEmptyUi", "graphs/UI/SpellUi/GrabSwirlEmptyUi.png");
-	load("GrabSwirlFullUi", "graphs/UI/SpellUi/GrabSwirlFullUi.png");
-
-
-
-	//Talent Ui
-	load("Talent Plate", "graphs/UI/SpellUi/TalentPlateUi.png");
-	
-	//Talent Stick
-	load("Horizontal StickEmpty", "graphs/UI/SpellUi/Sticks/HorizontalStickEmptyUi.png");
-	load("Horizontal StickFill", "graphs/UI/SpellUi/Sticks/HorizontalStickWhiteUi.png");
-	load("Vertical StickEmpty", "graphs/UI/SpellUi/Sticks/VerticalStickEmptyUi.png");
-	load("Vertical StickFill", "graphs/UI/SpellUi/Sticks/VerticalStickWhiteUi.png");
-	
-
-
-	//New indicator Angry
-	load("AngryBarNewEmpty", "graphs/UI/UnitBars/AngryBarNewEmpty.png");
-	load("AngryBarNewFill", "graphs/UI/UnitBars/AngryBarNewFill.png");
-	load("AngryBarNewReady", "graphs/UI/UnitBars/AngryBarNewReady.png");
-
-	//New indicator Energy
-	load("EnergyBarNewFill", "graphs/UI/UnitBars/EnergyBarNewFill.png");
-	load("EnergyBarNewReady", "graphs/UI/UnitBars/EnergyBarNewReady.png");
-	
-
-
-	//Enemy
-
-	//Bosses
 	
 	//BanditBoss
 	load("BanditBossLeft", "graphs/BanditBoss/BanditBossLeft.png");
@@ -213,7 +149,7 @@ void RPG_Assets::LoadSprites()
 
 
 
-	load("CutItem", "graphs/cutscenes/Cutitem.png");
+//	load("CutItem", "graphs/cutscenes/Cutitem.png");
 
 
 	//Parralax
@@ -317,14 +253,39 @@ void RPG_Assets::LoadItems()
 	{
 		m_mapItems[i->sName] = i;
 	};
-	load(new  cWeapon_PantirSword());
+//	load(new  cWeapon_PantirSword());
 
-	load(new  cWeapon_BrokenSword());  // <--Quest broken sword
-	load(new cWeapon_BanditSword());
-	load(new cWeapon_BanditBossSword());
+	load(new cEmptySlot());
+
+	load(new cEquip("Basic Neck", RPG_Assets::get().GetSprite("Items"), "General Neck\n", 0, 0, 0, 0, 0, 35, 1, 2));
+	load(new cEquip("Basic Helment", RPG_Assets::get().GetSprite("Items"), "General Helment\n", 0, 0, 0, 0, 0, 32, 2, 2));
+	load(new cEquip("Basic Chest", RPG_Assets::get().GetSprite("Items"), "General Chest\n", 0, 0, 0, 0, 0, 33, 4, 3));
+	load(new cEquip("Basic Back", RPG_Assets::get().GetSprite("Items"), "General Back\n", 0, 0, 0, 0, 0, 32, 5, 1));
+	load(new cEquip("Basic Boots", RPG_Assets::get().GetSprite("Items"), "General Boots\n +15 Strength\n", 0, 0, 0, 0, 0, 34, 6, 1));
+
+//	load(new  cBaseBack());
+//	load(new  cBaseChest());
+//	load(new  cBaseHelmet());
+//	load(new  cBaseNeck());
+//	load(new  cBaseBoots());
+
+
+	load(new cWeapon("Pantir's Dagger", RPG_Assets::get().GetSprite("Items"), RPG_Assets::get().GetSprite("Pantir's DaggerLeftFx"), RPG_Assets::get().GetSprite("Pantir's DaggerRightFx"), "+5 Dmg        \n", 5, 0, 0, 0, 0, 64, 3,1));
+	load(new cWeapon("Broken Sword", RPG_Assets::get().GetSprite("Items"), RPG_Assets::get().GetSprite("Pantir's DaggerLeftFx"), RPG_Assets::get().GetSprite("Pantir's DaggerRightFx"), "it seems the sword was\nbroken quite a long time\nago\n", 10, 0, 0, 0, 0, 67, 3,1));
+	load(new cWeapon("Bandit Sword", RPG_Assets::get().GetSprite("Items"), RPG_Assets::get().GetSprite("Bandit SwordLeftFx"), RPG_Assets::get().GetSprite("Bandit SwordRightFx"), "usually these kind of swords\nare used by bandits", 8, 0, 0, 0, 0,67,3,1));
+	load(new cWeapon("Bandit Boss Sword", RPG_Assets::get().GetSprite("Items"), RPG_Assets::get().GetSprite("Bandit SwordLeftFx"), RPG_Assets::get().GetSprite("Bandit SwordRightFx"), "usually these kind of swords \nare used by bandits\n", 10, 0, 0, 0, 0,67,3,3));
+
+//	load(new  cWeapon_BrokenSword());  // <--Quest broken sword
+//	load(new cWeapon_BanditSword());
+//	load(new cWeapon_BanditBossSword());
 
 	load(new cCoin());
 	load(new cSmallWallet());
+	load(new cFullSmallWallet());
+
+	load(new cEnergyElixir());
+	load(new cHealthElixir());
+	load(new cRageElixir());
 
 }
 
@@ -390,4 +351,26 @@ void RPG_Assets::LoadQuests()
 	load(new cQuset_KillBanditBoss);
 	load(new cQuset_KillWerewolf);
 	
+}
+
+void RPG_Assets::LoadMusc()
+{
+	// Загрузка звуковых эффектов
+	loadSound("TakeDamage", "Sounds/TakeDamageSound.wav");
+
+	loadSound("SwordSwing", "Sounds/HitSound.wav");
+
+	loadSound("SwordSwingTwo", "Sounds/HitSound2.wav");
+
+	loadSound("Jump", "Sounds/JumpSound.wav");
+	
+	loadSound("Landed", "Sounds/LandedSound.wav");
+
+	loadSound("Run", "Sounds/RunSound.wav");
+
+	loadSound("BackStab", "Sounds/HitLandedSound.wav");
+
+
+
+
 }

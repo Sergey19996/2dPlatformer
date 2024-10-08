@@ -5,7 +5,7 @@ class RPG_Engine;
 class cUI
 {
 public:
-	cUI(std::string name,  olc::Decal* Full);
+	cUI(std::string name);
 
 	virtual bool OnInteract(cDynamic* object) { return false; } 
 
@@ -24,13 +24,13 @@ public:
 
 	std::string sName;
 	
-	olc::Decal* pSpriteFull;
+//	olc::Decal* pSpriteFull;
 	
 
-	
+	uint16_t sourcePosX, sourcePosY, sourceSizeX, sourceSizeY;
 
-	int offsetX;
-	int offsetY;
+	int16_t offsetX;
+	int16_t offsetY;
 
 };
 
@@ -38,7 +38,7 @@ public:
 class cIndicator :public cUI
 {
 public:
-	cIndicator(std::string name, olc::Decal* Full,olc::Decal* Empty);
+	cIndicator(std::string name);
 	bool OnInteract(cDynamic* object) override;
 	bool OnUse(cDynamic* object) override;
 
@@ -79,7 +79,7 @@ public:
 class  cEnergyIndicators : public cIndicator
 {
 public:
-	cEnergyIndicators(std::string name, olc::Decal* Fill, olc::Decal* Empty);
+	cEnergyIndicators(std::string name);
 
 
 
@@ -103,10 +103,10 @@ public:
 
 	} m_Classenum;
 
-	olc::Decal* pSpriteReady;
+	//olc::Decal* pSpriteReady;
 
 
-	int sizeframe = 50;
+	//int sizeframe = 50;
 	int bhide = 0;
 };
 
@@ -115,7 +115,7 @@ public:
 class  cRageIndicators : public cIndicator
 {
 public:
-	cRageIndicators(std::string name, olc::Decal* Full, olc::Decal* Empty);
+	cRageIndicators(std::string name);
 
 public:
 	void DrawSelf(olc::PixelGameEngine* gfx, int px, int py) override;
@@ -132,9 +132,9 @@ public:
 		
 
 	} m_Classenum;
-	olc::Decal* pSpriteReady;
+	//olc::Decal* pSpriteReady;
 	int bhide = 0;
-	int sizeframe = 50;
+//	int sizeframe = 50;
 };
 
 
@@ -294,7 +294,7 @@ public:
 class  cStaticUi : public cUI
 {
 public:
-	cStaticUi(std::string name, olc::Decal* Full);
+	cStaticUi(std::string name);
 
 public:
 	

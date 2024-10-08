@@ -102,6 +102,7 @@ private:
 	std::vector< olc::vf2d*>BanditsPositions;
 	std::vector< olc::vf2d*>BoarPositions;
 	std::vector< olc::vf2d*>WerewolfPositions;
+	//std::vector< olc::vf2d*>WerewolfPositions;
 
 };
 
@@ -174,24 +175,19 @@ public:
 	bool OnInteraction(std::vector<cDynamic*>& vecDynobs, cDynamic* target, NATURE nature) override;
 };
 struct Tile {
-	//olc::vf2d position;
-	//olc::vf2d sourceRect;
+	
 
-	int Collision;
+	uint8_t Collision;
+	//uint8_t AdaptClsn;
+
 	olc::vf2d position;
 
-	//int ZeroLayer;
-	//int FirstLayer;
-	//int DynamicLayer;
-	//int SecondLayer;
-	//int ThirdLayer;
-	//int FourLayer;
 
 	struct layerinfo
 	{
 		int index;
-		olc::vf2d sourcerect = {0,0};
-		olc::vf2d size = {64,64};
+		olc::vi2d sourcerect = {0,0};
+		olc::vi2d size = {32,32};
 		int layerindex;
 	};
 

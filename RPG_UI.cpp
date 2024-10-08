@@ -3,13 +3,13 @@
 
 RPG_Engine* cUI::g_engine = nullptr;
 
-cUI::cUI(std::string name, olc::Decal* Full )
+cUI::cUI(std::string name)
 {
-	sName = name; pSpriteFull = Full;
+	sName = name; ;
 
 }
 
-cIndicator::cIndicator(std::string name, olc::Decal* pSpriteFull, olc::Decal* pSpriteEmpty) : cUI(name, pSpriteFull)
+cIndicator::cIndicator(std::string name) : cUI(name)
 {
 	
 	this->pSpriteEmpty = pSpriteEmpty;  // empty we add in indicator
@@ -39,33 +39,38 @@ void cIndicator::DrawSelfTalent(olc::PixelGameEngine* gfx, int px, int py)    //
 {
 }
 
-cExperience::cExperience() : cIndicator("Experience Indicator", RPG_Assets::get().GetSprite("ExperienceFull"), RPG_Assets::get().GetSprite("ExperienceEmprty"))
+cExperience::cExperience() : cIndicator("Experience Indicator")
 {
+	sourcePosX = 960;
+	sourcePosY = 142;
+	sourceSizeX = 230;
+	sourceSizeY = 17;
 }
 
 
 void cExperience::DrawSelf(olc::PixelGameEngine* gfx, int px, int py)
 {
-	float procent = g_engine->GetRequredExp() / (float)pSpriteFull->sprite->width;
+	float procent = g_engine->GetRequredExp() / (float)sourceSizeX;
 
 	float EXperienceiff = g_engine->GetCurrExp() / procent;
 
 	float pix = 0;
 	float piy = 0;
 
-	gfx->DrawPartialDecal({ pix,piy }, pSpriteEmpty, { 0,0 }, { (float)pSpriteFull->sprite->width,(float)pSpriteFull->sprite->height });   //offset pulling player back into the screen
+	//g_engine->D_Ui
 
-	gfx->DrawPartialDecal({ pix,piy }, pSpriteFull, { 0,0 }, { EXperienceiff,(float)pSpriteFull->sprite->height });   //offset pulling player back into the screen
+	gfx->DrawPartialDecal({ pix,piy }, g_engine->D_Ui, { (float)sourcePosX,(float)sourcePosY }, { (float)sourceSizeX,(float)sourceSizeY });   //offset pulling player back into the screen
+	gfx->DrawPartialDecal({ pix,piy }, g_engine->D_Ui, { (float)sourcePosX,(float)sourcePosY+ (float)sourceSizeY }, { EXperienceiff,(float)sourceSizeY });   //offset pulling player back into the screen
 
 
-	g_engine->DrawBigText("EXP:" + std::to_string(g_engine->GetCurrExp()) + "/" + std::to_string(g_engine->GetRequredExp()), pix+(pSpriteFull->sprite->width / 4), piy, 0.35, 0.35);
+	g_engine->DrawBigText("EXP:" + std::to_string(g_engine->GetCurrExp()) + "/" + std::to_string(g_engine->GetRequredExp()), pix+(sourceSizeX / 4), piy, 0.35, 0.35);
 
 	
 }
 
 
 
-cAttackLow::cAttackLow() : cEnergyIndicators("Attack Low", RPG_Assets::get().GetSprite("AttackEasyFullUi"), RPG_Assets::get().GetSprite("AttackEasyEmptyUi"))
+cAttackLow::cAttackLow() : cEnergyIndicators("Attack Low")
 {
 
 	this->offsetX =0;
@@ -74,76 +79,121 @@ cAttackLow::cAttackLow() : cEnergyIndicators("Attack Low", RPG_Assets::get().Get
 	m_Classenum = LOWATTACK;
 
 	TalentSave = 1;
+
+	sourcePosX = 0;
+	sourcePosY = 0;
+	sourceSizeX = 64;
+	sourceSizeY = 64;
 	
 }
 
 
 
-cAttackMid::cAttackMid() : cEnergyIndicators("Attack Mid", RPG_Assets::get().GetSprite("AttackMidFullUi"), RPG_Assets::get().GetSprite("AttackMidEmptyUi"))
+cAttackMid::cAttackMid() : cEnergyIndicators("Attack Mid")
 {
 
-	this->offsetX = pSpriteFull->sprite->width- (0.2 * pSpriteFull->sprite->width);
+	sourcePosX = 64;
+	sourcePosY = 0;
+	sourceSizeX = 64;
+	sourceSizeY = 64;
+
+
+	this->offsetX = sourceSizeX - (0.2 * sourceSizeX);
 	this->offsetY = 0;
 
 	m_Classenum = MIDATTACK;
 
-	
+
+
 	TalentSave = 2;
 
 }
 
-cAttackHigh::cAttackHigh() : cEnergyIndicators("Attack High", RPG_Assets::get().GetSprite("AttackHighFullUi"), RPG_Assets::get().GetSprite("AttackHighEmptyUi"))
+cAttackHigh::cAttackHigh() : cEnergyIndicators("Attack High")
 {
+	sourcePosX = 128;
+	sourcePosY = 0;
+	sourceSizeX = 64;
+	sourceSizeY = 64;
 
-	this->offsetX = 2*(pSpriteFull->sprite->width-(0.2* pSpriteFull->sprite->width));
+	this->offsetX = 2*(sourceSizeX -(0.2* sourceSizeX));
 	this->offsetY = 0;
 
 	m_Classenum = HIGHATTACK;
 
 	
 	TalentSave = 3;
+	
 
 }
-cAttacBack::cAttacBack() : cEnergyIndicators("Attack Back", RPG_Assets::get().GetSprite("BackStubFullUi"), RPG_Assets::get().GetSprite("BackStubEmptyUi"))
+cAttacBack::cAttacBack() : cEnergyIndicators("Attack Back")
 {
+	sourcePosX = 192;
+	sourcePosY = 0;
+	sourceSizeX = 64;
+	sourceSizeY = 64;
 
-	this->offsetX = 1 * pSpriteFull->sprite->width*0.5f;
+
+	this->offsetX = 1 * sourceSizeX*0.5f;
 	this->offsetY = -120;
 
 	m_Classenum = BACKATTACK;
 
 	
 	TalentSave = 4;
+
+	
 }
 
 
-cStepBack::cStepBack() : cEnergyIndicators("Appear Behind", RPG_Assets::get().GetSprite("ShadowStepFullUi"), RPG_Assets::get().GetSprite("ShadowStepEmptyUi"))
+cStepBack::cStepBack() : cEnergyIndicators("Appear Behind")
 {
-	this->offsetX = 1 * pSpriteFull->sprite->width * 0.5f;
+
+	sourcePosX = 576;
+	sourcePosY = 0;
+	sourceSizeX = 64;
+	sourceSizeY = 64;
+
+	this->offsetX = 1 * sourceSizeX * 0.5f;
 	this->offsetY = -120;
 
 	m_Classenum = STAPBACK;
 
 	
 	TalentSave = 5;
+
+
+
+	
 }
 
 
-cSwirlAttack::cSwirlAttack() : cEnergyIndicators("Swirl Attack", RPG_Assets::get().GetSprite("GrabSwirlFullUi"), RPG_Assets::get().GetSprite("GrabSwirlEmptyUi"))
+cSwirlAttack::cSwirlAttack() : cEnergyIndicators("Swirl Attack")
 {
-	this->offsetX = 1 * pSpriteFull->sprite->width * 0.5f;
+	sourcePosX = 512;
+	sourcePosY = 0;
+	sourceSizeX = 64;
+	sourceSizeY = 64;
+
+	this->offsetX = 1 * sourceSizeX * 0.5f;
 	this->offsetY = -120;
 
 	m_Classenum =SWIRLATTACK;
 
 	
+
+	
 	TalentSave = 6;
 }
 
-cVanish::cVanish() : cEnergyIndicators("Vanish", RPG_Assets::get().GetSprite("VanishFullUi"), RPG_Assets::get().GetSprite("VanishEmptyUi"))   // spells for talent
+cVanish::cVanish() : cEnergyIndicators("Vanish")   // spells for talent
 {
+	sourcePosX = 640;
+	sourcePosY = 0;
+	sourceSizeX = 64;
+	sourceSizeY = 64;
 
-	this->offsetX = 1 * pSpriteFull->sprite->width * 0.5f;
+	this->offsetX = 1 * sourceSizeX * 0.5f;
 	this->offsetY = -120;
 
 	m_Classenum = VANISH;
@@ -151,6 +201,7 @@ cVanish::cVanish() : cEnergyIndicators("Vanish", RPG_Assets::get().GetSprite("Va
 	
 	TalentSave = 7;
 
+
 }
 
 
@@ -159,10 +210,15 @@ cVanish::cVanish() : cEnergyIndicators("Vanish", RPG_Assets::get().GetSprite("Va
 
 
 
-cRightAttack::cRightAttack() : cRageIndicators("Attack Right", RPG_Assets::get().GetSprite("EviscirateUpFullUi"), RPG_Assets::get().GetSprite("EviscirateUpEmptyUi"))   // spells for talent
+cRightAttack::cRightAttack() : cRageIndicators("Attack Right")   // spells for talent
 {
+	sourcePosX = 448;
+	sourcePosY = 0;
+	sourceSizeX = 64;
+	sourceSizeY = 64;
 
-	this->offsetX = 3 * (pSpriteFull->sprite->width - (0.2 * pSpriteFull->sprite->width))+50;
+
+	this->offsetX = 3 * (sourceSizeX - (0.2 * sourceSizeX))+50;
 	this->offsetY = 50;
 
 	m_Classenum = ATTACKEARTH;
@@ -170,29 +226,41 @@ cRightAttack::cRightAttack() : cRageIndicators("Attack Right", RPG_Assets::get()
 	
 	TalentSave = 11;
 
+	
+
 }
 
 
 
 
 
-cRightAttackAir::cRightAttackAir() : cRageIndicators("Attack Right Air", RPG_Assets::get().GetSprite("EviscirateDownFull"), RPG_Assets::get().GetSprite("EviscirateDownEmptyUi"))   // spells for talen
+cRightAttackAir::cRightAttackAir() : cRageIndicators("Attack Right Air")   // spells for talen
 {
+	sourcePosX = 256;
+	sourcePosY = 0;
+	sourceSizeX = 64;
+	sourceSizeY = 64;
 
-	this->offsetX = 3 * (pSpriteFull->sprite->width - (0.2 * pSpriteFull->sprite->width)) + 50;
+	this->offsetX = 3 * (sourceSizeX - (0.2 * sourceSizeX)) + 50;
 	this->offsetY = 50;
 
 	m_Classenum = ATTACKAIR;
 	
 	TalentSave = 12;
+
+
 }
 
 
 
-cRightFlightUp::cRightFlightUp():cRageIndicators("Attack Right Flight Up", RPG_Assets::get().GetSprite("EviscirateFlightFullUi"), RPG_Assets::get().GetSprite("EviscirateFlightEmptyUi"))   // spells for talent
+cRightFlightUp::cRightFlightUp():cRageIndicators("Attack Right Flight Up")   // spells for talent
 {
+	sourcePosX = 384;
+	sourcePosY = 0;
+	sourceSizeX = 64;
+	sourceSizeY = 64;
 
-	this->offsetX = 3 * (pSpriteFull->sprite->width - (0.2 * pSpriteFull->sprite->width)) + 50;
+	this->offsetX = 3 * (sourceSizeX - (0.2 * sourceSizeX)) + 50;
 	this->offsetY = 50;
 
 	m_Classenum = ATTACKFLIGHTUP;
@@ -200,12 +268,19 @@ cRightFlightUp::cRightFlightUp():cRageIndicators("Attack Right Flight Up", RPG_A
 	
 	TalentSave = 13;
 
+	
+
 }
 
-cRightEpicLanding::cRightEpicLanding():cRageIndicators("Attack Right Epic Landing", RPG_Assets::get().GetSprite("EviscirateFallLandingFullUi"), RPG_Assets::get().GetSprite("EviscirateFallLandingEmptyUi"))   // spells for talent
+cRightEpicLanding::cRightEpicLanding():cRageIndicators("Attack Right Epic Landing")   // spells for talent
 {
 
-	this->offsetX = 3 * (pSpriteFull->sprite->width - (0.2 * pSpriteFull->sprite->width)) + 50;
+	sourcePosX = 320;
+	sourcePosY = 0;
+	sourceSizeX = 64;
+	sourceSizeY = 64;
+
+	this->offsetX = 3 * (sourceSizeX - (0.2 * sourceSizeX)) + 50;
 	this->offsetY = 50;
 
 	m_Classenum = ATTACKEPICLANDING;
@@ -213,6 +288,7 @@ cRightEpicLanding::cRightEpicLanding():cRageIndicators("Attack Right Epic Landin
 	
 	TalentSave = 14;
 
+
 }
 
 
@@ -221,20 +297,20 @@ cRightEpicLanding::cRightEpicLanding():cRageIndicators("Attack Right Epic Landin
 
 
 
-cEnergyIndicators::cEnergyIndicators(std::string name, olc::Decal* Full, olc::Decal* Empty) : cIndicator(name, Full,Empty)
+cEnergyIndicators::cEnergyIndicators(std::string name) : cIndicator(name)
 {
 
 	this->offsetX = 0;
 	this->offsetY = 0;
-	sizeframe = pSpriteFull->sprite->width;
+//	sizeframe = pSpriteFull->sprite->width;
 
 }
 
-cRageIndicators::cRageIndicators(std::string name, olc::Decal* full, olc::Decal* Empty) : cIndicator(name, full, Empty)
+cRageIndicators::cRageIndicators(std::string name) : cIndicator(name)
 {
 	this->offsetX = 0;
 this->	offsetY = 0;
-	sizeframe = pSpriteFull->sprite->width;
+//	sizeframe = pSpriteFull->sprite->width;
 }
 
 
@@ -251,7 +327,7 @@ void cEnergyIndicators::DrawSelf(olc::PixelGameEngine* gfx, int px, int py)
 		{
 		case cEnergyIndicators::EnergyIndicatorFirst:
 
-			procent = 35 / (float)pSpriteFull->sprite->width;   // calcilate procent from width
+			procent = 35 / (float)sourceSizeX;   // calculate procent from width
 			EnergyDiff = g_engine->GetEnergy() / procent;
 
 
@@ -267,7 +343,7 @@ void cEnergyIndicators::DrawSelf(olc::PixelGameEngine* gfx, int px, int py)
 			break;
 		case cEnergyIndicators::EnergyIndicatorSecond:
 
-			procent = 20 / (float)pSpriteFull->sprite->width;
+			procent = 20 / (float)sourceSizeX;
 			EnergyDiff = (g_engine->GetEnergy() - 35) / procent;
 
 		
@@ -283,7 +359,7 @@ void cEnergyIndicators::DrawSelf(olc::PixelGameEngine* gfx, int px, int py)
 
 			break;
 		case cEnergyIndicators::EnergyIndicatorThird:
-			procent = 45 / (float)pSpriteFull->sprite->width;
+			procent = 45 / (float)sourceSizeX;
 			EnergyDiff = (g_engine->GetEnergy() - 55) / procent;
 
 			
@@ -300,7 +376,7 @@ void cEnergyIndicators::DrawSelf(olc::PixelGameEngine* gfx, int px, int py)
 			break;
 		case cEnergyIndicators::JUMP:
 
-			procent = 15 / (float)pSpriteFull->sprite->width;
+			procent = 15 / (float)sourceSizeX;
 			EnergyDiff = g_engine->GetEnergy() / procent;
 
 			if (g_engine->GetEnergy() > 15)
@@ -312,12 +388,12 @@ void cEnergyIndicators::DrawSelf(olc::PixelGameEngine* gfx, int px, int py)
 			break;
 		case cEnergyIndicators::BACKATTACK:
 
-			procent = 25 / (float)pSpriteFull->sprite->width;
+			procent = 25 / (float)sourceSizeX;
 			EnergyDiff = g_engine->GetEnergy() / procent;
 
 			if (g_engine->GetLearnedTalent(4) && g_engine->GetbOnGraund()&& g_engine->GetBackStab())
 			{
-				this->offsetX = 1 * pSpriteFull->sprite->width * 0.5f;
+				this->offsetX = 1 * sourceSizeX * 0.5f;
 				this->offsetY = -120;
 			bhide =1;    // when we return not returned backstub we can't see spell
 			break;
@@ -350,7 +426,7 @@ void cEnergyIndicators::DrawSelf(olc::PixelGameEngine* gfx, int px, int py)
 			EnergyDiff = 64;
 			if (g_engine->GetLearnedTalent(5))
 			{
-				this->offsetX = 2 * pSpriteFull->sprite->width * 0.5f;
+				this->offsetX = 2 * sourceSizeX * 0.5f;
 				this->offsetY = -120;
 
 				this->bhide = g_engine->GetTarget();    // when we return not returned backstub we can't see spell
@@ -367,7 +443,7 @@ void cEnergyIndicators::DrawSelf(olc::PixelGameEngine* gfx, int px, int py)
 			if (g_engine->GetLearnedTalent(6)&& !g_engine->GetbOnGraund())
 			{
 
-				this->offsetX = 3 * pSpriteFull->sprite->width * 0.5f;
+				this->offsetX = 3 * sourceSizeX * 0.5f;
 				this->offsetY = -120;
 
 				this->bhide = g_engine->GetBackStab();    // when we return not returned backstub we can't see spell
@@ -388,6 +464,8 @@ void cEnergyIndicators::DrawSelf(olc::PixelGameEngine* gfx, int px, int py)
 		}
 
 
+		if (bhide != 0)
+		{
 
 		float pix = px;
 		float piy = py ;
@@ -397,27 +475,25 @@ void cEnergyIndicators::DrawSelf(olc::PixelGameEngine* gfx, int px, int py)
 		{
 			EnergyDiff = 0;
 		}
-		if (EnergyDiff >=sizeframe)
+		if (EnergyDiff >= sourceSizeX)
 		{
-			EnergyDiff = sizeframe;
+			EnergyDiff = sourceSizeX;
 		}
 
 
-		if (bhide != 0)
-		{
 
 			if (bhide == 1)
 			{
-				gfx->DrawPartialDecal({ pix + offsetX,piy + offsetY }, pSpriteEmpty, { 0,0 }, { (float)pSpriteFull->sprite->width,(float)pSpriteFull->sprite->height }, { 0.4,0.4 });   //Empty
+				gfx->DrawPartialDecal({ pix + offsetX,piy + offsetY }, g_engine->D_Ui, { (float)sourcePosX- (float)sourceSizeX,(float)sourcePosY+34 }, { (float)sourceSizeX,(float)sourceSizeY }, { 0.4,0.4 });   //Empty
 
-				gfx->DrawPartialDecal({ pix + offsetX,piy + offsetY }, pSpriteFull, { 0,0 }, { EnergyDiff,(float)pSpriteFull->sprite->height }, { 0.4,0.4 });   //Fill layer
+				gfx->DrawPartialDecal({ pix + offsetX,piy + offsetY }, g_engine->D_Ui, { (float)sourcePosX,(float)sourcePosY }, { EnergyDiff,(float)sourceSizeY }, { 0.4,0.4 });   //Fill layer
 			}
 
 
 
-			if (pSpriteReady != nullptr && bhide == 3)   //with energy bar and rage bar case. when they full need draww borders 
+			if (  bhide == 3)   //with energy bar and rage bar case. when they full need draww borders 
 			{
-				gfx->DrawPartialDecal({ pix + offsetX,piy + offsetY }, pSpriteReady, { 0,0 }, { (float)pSpriteReady->sprite->width,(float)pSpriteReady->sprite->height }, { 0.4,0.4 });   //FillED layer
+				gfx->DrawPartialDecal({ pix + offsetX,piy + offsetY }, g_engine->D_Ui, { (float)sourcePosX,(float)sourcePosY+(float)sourceSizeY }, { (float)sourceSizeX,(float)sourceSizeY }, { 0.4,0.4 });   //FillED layer
 			}
 		}
 
@@ -493,22 +569,27 @@ void cEnergyIndicators::DrawSelfTalent(olc::PixelGameEngine* gfx, int px, int py
 	float piy = py;
 
 
-	gfx->DrawPartialDecal({ pix + (offsetX * g_engine->fscale),piy + (offsetY * g_engine->fscale) }, pSpriteEmpty, { 0,0 }, { (float)pSpriteFull->sprite->width,(float)pSpriteFull->sprite->height }, { 0.5,0.5  });   //Empty
+	gfx->DrawPartialDecal({ pix + (offsetX * g_engine->fscale),piy + (offsetY * g_engine->fscale) }, g_engine->D_Ui, { (float)sourcePosX,(float)sourcePosY }, { (float)sourceSizeX,(float)sourceSizeY }, { 0.5,0.5  });   //Empty
 
 	if (bhide == true)
-		gfx->DrawPartialDecal({ pix + (offsetX *g_engine->fscale),piy + (offsetY *g_engine->fscale) }, pSpriteFull, { 0,0 }, { (float)pSpriteFull->sprite->width,(float)pSpriteFull->sprite->height }, { 0.5 ,0.5  });   //Fill layer
+		gfx->DrawPartialDecal({ pix + (offsetX *g_engine->fscale),piy + (offsetY *g_engine->fscale) }, g_engine->D_Ui, { (float)sourcePosX,(float)sourcePosY+64 }, { (float)sourceSizeX,(float)sourceSizeY }, { 0.5 ,0.5  });   //Fill layer
 
 
 }
 
-cNewEnergyIndicator::cNewEnergyIndicator(int attackvariation, int foffsetX, int foffsetY,std::string name) :cEnergyIndicators("NewEnergyIndicator", RPG_Assets::get().GetSprite("EnergyBarNewFill"), RPG_Assets::get().GetSprite("AngryBarNewEmpty"))
+cNewEnergyIndicator::cNewEnergyIndicator(int attackvariation, int foffsetX, int foffsetY,std::string name) :cEnergyIndicators("NewEnergyIndicator")
 {
-	pSpriteReady = RPG_Assets::get().GetSprite("EnergyBarNewReady");
+//	pSpriteReady = RPG_Assets::get().GetSprite("EnergyBarNewReady");
 
 	sName += name;
 	offsetX = foffsetX;
 	offsetY = foffsetY;
 	
+	sourcePosX = 1010;
+	sourcePosY = 192;
+	sourceSizeX = 50;
+	sourceSizeY = 15;
+
 
 	switch (attackvariation)
 	{
@@ -528,15 +609,15 @@ cNewEnergyIndicator::cNewEnergyIndicator(int attackvariation, int foffsetX, int 
 	}
 	
 
-	sizeframe = 50;
+	//sizeframe = 50;
 
 }
 
-cNewRageIndicator::cNewRageIndicator(int attackvariation, int foffsetX, int foffsetY, std::string name) :cRageIndicators("NewRageIndicator", RPG_Assets::get().GetSprite("AngryBarNewFill"), RPG_Assets::get().GetSprite("AngryBarNewEmpty"))
+cNewRageIndicator::cNewRageIndicator(int attackvariation, int foffsetX, int foffsetY, std::string name) :cRageIndicators("NewRageIndicator")
 {
-	sizeframe = 50;
+	//sizeframe = 50;
 
-	pSpriteReady = RPG_Assets::get().GetSprite("AngryBarNewReady");
+	//pSpriteReady = RPG_Assets::get().GetSprite("AngryBarNewReady");
 
 	sName += name;
 	offsetX = foffsetX;
@@ -558,6 +639,12 @@ cNewRageIndicator::cNewRageIndicator(int attackvariation, int foffsetX, int foff
 		break;
 	
 	}
+
+	sourcePosX = 960;
+	sourcePosY = 192;
+	sourceSizeX = 50;
+	sourceSizeY = 16;
+
 
 }
 
@@ -607,10 +694,10 @@ void cRageIndicators::DrawSelfTalent(olc::PixelGameEngine* gfx, int px, int py)
 	float piy = py;
 
 
-	gfx->DrawPartialDecal({ pix + (offsetX * g_engine->fscale),piy + (offsetY * g_engine->fscale) }, pSpriteEmpty, { 0,0 }, { (float)pSpriteFull->sprite->width,(float)pSpriteFull->sprite->height }, { 1 * g_engine->fscale,1 * g_engine->fscale });   //Empty
+	gfx->DrawPartialDecal({ pix + (offsetX * g_engine->fscale),piy + (offsetY * g_engine->fscale) }, g_engine->D_Ui, { (float)sourcePosX,(float)sourcePosY }, { (float)sourceSizeX,(float)sourceSizeY }, { 1 * g_engine->fscale,1 * g_engine->fscale });   //Empty
 
 	if (bhide == true)
-		gfx->DrawPartialDecal({ pix + (offsetX * g_engine->fscale),piy + (offsetY * g_engine->fscale) }, pSpriteFull, { 0,0 }, { (float)pSpriteFull->sprite->width,(float)pSpriteFull->sprite->height }, { 1 * g_engine->fscale,1 * g_engine->fscale });   //Fill layer
+		gfx->DrawPartialDecal({ pix + (offsetX * g_engine->fscale),piy + (offsetY * g_engine->fscale) }, g_engine->D_Ui, { (float)sourcePosX,(float)sourcePosY }, { (float)sourceSizeX,(float)sourceSizeY }, { 1 * g_engine->fscale,1 * g_engine->fscale });   //Fill layer
 
 
 
@@ -627,7 +714,7 @@ void cRageIndicators::DrawSelf(olc::PixelGameEngine* gfx, int px, int py)
 		switch (m_Classenum)
 		{
 		case cRageIndicators::RageIndicatorFirst:     // suit for attack in air and on ground 
-			procent = 35 / (float)pSpriteFull->sprite->width;
+			procent = 35 / (float)sourceSizeX;
 			EnergyDiff = g_engine->GetRage() / procent;
 
 
@@ -641,7 +728,7 @@ void cRageIndicators::DrawSelf(olc::PixelGameEngine* gfx, int px, int py)
 
 			break;
 		case cRageIndicators::RageIndicatorSecond:
-			procent = 35 / (float)pSpriteFull->sprite->width;
+			procent = 35 / (float)sourceSizeX;
 			EnergyDiff = (g_engine->GetRage() - 35) / procent;
 
 			if (g_engine->GetRage() > 70)
@@ -654,7 +741,7 @@ void cRageIndicators::DrawSelf(olc::PixelGameEngine* gfx, int px, int py)
 			break;
 
 		case cRageIndicators::RageIndicatorThird:
-			procent = 35 / (float)pSpriteFull->sprite->width;
+			procent = 35 / (float)sourceSizeX;
 			EnergyDiff = (g_engine->GetRage() - 65) / procent;
 
 			if (g_engine->GetRage() > 99)
@@ -670,7 +757,7 @@ void cRageIndicators::DrawSelf(olc::PixelGameEngine* gfx, int px, int py)
 
 
 		float pix = px;
-		float piy = py - (2 * pSpriteFull->sprite->height + (py / 64));
+		float piy = py - (2 * sourceSizeY + (py / 64));
 
 
 		if (EnergyDiff <= 0)
@@ -688,16 +775,16 @@ void cRageIndicators::DrawSelf(olc::PixelGameEngine* gfx, int px, int py)
 
 			if (bhide == 1)
 			{
-				gfx->DrawPartialDecal({ pix + offsetX,piy + offsetY }, pSpriteEmpty, { 0,0 }, { (float)pSpriteFull->sprite->width,(float)pSpriteFull->sprite->height }, { 0.4,0.4 });   //Empty
+				gfx->DrawPartialDecal({ pix + offsetX,piy + offsetY }, g_engine->D_Ui, { (float)sourcePosX,(float)sourcePosY+34 }, { (float)sourceSizeX,(float)sourceSizeY }, { 0.4,0.4 });   //Empty
 
-				gfx->DrawPartialDecal({ pix + offsetX,piy + offsetY }, pSpriteFull, { 0,0 }, { EnergyDiff,(float)pSpriteFull->sprite->height }, { 0.4,0.4 });   //Fill layer
+				gfx->DrawPartialDecal({ pix + offsetX,piy + offsetY }, g_engine->D_Ui, { (float)sourcePosX,(float)sourcePosY+18 }, { EnergyDiff,(float)sourceSizeY }, { 0.4,0.4 });   //Fill layer
 			}
 
 
 
-			if (pSpriteReady != nullptr && bhide == 3)
+			if (bhide == 3)
 			{
-				gfx->DrawPartialDecal({ pix + offsetX,piy + offsetY }, pSpriteReady, { 0,0 }, { (float)pSpriteReady->sprite->width,(float)pSpriteReady->sprite->height }, { 0.4,0.4 });   //FillED layer
+				gfx->DrawPartialDecal({ pix + offsetX,piy + offsetY }, g_engine->D_Ui, { (float)sourcePosX,(float)sourcePosY }, { (float)sourceSizeX,(float)sourceSizeY }, { 0.4,0.4 });   //FillED layer
 			}
 		}
 	
@@ -709,12 +796,12 @@ void cRageIndicators::DrawSelf(olc::PixelGameEngine* gfx, int px, int py)
 
 
 
-cJump::cJump() :cEnergyIndicators("Jump", RPG_Assets::get().GetSprite("JumpFullUi"), RPG_Assets::get().GetSprite("JumpEmptyUi"))
+cJump::cJump() :cEnergyIndicators("Jump")
 {
 	offsetX = 0;
-	offsetY = +4*pSpriteFull->sprite->height;
+	offsetY = +4* sourceSizeX;
 	m_Classenum = JUMP;
-	sizeframe = 64;
+	
 }
 
 
@@ -722,7 +809,7 @@ cJump::cJump() :cEnergyIndicators("Jump", RPG_Assets::get().GetSprite("JumpFullU
 
 
 
-cStaticUi::cStaticUi(std::string name, olc::Decal* Full) : cUI(name, Full)
+cStaticUi::cStaticUi(std::string name) : cUI(name)
 {
 	offsetX = 0;
 	offsetY = 0;
@@ -738,25 +825,35 @@ void  cStaticUi::DrawSelf(olc::PixelGameEngine* gfx, int px, int py)
 
 
 
-	gfx->DrawPartialDecal({ (pix +offsetX),(piy+offsetY) }, pSpriteFull, { 0,0 }, { (float)pSpriteFull->sprite->width,(float)pSpriteFull->sprite->height });   //offset pulling player back into the screen
+	gfx->DrawPartialDecal({ (pix +offsetX),(piy+offsetY) }, g_engine->D_Ui, { (float)sourcePosX,(float)sourcePosY }, { (float)sourceSizeX,(float)sourceSizeY });   //offset pulling player back into the screen
 	
 }
 
-cLevel::cLevel() : cStaticUi("Level Ui", RPG_Assets::get().GetSprite("UiLevelPlace"))
+cLevel::cLevel() : cStaticUi("Level Ui")
 {
 	//RPG_Assets::get().GetSprite("UiLevelPlace")->sprite->width
 	offsetX = 0;
 	offsetY = 0;
+
+	sourcePosX = 960;
+	sourcePosY = 261;
+	sourceSizeX = 62;
+	sourceSizeY = 31;
 }
 
-cSpellPlace::cSpellPlace() : cStaticUi("Spell Place", RPG_Assets::get().GetSprite("SpellUi"))
+cSpellPlace::cSpellPlace() : cStaticUi("Spell Place")
 {
 	//RPG_Assets::get().GetSprite("SpellUi")->sprite->height
 	offsetX = 0;
 	offsetY = 0;
+	 
+	sourcePosX = 832;
+	sourcePosY = 0;
+	sourceSizeX = 335;
+	sourceSizeY = 142;
 }
 
-cNumber::cNumber() :cStaticUi("Level Number", RPG_Assets::get().GetSprite("font"))
+cNumber::cNumber() :cStaticUi("Level Number")
 {
 	offsetX = 18;
 	offsetY = 0;

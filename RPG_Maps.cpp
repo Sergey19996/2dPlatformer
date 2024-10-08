@@ -52,27 +52,35 @@ bool cMap::Create(std::string fileData, olc::Decal* sprite, olc::Decal* sdinspri
 		for (int i = 0; i < nWidth * nHeight; i++)
 		{
 			Tile tile;
-
+			
+		//	while (data >> str) {
+			//	int temp = std::stoi(str);
+			//	uint8_t value = static_cast<uint8_t>(temp);
+				// Записывай значение в массив
+		//	}
 			
 			
 			tile.position.x = i % nWidth;
 			tile.position.y = i / nWidth;
 
-			data >> tile.Collision;
+			int temp =0;
+			data >> temp;   // in data we keep information in char or string. 
+			tile.Collision = static_cast<uint8_t>(temp);;
 
+			
 			data >> tile.FirstLayer.index;
-			tile.FirstLayer.sourcerect.x = (tile.FirstLayer.index %32)*64;
-			tile.FirstLayer.sourcerect.y = (tile.FirstLayer.index /32)*64;
+			tile.FirstLayer.sourcerect.x = (tile.FirstLayer.index %32)*32;
+			tile.FirstLayer.sourcerect.y = (tile.FirstLayer.index /32)*32;
 			tile.FirstLayer.layerindex = 1;
 
 			data >> tile.SecondLayer.index;
-			tile.SecondLayer.sourcerect.x = (tile.SecondLayer.index %32)*64;
-			tile.SecondLayer.sourcerect.y = (tile.SecondLayer.index / 32)*64;
+			tile.SecondLayer.sourcerect.x = (tile.SecondLayer.index %32)*32;
+			tile.SecondLayer.sourcerect.y = (tile.SecondLayer.index / 32)*32;
 			tile.SecondLayer.layerindex = 2;
 
 			data >> tile.ThirdLayer.index;
-			tile.ThirdLayer.sourcerect.x = (tile.ThirdLayer.index % 32)*64;
-			tile.ThirdLayer.sourcerect.y = (tile.ThirdLayer.index /32)*64;
+			tile.ThirdLayer.sourcerect.x = (tile.ThirdLayer.index % 32)*32;
+			tile.ThirdLayer.sourcerect.y = (tile.ThirdLayer.index /32)*32;
 			tile.ThirdLayer.layerindex = 3;
 
 			batchLayer.push_back(tile);
@@ -92,40 +100,19 @@ bool cMap::Create(std::string fileData, olc::Decal* sprite, olc::Decal* sdinspri
 			batchLayer[i].DynamicLayer.layerindex = 10;
 
 
-			batchLayer[i].DynamicLayer.size.x = (256);
-			batchLayer[i].DynamicLayer.size.y = (256);
+			batchLayer[i].DynamicLayer.size.x = (128);
+			batchLayer[i].DynamicLayer.size.y = (128);
 
 			data >> batchLayer[i].ZeroLayer.index;
-			batchLayer[i].ZeroLayer.sourcerect.x = (batchLayer[i].ZeroLayer.index % 32)*64;
-			batchLayer[i].ZeroLayer.sourcerect.y = (batchLayer[i].ZeroLayer.index /32)*64;
+			batchLayer[i].ZeroLayer.sourcerect.x = (batchLayer[i].ZeroLayer.index % 32)*32;
+			batchLayer[i].ZeroLayer.sourcerect.y = (batchLayer[i].ZeroLayer.index /32)*32;
 			batchLayer[i].ZeroLayer.layerindex = 0;
 
 
 
 		}
 		
-		/// ///////////////
-
-
-
-
-			
 		
-		// Iterate over All level cells 
-	
-
-			
-				//dw
-
-			//	g_engine->FillBatch(idx.SecondLayer, 3, x, y, batchBeforeCharsLayer, batchAfterCharsLayer);
-			//	g_engine->FillBatch(idx.FirstLayer, 1, x, y, batchBeforeCharsLayer, batchAfterCharsLayer);
-				//FillBatch(idx.DynamicLayer, 2, x, y,  batchBeforeCharsLayer, batchAfterCharsLayer);
-
-			//	g_engine->FillBatch(idx.ZeroLayer, 0, x, y, batchBeforeCharsLayer, batchAfterCharsLayer);
-
-			
-		
-		//}
 		CombineAdjacentTiles(batchLayer, batchLayer[0].ThirdLayer.layerindex);
 		CombineAdjacentTiles(batchLayer, batchLayer[0].SecondLayer.layerindex);
 		CombineAdjacentTiles(batchLayer, batchLayer[0].FirstLayer.layerindex);
@@ -225,7 +212,7 @@ Tile cMap::GetIndexLayer( int x, int y)
 int cMap::GetColliziionIndex(int x, int y)
 {
 	if (x >= 0 && x < nWidth && y >= 0 && y < nHeight)
-		return batchLayer[y * nWidth + x].Collision;
+		return static_cast<int>(batchLayer[y * nWidth + x].Collision);
 	else
 		return 0;
 }
@@ -264,10 +251,10 @@ std::pair<olc::vf2d*, olc::vf2d*>*::cMap::getObsticlesPoints(float pxX, float px
 			}
 		}
 	
-		olc::vf2d* v1 = new olc::vf2d{ 1,1 };
-		olc::vf2d* v2 = new olc::vf2d{ 1,1 };
+		olc::vf2d v1 { 1,1 };
+		olc::vf2d v2 { 1,1 };
 
-		std::pair<olc::vf2d*, olc::vf2d*>* g1 = new std::pair<olc::vf2d*, olc::vf2d*>(v1, v2);
+		std::pair<olc::vf2d*, olc::vf2d*>* g1 = new std::pair<olc::vf2d*, olc::vf2d*>(&v1, &v2);
 
 		return  g1;
 	
@@ -281,29 +268,38 @@ cMap_Forest::cMap_Forest()
 	bFinishloading = Create("save/LevelMap.txt",RPG_Assets::get().GetSprite("BlockFirstLvl"), RPG_Assets::get().GetSprite("ForestDynamicLayer"), RPG_Assets::get().GetSprite("ParralaxForestClose"), RPG_Assets::get().GetSprite("ParralaxForestMid"), RPG_Assets::get().GetSprite("ParralaxForestFar"), "Forest");
 
 
-	setWolfsPos();
-	setBanditsPos();
-	setBoarPos();
-	setWereWolfsPos();
+//	setWolfsPos();
+//	setBanditsPos();
+//	setBoarPos();
+//	setWereWolfsPos();
 
-
+	//RPG_Assets::get().playMusic("D:/C++/Pantir_Platformer/Sounds/FriendSong.wav");
 }
 
 bool cMap_Forest::PopulateDynamics(std::vector<cDynamic*>& vecDyns)
 {
 
+	RPG_Assets::get().playMusic("Sounds/ForestMusic.wav");
 
+	int Mqphase = g_engine->GetQuest("MainQuest")->GetPhase();
 	//SetupParallax(RPG_Assets::get().GetSprite("ParralaxForestClose"), RPG_Assets::get().GetSprite("ParralaxForestMid"), RPG_Assets::get().GetSprite("ParralaxForestFar"));
+
+
+	//olc::vf2d test = { 8.0f,25.5 };
+	//g_engine->SpawnBanditArcher(&test);
 
 	for (int i = 0; i < BanditsPositions.size(); )
 	{
 		
 		//g1->px = 128;
 		//g1->py = 1;
-		g_engine->SpawnBandit(*&(BanditsPositions[i]));
+	//	g_engine->SpawnBandit(*&(BanditsPositions[i]));
 		
+	//	i++;
+		g_engine->SpawnBanditArcher(*&(BanditsPositions[i]));
 		i++;
-	
+		g_engine->SpawnBandit(*&(BanditsPositions[i]));
+		i++;
 	}
 
 
@@ -351,18 +347,21 @@ bool cMap_Forest::PopulateDynamics(std::vector<cDynamic*>& vecDyns)
 
 	//vecDyns.push_back(new cDynamic_Teleport(180.0f, 28.0f, "Forest", 249.0f, 55.0f)); //<--- Teleport in cave main 
 	
-
-	cDynamic* g3 = new cDynamic_creature_NPCBandit("CaveEntrence");
-	g3->SwitchLayer(4);
-	g3->px = 180.0f;
-	g3->py = 27.5f;
-	vecDyns.push_back(g3);
+	if (Mqphase > 5)
+	{
+		cDynamic* g3 = new cDynamic_creature_NPCBandit("CaveEntrence");
+		g3->SwitchLayer(4);
+		g3->px = 180.0f;
+		g3->py = 27.5f;
+		
+		vecDyns.push_back(g3);
 
 	g3 = new cDynamic_creature_NPCBandit("CaveOut");
 	g3->SwitchLayer(4);
 	g3->px = 249.0f;
 	g3->py = 54.5f;
 	vecDyns.push_back(g3);
+	};
 
 
 
@@ -419,6 +418,8 @@ void cMap_Forest::setWolfsPos()
 
 	olc::vf2d* v1 = new olc::vf2d{ 25,23.5 };
 	
+
+
 	WolfsPositions.push_back(v1);
 
 	
@@ -448,13 +449,27 @@ void cMap_Forest::setBanditsPos()
 	olc::vf2d* v1 = new olc::vf2d{ 101,23.5 };
 	BanditsPositions.push_back(v1);
 
+
+	 v1 = new olc::vf2d{ 103,23.5 };
+	BanditsPositions.push_back(v1);
+
+
 	v1 = new olc::vf2d{ 115.5,23.5 };
+	BanditsPositions.push_back(v1);
+
+	v1 = new olc::vf2d{ 116.5,23.5 };
 	BanditsPositions.push_back(v1);
 
 	v1 = new olc::vf2d{ 130,23.5 };
 	BanditsPositions.push_back(v1);
 
+	v1 = new olc::vf2d{ 132,23.5 };
+	BanditsPositions.push_back(v1);
+
 	v1 = new olc::vf2d{ 144,23.5 };
+	BanditsPositions.push_back(v1);
+
+	v1 = new olc::vf2d{ 146,23.5 };
 	BanditsPositions.push_back(v1);
 
 	v1 = new olc::vf2d{ 209,30.5 };
@@ -545,6 +560,9 @@ cMap_VillageInFire::cMap_VillageInFire()
 bool cMap_VillageInFire::PopulateDynamics(std::vector<cDynamic*>& vecDyns)
 {
 
+	RPG_Assets::get().playMusic("Sounds/VillageInFireMusic.wav");
+	RPG_Assets::get().SetMusicVolume(50);
+
 
 	for (int i = 0; i < BanditsPositions.size(); )
 	{
@@ -619,6 +637,8 @@ cMap_Village::cMap_Village()
 bool cMap_Village::PopulateDynamics(std::vector<cDynamic*>& vecDyns)
 {
 
+	RPG_Assets::get().playMusic("Sounds / VillgaeMusic.wav");
+
 	g_script->AddCommand((new cComand_AppearScreen(2)));
 
 	cDynamic* g1 = new cDynamic_creature_NPCBandit("BlackSmith");
@@ -661,7 +681,7 @@ bool cMap_Village::PopulateDynamics(std::vector<cDynamic*>& vecDyns)
 
 
 
-	g_engine->GiveBlackSmithItem(RPG_Assets::get().GetItem("SmallWallet"));
+	g_engine->GiveBlackSmithItem("SmallWallet");
 
 
 
@@ -739,6 +759,9 @@ cMap_VillageTavern::cMap_VillageTavern()
 
 bool cMap_VillageTavern::PopulateDynamics(std::vector<cDynamic*>& vecDyns)    //<----Tavern SPawn
 {
+
+	RPG_Assets::get().playMusic("Sounds/TavernMusic.wav");
+
 	cDynamic* g1 = new cDynamic_creature_NPCBandit("SaveMan");
 	g1->SwitchLayer(4); // Questable layer tag
 	g1->px = 7;
@@ -759,7 +782,7 @@ bool cMap_VillageTavern::PopulateDynamics(std::vector<cDynamic*>& vecDyns)    //
 
 
 
-	g_engine->GiveStoreItem(RPG_Assets::get().GetItem("SmallWallet"));
+	g_engine->GiveStoreItem("SmallWallet");
 
 
 	vecDyns.push_back(new cDynamic_Teleport(6.0f, 10.5f, "Village", 92.0f, 13.0f)); //<--- Teleport From Tavern in Village Left side (Day)
@@ -820,7 +843,7 @@ cMap_ForestPartTwo::cMap_ForestPartTwo()
 bool cMap_ForestPartTwo::PopulateDynamics(std::vector<cDynamic*>& vecDyns)
 {
 
-
+	RPG_Assets::get().playMusic("Sounds/Forest.wav");
 
 	for (int i = 0; i < WolfsPositions.size(); )
 	{

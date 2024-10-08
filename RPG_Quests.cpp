@@ -45,12 +45,11 @@ bool cQuset_MainQuest::PopulateDynamics(std::vector<cDynamic*>& vecDyns, std::st
 
 
 			cDynamic* g1 = new cDynamic_creature_Bandit();
-			g1->quested = true;  // when we don't want to add him in initializepool after death
+			g1->setFlag(g1->quested);  // when we don't want to add him in initializepool after death
 			g1->sName = "FirstBandit";
-			g1->quested = true;
 			g1->px = 81;
 			g1->py = 26;
-			g1->bControllable = 0;
+			g1->clearFlag(g1->bControllable);
 			vecDyns.push_back(g1);
 
 
@@ -58,8 +57,8 @@ bool cQuset_MainQuest::PopulateDynamics(std::vector<cDynamic*>& vecDyns, std::st
 			cDynamic_creature_WereWolf* z1 = new cDynamic_creature_WereWolf();
 			z1->sName = "werewolf";
 			z1->bTransformed = false;
-			z1->quested = true;
-			z1->bControllable = 0;
+			z1->setFlag(z1->quested) ;
+			z1->clearFlag(z1->bControllable);
 			z1->px = 178;
 			z1->py = 26;
 			vecDyns.push_back(z1);
@@ -86,7 +85,7 @@ bool cQuset_MainQuest::PopulateDynamics(std::vector<cDynamic*>& vecDyns, std::st
 			c5->py = 26;
 			vecDyns.push_back(c5);
 			
-			g_script->AddCommand(new cComand_moveTo(vecDyns[0], 6, 25.5, 1));
+			g_script->AddCommand(new cComand_moveTo(vecDyns[0], 6,6, 1));
 			g_script->AddCommand(new cComand_ShowDialog({ "StoryTeller:","And our hero ended up in ","the forest" }));
 			m_nPhase = 1;
 
@@ -164,7 +163,7 @@ bool cQuset_MainQuest::OnInteraction(std::vector<cDynamic*>& vecDynobs, cDynamic
 			//sDescription = "Kill Bandit";
 		
 			
-			target->bDead = true;
+			target->setFlag(target->bDead);
 			
 		
 			
@@ -209,7 +208,7 @@ bool cQuset_MainQuest::OnInteraction(std::vector<cDynamic*>& vecDynobs, cDynamic
 		sDescription = "Kill WereWolf";
 
 
-		target->bDead = true;
+		target->setFlag(target->bDead);
 
 
 

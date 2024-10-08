@@ -2,7 +2,7 @@
 #include "RPG_Dynamic.h"
 
 class RPG_Engine;
-
+class InventaryItem;
 class cItem
 {
 public:
@@ -11,6 +11,7 @@ public:
 	cItem(const cItem &p);
 
 	virtual bool OnInteract(cDynamic* object) { return false; }
+	virtual bool OnUse(cDynamic* object, std::vector<InventaryItem*>& m_listItems, InventaryItem* socket =nullptr) { return false; }
 	virtual bool OnUse(cDynamic* object) { return false; }
 	virtual bool OnSell() ;
 	virtual bool OnBuy();
@@ -19,39 +20,65 @@ public:
 	std::string sName;
 	std::string sDescription;
 	std::string sCraftRequaries;
-	int sTradePrice;   // <---Price for sell
-	int sTradeBuyPrice; // <--Price for buy
+	uint8_t sTradePrice;   // <---Price for sell
+	uint8_t sTradeBuyPrice; // <--Price for buy
 	olc::Decal* pSprite;
 	bool bKeyItem = false;
-	bool bEquipable = false;
 
-	bool Absorbed = false;
+	unsigned int Attributes = 0;  // 15 - 1111   255 - 1111 1111
+
 
 	static RPG_Engine* g_engine;
 	
 
-	float ipx = 0;    // Offset in inventory
-	float ipy = 0;
-	bool mouseGrabbed = false;
-	bool objectselected = false;
-	int invnumber = 0;  // Index in inventory
-	bool bInWarehouse = false;
+	uint32_t spriteindex = 0;
+	int UiIndex = 0;
 
-	int GoldCount = 0;  // Describe gold state in wallet and splited coins
+	uint8_t equipIndex = 0; // Index in equipment
+	uint8_t MaxStack = 0;  // maxamount of stack in inventory
+	uint8_t Gold = 0;
 
 };
 
 
-class cWeapon : public cItem    //store is amount of damage  that particular weapon does
+
+
+class  cEquip : public cItem
 {
 public:
-	cWeapon(std::string name, olc::Decal* sprite, std::string desc, int dmg);
+	cEquip(std::string name, olc::Decal* sprite, std::string desc, uint8_t dmg, uint8_t aglty, uint8_t inteleg, uint8_t versality, uint8_t Strangth, uint32_t spriteindex, uint8_t equipindex,uint8_t tradeprice);
 	bool OnInteract(cDynamic* object) override;
 	bool OnUse(cDynamic* object) override;
 	bool OnBuy()  override { return false; };
 	bool OnCraft(bool click)  override { return false; };
+
+
+	//int nDamage = 0;
+
+	
+
+	
+
+private:
+
+};
+
+
+
+
+
+
+class cWeapon : public cEquip    //store is amount of damage  that particular weapon does
+{
 public:
-	int nDamage = 0;
+	cWeapon(std::string name, olc::Decal* sprite,olc::Decal*ProjectileLeft,olc::Decal* ProjectileRight, std::string desc, uint8_t dmg, uint8_t aglty, uint8_t inteleg, uint8_t versality, uint8_t Strangth, uint32_t spriteindex, uint8_t equipIndex,uint8_t price);
+	bool OnUse(cDynamic* object) override;
+	bool OnInteract(cDynamic* object) override;
+
+private:
+	olc::Decal* ProjectileLeft;
+	olc::Decal* ProjectileRight;
+
 
 
 };
@@ -65,8 +92,11 @@ public:
 	bool OnUse(cDynamic* object) override;
 	bool OnBuy() override { return false; };
 	bool OnCraft(bool click)  override { return false; };
+	int GoldCount = 0;  // Describe gold state in wallet and splited coins
 public:
+	uint8_t MaxGold = 60;
 
+protected:
 
 };
 
@@ -77,65 +107,88 @@ class cCoin : public cGold
 public:
 	cCoin();
 
-
+	bool OnInteract(cDynamic* object) override;
 };
 
 class cSmallWallet : public cGold
 {
 public:
 	cSmallWallet();
-	bool OnUse(cDynamic* object) override;
+	bool OnUse(cDynamic* object, std::vector<InventaryItem*>& m_listItems, InventaryItem* Socket =nullptr) override;
 	bool OnBuy() override;
 	bool OnCraft(bool click) override;
+	bool OnSell() override;
 private:
 	
 	//CraftZone
 	std::string FirstItem = "Broken Sword";
 	std::string SecondItem = "Pantir's Dagger";
+
+	uint8_t MaxGold = 60;
 };
 
 
-
-
-class cWeapon_PantirSword : public cWeapon
+class cFullSmallWallet : public cGold
 {
 public:
-	cWeapon_PantirSword();
+	cFullSmallWallet();
+	//bool OnUse(cDynamic* object, std::vector<InventaryItem*>& m_listItems, InventaryItem* Socket = nullptr) override;
+	//bool OnBuy() override;
+	//bool OnCraft(bool click) override;
+private:
 
-public:
-	bool OnUse(cDynamic* object) override;
+	//CraftZone
+//	std::string FirstItem = "Broken Sword";
+//	std::string SecondItem = "Pantir's Dagger";
 };
 
-class cWeapon_BanditSword : public cWeapon
+
+
+class cEmptySlot : public cItem
 {
 public:
-	cWeapon_BanditSword();
+	cEmptySlot();
 
-public:
+
 	bool OnUse(cDynamic* object) override;
+private:
 };
 
 
-class cWeapon_BanditBossSword : public cWeapon
+class cHealthElixir : public cItem
 {
 public:
-	cWeapon_BanditBossSword();
+	cHealthElixir();
 
-public:
-	bool OnUse(cDynamic* object) override;
+ bool OnUse(cDynamic* object, std::vector<InventaryItem*>& m_listItems, InventaryItem* socket =nullptr) override;
+private:
+
+	
 };
 
 
-
-
-class cWeapon_BrokenSword : public cWeapon
+class cEnergyElixir : public cItem
 {
 public:
-	cWeapon_BrokenSword();
+	cEnergyElixir();
 
-public:
-	bool OnUse(cDynamic* object) override;
+	bool OnUse(cDynamic* object, std::vector<InventaryItem*>& m_listItems, InventaryItem* socket =nullptr) override;
+private:
 
+	
 
 };
+
+class cRageElixir : public cItem
+{
+public:
+	cRageElixir();
+
+	bool OnUse(cDynamic* object, std::vector<InventaryItem*>& m_listItems, InventaryItem* socket =nullptr) override;
+private:
+
+	
+
+};
+
 

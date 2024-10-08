@@ -58,8 +58,8 @@ bool cGameSettings::LoadConfigFile(std::string sFile)
 	return true;
 }
 
-int cGameSettings::nScreenWidth = 990;
-int cGameSettings::nScreenHeight = 512;
+int cGameSettings::nScreenWidth = 495;
+int cGameSettings::nScreenHeight = 256;
 int cGameSettings::nPixelWidth = 2;
 int cGameSettings::nPixelHeight =2;
 bool cGameSettings::bFullScreen = true;

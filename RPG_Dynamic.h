@@ -6,6 +6,7 @@ class RPG_Engine;
 
 class cWeapon;
 class cItem;
+class cEquip;
 
 class cIndicator;
 class cDynamic_HpBar;
@@ -27,29 +28,59 @@ public:
 	enum LAYER
 	{ Friend = 0, Enemy = 1, Neutral = 2, Particle = 3,Questable =4 } m_layer;
 
-	bool bIsProjectile;
-	bool bDraw = true;
-	bool bIsAttackable;
-	bool bRedundant;        //translate like unnecessary
-	bool bDead = false;
+
+	// Объявляем флаги через enum
+	enum DynamicFlagsEnum {
+		BisProjectile = 1 << 0,  // 1-й бит
+		bDraw = 1 << 1,  // 2-й бит
+		bIsAttackable = 1 << 2,  // 3-й бит
+		bRedundant = 1 << 3,  // 4-й бит
+		bDead = 1 << 4,  // 5-й бит
+		bOnGround = 1 << 5,  // 6-й бит
+		bOnTarget = 1 << 6,  // 7-й бит
+		binitialized = 1 << 7,  // 8-й бит
+		bControllable = 1 << 8,  // 9-й бит
+		quested = 1 << 9,  // 10-й бит
+		isAttack = 1 << 10, // 11-й бит
+		IsThrow = 1 << 11, // 12-й бит
+		IsOnePlay = 1 << 12, // 13-й бит
+		bOnLanded = 1 << 13, // 14-й бит
+		bAnimAction = 1 << 14, // 15-й бит
+		isprojfollow = 1 << 15, // 16-й бит
+		Btarget = 1 << 16, // 17-й бит
+		gravity = 1 << 17,  // 18-й бит
+		isDirectionLock = 1 << 18 // 19-й бит
+	};
+
+	
+	// Переменная для хранения всех флагов
+	unsigned int DynamicFlags = 0;
+
+	// Методы для установки и проверки флагов
+	void setFlag(DynamicFlagsEnum flag) {
+		DynamicFlags |= flag;  // Устанавливаем флаг
+	}
+
+	void clearFlag(DynamicFlagsEnum flag) {
+		DynamicFlags &= ~flag;  // Сбрасываем флаг //revers number
+	}
+
+	bool checkFlag(DynamicFlagsEnum flag) const {
+		return DynamicFlags & flag;  // Проверяем флаг
+	}
+
 	std::string sName;
-	bool bOnGround;
-	int Jumpcounter;
-	bool bOnTarget = false;
-
-	bool binitialized = false;
+	unsigned int Jumpcounter :4;
 
 
-	bool bControllable = true;
+
 
 	int mass = 32;
-	bool gravity = true;
 	
 	std::pair<olc::vf2d*, olc::vf2d*>* obsticlepoints = nullptr;
 
 	float CollbordersX, CollbordersY, CollbordersXF, CollbordersYF;
 
-	bool quested = false;
 
 public:
 	virtual void DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy) {}
@@ -59,6 +90,8 @@ public:
 	virtual void SwitchLayer(int num) ;
 	virtual  int GetHealth() { return 0; };
 	virtual void SetHealth(int setHealth)  { };
+
+
 
 	static RPG_Engine* g_engine;
 
@@ -79,40 +112,88 @@ protected:
 	olc::Decal* m_pSpriteRight;
 	olc::Decal* m_pSpriteLeft;
 
-	
+
 	float m_fTimer;
-	enum {  WEST = 1, EAST = 3 } M_nFacingDirection;
-	enum { SOUTH = 0,  NORTH = 1, NOTLOOKING =3 } M_nFacingDirectionVertical;
+	enum { WEST = 1, EAST = 3 } M_nFacingDirection;
+	enum { SOUTH = 0, NORTH = 1, NOTLOOKING = 3 } M_nFacingDirectionVertical;
 
-	enum{STRENGTH =0, AGILITY =1,INTELLIGENCE=2 }M_BaseClass;
+	enum { STRENGTH = 0, AGILITY = 1, INTELLIGENCE = 2 }M_BaseClass;
 
-	int Defence = 0;
-	int AverageAttack = 0;
-	int calculatedDamage = 0;
 	float fHpRegeneration = 0;
-	int Movementspeed = 0;
+
+
+
+	int calculatedDamage = 0;
+
+
+
+	//   Calculation thatnk's lvl oh character
+
+	float LvlHaste = 0;  // how fast animations flow
+
+
+	unsigned int Lvlattributes = 0;
+
+	void SetLvlAgility(uint8_t agil);
+	void SetLvlStrength(uint8_t str);
+	void SetLvlInt(uint8_t Inteleg);
+	void SetLvlMovement(uint8_t movement);
+	uint8_t getLvlAgil();
+	uint8_t gettLvlStrength();
+	uint8_t getLvlInt();
+	uint8_t getLvlMovement();
+
+
+
+	unsigned int LvlAverageAttack : 8;
+	unsigned int LvlDefence : 8;
+	unsigned int lvlHealthMax =0;
+	//
 	
+	unsigned int Endattributes = 0;
+	void SetEndAgility(uint8_t agil);
+	void SetEndStrength(uint8_t str);
+	void SetEndInt(uint8_t Inteleg);
+	void SetEndMovement(uint8_t movement);
+	uint8_t getEndAgil();
+	uint8_t getEndStrength();
+	uint8_t getEndInt();
+	uint8_t getEndMovement();
 
 
 
-	int versality = 0;
+	unsigned int EndAverageAttack : 8;   // here keeping calculation with addition from items
+	unsigned int EndDefence : 8;
 
-	int agility = 0;
-	float Haste = 0;
-	int strength = 0;
-	int intelligence = 0;
+	float EndHaste = 0;
+
+	unsigned int BasicAttributes = 0;
 
 
-	bool isDirectionLock =false;
-	
+	void setBasicAgility(uint8_t agil);
+	void setBasicStrength(uint8_t str);
+	void setBasicInt(uint8_t Inteleg);
+	void setBasicMovement(uint8_t movement);
+	uint8_t getBasicAgil();
+	uint8_t getBasicStrength();
+	uint8_t getBasicInt();
+	uint8_t getBasicMovement();
+
+
+	uint8_t GetWeaponAttributes(unsigned int attributes)
+	{
+		uint8_t dmg = (attributes >> 16) & 0xf;
+		return dmg;
+	}
+
 	enum
 	{
 		Idle = 0,
 		Walk = 1,
 		Jump = 2,
 		Attack = 3,
-		AttackEasy =4,
-		AttackGreat =5,
+		AttackEasy = 4,
+		AttackGreat = 5,
 
 		DoubleJump = 6,
 		AirAttack = 7,
@@ -123,19 +204,19 @@ protected:
 		Landing = 11,
 
 		AirEviscirate = 12,   //  Right Botton
-		Hit =13,
+		Hit = 13,
 
 		AttackBack = 16,
 
-		UpEviscirate =17,      //  Right Botton
-		AirDownEviscirate =18,    //  Right Botton
+		UpEviscirate = 17,      //  Right Botton
+		AirDownEviscirate = 18,    //  Right Botton
 		LANDINGEviscirate = 19,    //  Right Botton
-		BLINKDESAPEAR =20,
-		GRAB =21,
-		Swirl =22,
-		Death =23,
-		IdleTwo =24,
-		IdleReaction =25
+		BLINKDESAPEAR = 20,
+		GRAB = 21,
+		Swirl = 22,
+		Death = 23,
+		IdleTwo = 24,
+		IdleReaction = 25
 
 
 	}  M_nGraphicState;
@@ -146,10 +227,16 @@ protected:
 	float m_fKnockBackDX = 0.0f;
 	float m_fKnockBackDY = 0.0f;
 
-	
-	int redColor = 255;      //<--colors
-	int greenColor = 255;
-	int blueColor = 255;
+
+
+	uint32_t color = 0;
+
+	uint8_t BeveOffsetpX = 0;   // offset for behave px
+	uint8_t BeveOffsetpY = 0; // py
+
+	// int8_t redColor = 255;      //<--colors
+	// int8_t greenColor = 255;
+	// int8_t blueColor = 255;
 
 	
 public:
@@ -164,23 +251,22 @@ public:
 	int FxColumn;
 
 	int nHealth;
+	
 	int nHealthMax;
 	
-	int enumCounter;
+	unsigned int enumCounter :8;
 	
 	/// ///
 	float attackdirectionX = 0.0f;       //in indicators equal enumirator of attack 
 	float attackdirectionY = 0.0f;       // we can modify direction of victim in depend of attack
 	
-	bool isAttack ;
-	bool IsThrow;
-	bool IsOnePlay;
-	bool bOnLanded =false;
-	bool bAnimAction = false;   // <--Situation, when we need act animation  while not ended  abuse onladinind idle and other
-	bool isprojfollow =false;
+
+	// need put it in int
 
 
-	bool Btarget = false; 
+
+
+
 
 	// working with drawning sprites
 	int m_nGraphicCounterX;
@@ -199,9 +285,10 @@ public:
 
 	///////
 	float nSheetOffsetY, nSheetOffsetX;
-	float nSheetSizeX = 128.0f;
-	float nSheetSizeY = 128.0f;
-	float sparedVx = 0;
+	float nSheetSizeX = 64.0f;
+	float nSheetSizeY = 64.0f;
+	float sparedVx = 0.0f;
+	float sparedVy = 0.0f;
 
 	int rageset = 0;   // <- parametr for calculate rage indicator
 	
@@ -211,6 +298,17 @@ public:
 	 
 public:
 	
+		void setColor(uint8_t Red, uint8_t Green, uint8_t Blue, uint8_t Alpha);
+		uint8_t getRed();
+		uint8_t getGreen();
+		uint8_t getBlue();
+		uint8_t getAlpha();
+		void setRedColor(uint8_t Red);
+		void setGreenColor(uint8_t Green);
+		void setBlueColor(uint8_t Blue);
+		void SetAlphaColor(uint8_t Alpha);
+
+
 	virtual void Behaviour(float fElapsedTime, cDynamic* player = nullptr);
 	virtual void ReturnBaseLayer() {};
 	virtual void DeathFun() {};
@@ -222,8 +320,8 @@ public:
 
 	void Update(float fElapsedTime, cDynamic* player = nullptr) override;
 	void DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy) override;
-	void SetAnimation(int num) { enumCounter = num; IsOnePlay = true; };
-	void SetHealth(int setHealth) override { nHealth -= setHealth; };
+	void SetAnimation(int num) { enumCounter = num;  setFlag(IsOnePlay); };
+	//void SetHealth(int setHealth) override { nHealth -= setHealth; };
 	void calculateStats();
 	void GravityControl(float felapsedtiem);
 	void SetUpDamage();
@@ -240,10 +338,13 @@ public:
 	int GetFacingDirectionVertical() { return M_nFacingDirectionVertical; };
 	int calculateDeathExp();
 	int GetAttack() { return  calculatedDamage; };
-	int GetDefence() { return Defence; };
+	int GetDefence() { return EndDefence; };
 	int GetHealth() override { return nHealth; };
+	
+	cEquip* pEquipedWeapon = nullptr;
+	
 
-	cWeapon* pEquipedWeapon = nullptr;
+
 	cDynamic_HpBar* hpUpdate = nullptr;
 	cDynamic_EnergyBar* EnergyUpdate = nullptr;
 	cDynamic_RageBar* RageUpdate = nullptr;
@@ -251,16 +352,19 @@ public:
 
 	
 
-	float ProjOffsetX = 0;
-	float ProjOffsetY =0;
+	//float ProjOffsetX = 0;
+//	float ProjOffsetY =0;
 protected:
 	bool bKnockBack = true;
-	float BasicAgility = 0;
-	float BasicStrength = 0;
-	float BasicIntelect = 0;
-	float BasicMovementSpeed = 0;
+
+	
+	// unsigned int BasicAgility : 8;
+	// unsigned int BasicStrength : 8;
+	// unsigned int BasicIntelect : 8;
+	// unsigned int BasicMovementSpeed : 8;
 
 
+	 unsigned int BasicAveAtck : 8;
 };
 
 
@@ -292,7 +396,11 @@ public:
 
 	void PerformAttack() override;
 	bool IsLanded()  override;
-	
+
+protected:
+	float fSpecAtckdist = 2.9f;
+	float fAttackDist = 1.6f;
+	float vxBorder = 2.0f;
 };
 
 
@@ -324,7 +432,8 @@ public:
 
 
 private:
-	int looptimes = 3;
+	unsigned int looptimes : 4;
+	
 
 	int attackdif = 0;
 
@@ -337,6 +446,7 @@ class  cDynamic_creature_Bandit : public cDynamic_creature_Enemy
 {
 
 public:
+	cDynamic_creature_Bandit(std::string n, olc::Decal* spriteRight, olc::Decal* spriteLeft);
 	cDynamic_creature_Bandit();
 	void IndicateAnim() override;
 	
@@ -352,6 +462,31 @@ public:
 
 	
 };
+
+
+
+class  cDynamic_creature_BanditArcher : public cDynamic_creature_Bandit
+{
+
+public:
+	
+	cDynamic_creature_BanditArcher();
+	//void IndicateAnim() override;
+
+	void SpecAttack(float targetX, float targetY, float Distance) override;
+
+
+//	void ReturnBaseLayer()override { m_layer = Enemy; };
+
+	void AttackOne() override;
+	void AttackTwo() override;
+
+
+	//void DeathFun() override;
+//	void Behaviour(float fElapsedTime, cDynamic* player = nullptr) override;
+
+};
+
 
 
 class  cDynamic_creature_DireWolf : public  cDynamic_creature_Enemy
@@ -421,6 +556,8 @@ private:
 	std::list<cComand*> Rider_comands;
 	
 
+	
+
 };
 
 
@@ -486,11 +623,21 @@ class cDynamic_creature_Pantir : public cDynamic_Creature    //represent player
 {
 
 public:
+
+
+	cEquip* pEquipedChest = nullptr;
+	cEquip* pEquipedHelmet = nullptr;
+	cEquip* pEquipedBoots = nullptr;
+	cEquip* pEquipedBack = nullptr;
+	cEquip* pEquipedNeck = nullptr;
+
+	cEquip* pEmptySlot = nullptr;
+	
 	cDynamic_creature_Pantir();
 	
-	//void PerformAttack() override;
+
 	
-	
+	void MergeItemLvl();
 	void  SwirlGrab(cDynamic* dyn);
 
 	void Behaviour(float fElapsedTime, cDynamic* player = nullptr);
@@ -498,8 +645,18 @@ public:
 
 	bool checkFacingDirection(cDynamic* Enemy = nullptr);
 	void IndicateAnim() override;
-	
 	int GetStats(int num);
+
+
+	 int GetHealth() override { return nHealth; };
+	 void SetHealth(int setHealth) override;
+	
+	 int GetEnergy()  { return energyAmount; };
+	 void SetEnergy(int setEnergy) ;
+
+	 int GetRage() { return rageAmount; };
+	 void SetRage(int setEnergy);
+
 
 	bool ConnectTarget(cDynamic* takenTarget) 
 	
@@ -508,9 +665,9 @@ public:
 		{
 
 
-
+	
 		Target = takenTarget;
-		Target->bOnTarget = true;
+		Target->setFlag(Btarget);
 		return true;
 
 		}
@@ -522,8 +679,12 @@ public:
 	return Target;
 	return nullptr;}
 
+
+	void TakeAttributes(unsigned int attributes);
+	void SubstracAttributes(unsigned int attributes);
+
 	
-	int GetMovement() { return (this->Movementspeed+this->moveBonus)/10; };
+	int GetMovement() { return (this->getEndMovement() + this->moveBonus) / 10; };
 
 	void MoveJump();
 	void MoveDoubleJump();
@@ -546,6 +707,8 @@ public:
 	void RageMoveAttackLanding();
 	void BlinkBehind();
 
+
+	void StatsImpact();
 	
 	bool IsLanded()  override;
 	void DeathFun() override;
@@ -556,15 +719,42 @@ public:
 
 	float energyCount = 0;   // <counter of energe. thanks felapsed time it's gain 1 and than add it in energy amount
 	float fAttackcount = 0;    // <-- Counter for sinister strices;  help count logic when we dragged lef mouse and released 
-	int energeyAmount = 100;
-
+	int8_t energyAmount = 100;
+	uint8_t MaxEnergy = 100;
+	uint8_t MaxRage = 100;
 
 	float rageCount = 0;      // <counter of Rage. thanks felapsed time it's gain 1 and than substruct it in  rage amount
 	
-	int rageAmount = 100;
+	int8_t rageAmount = 0;
 	bool bHideMode = false;
 
 private:
+	
+	unsigned int ItemAttributes = 0;
+
+	void setItemAgil(uint8_t Agil);
+	void setItemStr(uint8_t Str);
+	void setItemInt(uint8_t Int);
+	void setItemMove(uint8_t Move);
+
+	uint8_t getItemAgil();
+	uint8_t getItemStr();
+	uint8_t getItemInt();
+	uint8_t getItemMove();
+
+	
+
+
+	float ItemHaste = 0;
+
+
+	unsigned int ItemDef : 8;
+	unsigned int ItemAvAtk = 0;
+
+	float rawDmg = 0.0f;
+	float rawHaste = 0.0f;
+	float rawDef = 0.0f;
+	float rawHealth = 0.0f;
 
 	float targetTime = 0.5f;
 	olc::Decal* m_pSpriteGrabRight;
@@ -576,6 +766,7 @@ private:
 	cDynamic* Target = nullptr;
 	float Hidetimer = 2.0f;
 	
+
 };
 
 
@@ -585,8 +776,14 @@ class cDynamic_Item : public cDynamic
 {
 public:
 	cDynamic_Item(float x, float y, cItem* item);
+	cDynamic_Item();
 	void DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy) override;
 	void OnInteract(cDynamic* player = nullptr) override;
+
+	~cDynamic_Item()
+	{
+		std::cout << "Hello";
+	};
 
 public:
 	cItem* item;
@@ -602,25 +799,31 @@ public:
 class cDynamic_Projectile : public cDynamic
 {
 public:
-	cDynamic_Projectile(float ox, float oy,  LAYER mlayer, float velx, float vely, float duration, olc::Decal* pSpriteRight, olc::Decal* pSpriteLeft ,  int m_GraphicState, float m_nGraphicTime, int rageset);
-	cDynamic_Projectile(olc::Decal* pSpriteRight, olc::Decal* pSpriteLeft, cDynamic_Creature* Aggressor) ;
+	cDynamic_Projectile();
+
+	//cDynamic_Projectile(float ox, float oy,  LAYER mlayer, float velx, float vely, float duration, olc::Decal* pSpriteRight, olc::Decal* pSpriteLeft ,  int m_GraphicState, float m_nGraphicTime, int rageset);
+	//cDynamic_Projectile(olc::Decal* pSpriteRight, olc::Decal* pSpriteLeft, cDynamic_Creature* Aggressor) ; // when projectile follw for char
 	void DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy) override;
 	void Update(float fElapsedTime, cDynamic* player = nullptr) override;
 	void SwitchLayer(int num);
 	void SetTimer(int charstate);
 	int setEnum(int charstate);
 	
+	void SetDeafult();
+	void SetAgressorData(cDynamic_Creature* Aggresor);
+	void SetAgressorThowData(cDynamic_Creature*Aggresor, uint8_t Time);
+	void SetSprites(olc::Decal* pSpriteRight, olc::Decal* pSpriteLeft);
 
 public:
 	olc::Decal* pSpriteRight = nullptr;
 	olc::Decal* pSpriteLeft = nullptr;
 	
 
-	float nSheetSize = 128.0f;
-	int m_FacingDirection;
-	int m_VerticalFacingDirection;
+	float nSheetSize = 64.0f;
+	uint8_t m_FacingDirection;
+	uint8_t m_VerticalFacingDirection;
 	int m_GraphicState;
-	int Frameindicator;
+	uint8_t Frameindicator;
 
 	float attackDirectionX;
 	float attackDirectionY;
@@ -633,8 +836,8 @@ public:
 	bool bOneHit = true;
 	bool gettarget = false;
 
-	int HitCount = 0;     // we will gather this in rpg_engine 
-	int HitAmount = 1;   // how many times projectile should attack befroe switch in neutral
+	uint8_t HitCount = 0;     // we will gather this in rpg_engine 
+	uint8_t HitAmount = 1;   // how many times projectile should attack befroe switch in neutral
 
 
 
@@ -643,6 +846,7 @@ private:
 
 private:
 	bool repitable = false;
+	float angle =0.0f;
 	
 protected:
 	enum
@@ -667,19 +871,22 @@ protected:
 class cDynamic_HpBar :public cDynamic
 {
 public:
-	cDynamic_HpBar( float ox, float oy, olc::Decal* HpFull, olc::Decal* HpEmpty,int HP, cDynamic_Creature* hpmember);
+	cDynamic_HpBar( float ox, float oy, int HP, cDynamic_Creature* hpmember);
 	void DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy) override;
 	void Update(float fElapsedTime, cDynamic* player  = nullptr)override;
 	void setLevelHp(int pam);
 
 public:
-	int charHp;
-	int hpMax;
-	olc::Decal* HpFull = nullptr;
-	olc::Decal * HpEmpty = nullptr;
+	int16_t charHp;
+	int16_t hpMax;
+	//olc::Decal* HpFull = nullptr;
+	//olc::Decal * HpEmpty = nullptr;
 	cDynamic_Creature* Hpowner = nullptr;
 	float procent;
 	
+private:
+	int16_t soursceposX, soursceposY, soursceSizeX, soursceSizeY;
+
 
 };
 
@@ -688,9 +895,19 @@ public:
 class cDynamic_TextDamage : public cDynamic
 {
 public:
+
+	cDynamic_TextDamage();
 	cDynamic_TextDamage(float px, float py, std::string DamageText, olc::Pixel COlor =olc::WHITE);
 	void Update(float fElapsedTimeб, cDynamic* player = nullptr)override;
 	void DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)override;
+	
+	void SetText(std::string Text, olc::Pixel Color = olc::WHITE)
+	{
+		DamageText = Text;
+		this->Color = Color;
+		this->clearFlag(bRedundant);
+	};
+	void SetDeafult();
 
 private:
 	

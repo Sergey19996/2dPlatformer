@@ -172,7 +172,7 @@ cComand_waiting::cComand_waiting(cDynamic* object)
 
 void cComand_waiting::Start()
 {
-	m_pObject->bControllable = 0;
+	m_pObject->setFlag(m_pObject->bControllable);
 	m_pObject->vx = 0;
 	bCompleted = true;
 
@@ -185,7 +185,7 @@ cComand_Unlock::cComand_Unlock(cDynamic* object)
 
 void cComand_Unlock::Start()
 {
-	m_pObject->bControllable = 1;
+	m_pObject->clearFlag(m_pObject->bControllable);
 	bCompleted = true;
 }
 
@@ -214,7 +214,7 @@ void cComand_CheatDeath::Start()
 
 		fake->SetHealth(1);
 		fake->sName = "Fake";
-		fake->bControllable = false;
+		fake->clearFlag(fake->bControllable);
 		fake->px = m_pObject->px;
 		fake->py = m_pObject->py;
 
@@ -227,7 +227,7 @@ void cComand_CheatDeath::Start()
 		cDynamic* fake = new cDynamic_creature_DireWolf();
 
 		fake->sName = "Fake";
-		fake->bControllable = false;
+		fake->clearFlag(fake->bControllable);
 		fake->px = m_pObject->px;
 		fake->py = m_pObject->py;
 		fake->SetHealth(1);
@@ -241,7 +241,7 @@ void cComand_CheatDeath::Start()
 		cDynamic* fake = new cDynamic_creature_Bandit();
 
 		fake->sName = "Fake";
-		fake->bControllable = false;
+		fake->clearFlag(fake->bControllable);
 		fake->px = m_pObject->px;
 		fake->py = m_pObject->py;
 		fake->SetHealth(1);
@@ -257,7 +257,7 @@ void cComand_CheatDeath::Start()
 
 
 		fake->sName = "Fake";
-		fake->bControllable = false;
+		fake->clearFlag(fake->bControllable);
 		fake->px = m_pObject->px;
 		fake->py = m_pObject->py;
 		fake->SetHealth(1);
@@ -282,7 +282,7 @@ void cComand_CleanDeath::Start()
 	for (auto& quest : *vecDyn)
 		if (quest->sName == Name)
 		{
-			quest->bDead = true;
+			quest->setFlag(quest->bDead);
 
 			break;
 		}
@@ -473,7 +473,7 @@ cComand_SetDeath::cComand_SetDeath(cDynamic* object)
 void cComand_SetDeath::Start()
 {
 	m_pObject->SetHealth(0);
-	m_pObject->bDead = true;
+	m_pObject->setFlag(m_pObject->bDead);
 	bCompleted = true;
 }
 
@@ -549,7 +549,7 @@ void cComand_JumpTo::Start()
 	float disty = m_fTargetPosY - m_fStartPosY;
 
 
-	m_pObject->gravity = false;
+	m_pObject->clearFlag(m_pObject->gravity);
 	m_Xdist = sqrtf(distx * distx + disty * disty);
 }
 
@@ -596,7 +596,7 @@ void cComand_JumpTo::Update(float fElapsedTime)
 		m_pObject->py = m_fTargetPosY;
 		m_pObject->vx = 0.0f;
 		m_pObject->vy = 0.0f;
-		m_pObject->gravity = true;
+		m_pObject->setFlag(m_pObject->gravity);
 		bCompleted = true;
 	}
 }

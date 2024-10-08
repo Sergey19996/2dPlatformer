@@ -17,7 +17,9 @@ cDynamic::cDynamic(std::string n)
 
 	
 	m_layer = Neutral;
-	bOnGround = false;
+
+	clearFlag(bOnGround);
+	setFlag(bDraw);
 	Jumpcounter = 0;
 
 
@@ -77,29 +79,37 @@ cDynamic_Creature::cDynamic_Creature(std::string name, olc::Decal* spriteRight, 
 	nHealth = 10;
 	nHealthMax = 10;
 	//M_nFacingDirection = SOUTH;
-	
-	m_fTimer = 0.0f;
-	bIsAttackable = true;
-	bOnGround =false;
-	isAttack =false;
-	IsOnePlay = false;
 
-	gravity = true;
-	 m_nGraphicCounterX = 0;
-	 m_nGraphicCounterY = 0;
-	 FXFrame = 0;
-	 frameIndicator = 0;
-	 framespeed = 0.12f;
-	 m_nGraphicAmountFrames = 0;
-	 m_nGraphicEndFrame = 0;
-	 animspr = 0.0f;
-	 enumCounter = 0;
+	m_fTimer = 0.0f;
+
+	setFlag(bIsAttackable);
+	setFlag(bControllable);
+	clearFlag(bOnGround);
+	clearFlag(isAttack);
+	clearFlag(IsOnePlay);
+	setFlag(gravity);
+
+
+	m_nGraphicCounterX = 0;
+	m_nGraphicCounterY = 0;
+	FXFrame = 0;
+	frameIndicator = 0;
+	framespeed = 0.12f;
+	m_nGraphicAmountFrames = 0;
+	m_nGraphicEndFrame = 0;
+	animspr = 0.0f;
+	enumCounter = 0;
+
+
+	setColor(255, 255, 255, 255);
+
 }
 
 cDynamic_ClipTrigger::cDynamic_ClipTrigger(std::string name) : cDynamic(name)
 {
 	
-	gravity = true;
+	this->setFlag(gravity);
+	
 }
 
 
@@ -120,25 +130,27 @@ void cDynamic_Creature::Update(float fElapsedTime, cDynamic* player)
 		if (m_fKnockBackTimer <= 0.0f )
 		{
 			//vx = 0;
-			bControllable = true; // when we control in scripteditor
-			bIsAttackable = true;
-			bAnimAction = false;
+			setFlag(bControllable);// when we control in scripteditor
+			setFlag(bIsAttackable);
+			clearFlag(bAnimAction);
+			
 			
 		//	player->bSolidvsDyn = true;     //return  unavalibale to go through ppl
 			m_fKnockBackTimer = 0;
 			ReturnBaseLayer();
 			//mass = 48;
 
-			greenColor = 255;   //<--return colors
-			blueColor = 255;
-			redColor = 255;
+
+			setColor(255, 255, 255, 255);
+		//	greenColor = 255;   //<--return colors
+			//blueColor = 255;
+			//redColor = 255;
 
 		}
 	}
-
 	else
 	{
-		if (isAttack == false && isDirectionLock==false)
+		if (!checkFlag(isAttack) && !checkFlag(isDirectionLock))
 		{
 		if (vx < 0) M_nFacingDirection = WEST;
 		if (vx > 0) M_nFacingDirection = EAST;
@@ -146,18 +158,16 @@ void cDynamic_Creature::Update(float fElapsedTime, cDynamic* player)
 
 		if (nHealth <= 0)                                //Death char Tracker
 		{
-			std::cout << "Hello" << std::endl;
-			bDraw = false;
-			if (!quested)
+			
+			clearFlag(bDraw);
+			setFlag(bDead);
+			g_engine->SetCurrentExp(calculateDeathExp()); // Get exp from dead enemy
+			g_engine->AddVecDynamic(new cDynamic_Item(this->px, this->py,RPG_Assets::get().GetItem("Coin")));
+
+			if (!checkFlag(quested))
 			{
 			this->DeathFun(); // droping fx object
 			}
-			bDead = true;
-			g_engine->SetCurrentExp(calculateDeathExp()); // Get exp from dead enemy
-			g_engine->AddVecDynamic(new cDynamic_Item(this->px, this->py,new cCoin()));
-
-			if (!this->quested)
-			g_engine->ReturnToPool(this);  // now for wolfs bandits
 
 				//vecDyns.push_back(new cDynamic_Item(10, 10, RPG_Assets::get().GetItem("Small Health")));
 		}
@@ -198,14 +208,24 @@ void cDynamic_Creature::Update(float fElapsedTime, cDynamic* player)
 		}
 
 	}
-	
-
+	if(hpUpdate !=nullptr)
+	hpUpdate->Update(fElapsedTime, this);
 
 
 }
 
 void cDynamic_Creature::Behaviour(float fElapsedTime, cDynamic* player)
 {
+}
+
+void cDynamic_Creature::setGreenColor(uint8_t Green)
+{
+	color = (color & 0xFFFF00FF) | (Green << 8);
+}
+
+void cDynamic_Creature::setBlueColor(uint8_t Blue)
+{
+	color = (color & 0xFF00FFFF) | (Blue << 16);
 }
 
 void cDynamic_Creature::calculateStats()
@@ -223,41 +243,47 @@ void cDynamic_Creature::calculateStats()
 		break;
 	}
 
-	// Initialize variables
-	float sup_intelligence = BasicIntelect - 1.5f;
-	float sup_agility = BasicAgility - 2.5f;
-	float averHelp = (19.0f * 1.35f) - 1.35f;
-	float sup_strength = BasicStrength - 1.7f;
+
+
+
+
+	// Initialize variables  we subtract first wave of addition
+	float sup_intelligence = getBasicInt() - 1.5f;  // Basic stats it's constants 
+	float sup_agility = getBasicAgil() - 2.5f;
+	float averHelp =BasicAveAtck -  2.5f;
+	float sup_strength = getBasicStrength() - 1.7f;
 	float defsup = 2.25f - 0.18f;
-	float MoveSup = BasicMovementSpeed;
-	float HasteSup = 0;
+	float MoveSup = getBasicMovement();
+	//float HasteSup = 0;
 	for (int i = 1; i <= LvL; i++)
 	{
 		// Calculate Intelligence
 		sup_intelligence += 1.5f;
 		if (i == LvL)
 		{
-			intelligence = sup_intelligence;
-			std::cout << "IntL: " << intelligence << std::endl;
+			SetLvlInt(sup_intelligence);
+		//	std::cout << "IntL: " << LvlIntelligence << std::endl;
 		}
 
 		// Calculate Agility
 		sup_agility += 2.5f;
-		HasteSup = ((sup_agility/100)-0.165f)/10;
+	//	HasteSup = ((sup_agility/100)-0.165f)/10;
 
-		averHelp += 1.35f + 2.5f;
+		averHelp += 2.5f;
 
-		MoveSup += 0.5f;
+		MoveSup += 0.1f;
 		if (i == LvL)
 		{
-			Haste = HasteSup;
-			std::cout << "Haste: " << Haste << std::endl;
-			Movementspeed = MoveSup;
-			std::cout << "Movementspd: " << Movementspeed << std::endl;
-			agility = sup_agility;
-			std::cout << "agility: " << agility << std::endl;
-			AverageAttack = averHelp;
-			std::cout << "AverAttack: " << AverageAttack << std::endl;
+		//	LvlHaste = HasteSup;
+			std::cout << "Haste: " << LvlHaste << std::endl;
+			SetLvlMovement(MoveSup);
+		//	LvlMovementspeed = MoveSup;
+		//	std::cout << "Movementspd: " << LvlMovementspeed << std::endl;
+			SetLvlAgility(sup_agility);
+		//	LvlAgility = sup_agility;
+		//	std::cout << "agility: " << LvlAgility << std::endl;
+			LvlAverageAttack = averHelp;
+			std::cout << "AverAttack: " << LvlAverageAttack << std::endl;
 		}
 
 		// Calculate Strength
@@ -265,16 +291,21 @@ void cDynamic_Creature::calculateStats()
 		defsup += 0.18f;
 		if (i == LvL)
 		{
-			strength = sup_strength;
-			std::cout << "strength: " << strength << std::endl;
-			nHealthMax = strength * 25;
-			nHealth = nHealthMax;
-			hpUpdate->setLevelHp(nHealthMax);
-			Defence = defsup;
+			SetLvlStrength(sup_strength);
+			//LvlStrength = sup_strength;
+			//std::cout << "strength: " << LvlStrength << std::endl;
+			lvlHealthMax = gettLvlStrength() * 25;
+			nHealth = lvlHealthMax;
+			hpUpdate->setLevelHp(lvlHealthMax);
+			LvlDefence = defsup;
 		}
 	}
 
+}
 
+void cDynamic_Creature::SetAlphaColor(uint8_t Alpha)
+{
+	color = (color & 0x00FFFFFF) | (Alpha >> 24);  // reading mask need form right to left
 }
 
 void cDynamic_Creature::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)
@@ -283,27 +314,27 @@ void cDynamic_Creature::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)
 	const int spriteWidth = m_pSpriteRight->sprite->width / nSheetSizeX;
 
 	                //0.12f   - 0.05f (20 lvl)
-	if (animspr >= framespeed-Haste)                 //it's speed of frames
+	if (animspr >= framespeed-EndHaste)                 //it's speed of frames
 	{
 
 			frameIndicator++;
 
-		if (IsOnePlay || isAttack ||bOnLanded )                 // if we put left mouse key
+		if (checkFlag(IsOnePlay) || checkFlag(isAttack) || checkFlag(bOnLanded) )                 // if we put left mouse key
 		{
 			//x stroke is getting growth
 
 
 			if (frameIndicator >= m_nGraphicEndFrame)
 			{
-				IsOnePlay = false;
-				isAttack = false;
-				bOnLanded = false;
-				IsThrow = false;
+				clearFlag(IsOnePlay);
+				clearFlag(isAttack);
+				clearFlag(bOnLanded);
+				clearFlag(IsThrow);
 				//isprojfollow = false;
 				sparedVx =0.0f;
 			//	setEnum();
 			}
-			if (frameIndicator == FXFrame && isAttack)   //   <---- summon projectile when attack
+			if (frameIndicator == FXFrame && checkFlag(isAttack))   //   <---- summon projectile when attack
 			{
 				PerformAttack();
 			}
@@ -332,11 +363,11 @@ void cDynamic_Creature::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)
 	if (M_nFacingDirection == EAST)
 	{
 
-		gfx->DrawPartialDecal({ (px - ox) * 64.0f,(py - oy) * 64.0f }, m_pSpriteRight, { nSheetOffsetX,nSheetOffsetY }, { nSheetSizeX,nSheetSizeY }, {1,1},olc::Pixel(redColor,greenColor, blueColor));   //offset pulling player back into the screen
+		gfx->DrawPartialDecal({ (px - ox) * (g_engine->fscale * 64.0f),(py - oy) * (g_engine->fscale * 64.0f) }, m_pSpriteRight, { nSheetOffsetX,nSheetOffsetY }, { nSheetSizeX,nSheetSizeY }, {1,1},olc::Pixel(getRed(), getGreen(), getBlue()));   //offset pulling player back into the screen
 	}
 	else
 	{
-		gfx->DrawPartialDecal({ (px - ox) * 64.0f,(py - oy) * 64.0f }, m_pSpriteLeft, { nSheetOffsetX,nSheetOffsetY }, { nSheetSizeX,nSheetSizeY }, { 1,1 }, olc::Pixel(redColor, greenColor, blueColor));   //offset pulling player back into the screen
+		gfx->DrawPartialDecal({ (px - ox) * (g_engine->fscale*64.0f),(py - oy) * (g_engine->fscale * 64.0f) }, m_pSpriteLeft, { nSheetOffsetX,nSheetOffsetY }, { nSheetSizeX,nSheetSizeY }, { 1,1 }, olc::Pixel(getRed(), getGreen(), getBlue()));   //offset pulling player back into the screen
 
 	}
 
@@ -349,11 +380,11 @@ void cDynamic_Creature::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)
 	}
 	
 	
-	if (bOnTarget ==true)
+	if (checkFlag(bOnTarget))
 	{
 	//	gfx->DrawPartialDecal({ (px - ox) * 64.0f+38,(py - oy) * 64.0f+18 }, m_pSpriteRight, { nSheetOffsetX,nSheetOffsetY }, { nSheetSizeX,nSheetSizeY }, { 1,1 }, olc::Pixel(redColor, greenColor, blueColor));   //offset pulling player back into the screen
 		
-		g_engine->DrawBigText(std::to_string(LvL) + " " + sName, (px - ox + 0.36f) * 64.0f + 18, (py - oy) * 64.0f , 0.5, 0.5, olc::YELLOW);
+		g_engine->DrawBigText(std::to_string(LvL) + " " + sName, (px - ox + 0.36f) * (g_engine->fscale * 64.0f) + 18, (py - oy) * (g_engine->fscale * 64.0f), 0.5, 0.5, olc::YELLOW);
 
 
 		//gfx->DrawPartialDecal({ (px - ox) * 64.0f + 28,(py - oy) * 64.0f + 18 }, HpEmpty, { 0,0 }, { (float)HpEmpty->sprite->width,(float)HpEmpty->sprite->height });   //offset pulling player back into the screen
@@ -382,12 +413,12 @@ int cDynamic_Creature::calculateDeathExp()
 
 void cDynamic_Creature::GravityControl(float felapsedtime)
 {
-	gravity = false;
+	clearFlag(gravity);
 	gravityofftimer -= felapsedtime;
 
 		if (gravityofftimer <=0 || m_fKnockBackTimer>0.0f)
 		{
-			gravity = true;
+			setFlag(gravity);
 		}
 
 	
@@ -395,6 +426,15 @@ void cDynamic_Creature::GravityControl(float felapsedtime)
 
 void cDynamic_Creature::SetUpDamage ()   //standart damage for all chars
 {
+	
+
+	float halfdmg = GetWeaponAttributes(pEquipedWeapon->Attributes) / 2; // Пример значения для halfdmg
+
+	// Генерация случайных чисел
+	uint16_t rand1 = rand() % static_cast<int>(halfdmg);
+	uint16_t rand2 = rand() % static_cast<int>(halfdmg);
+
+	int16_t rand3 = rand1 - rand2;
 
 	switch (M_nGraphicState)
 	{
@@ -406,21 +446,23 @@ void cDynamic_Creature::SetUpDamage ()   //standart damage for all chars
 	
 		break;
 	case cDynamic_Creature::Attack:
-		calculatedDamage = (AverageAttack + pEquipedWeapon->nDamage) * 2.65f;
+		calculatedDamage = EndAverageAttack+ rand3 * 2.65f;
 		break;
 	case cDynamic_Creature::AttackEasy:
-		calculatedDamage = (AverageAttack - 20 + pEquipedWeapon->nDamage) * 5;
+		calculatedDamage = EndAverageAttack + rand3 + 20 * 5;
 		break;
 	case cDynamic_Creature::AttackGreat:
-		calculatedDamage = (AverageAttack + 20 + pEquipedWeapon->nDamage) * 3;
+		calculatedDamage = EndAverageAttack+ rand3 + 20 * 3;
 		break;
 	case cDynamic_Creature::DoubleJump:
 		break;
 	case cDynamic_Creature::AirAttack:
-		calculatedDamage = (AverageAttack + pEquipedWeapon->nDamage) * 2.65f;
+		calculatedDamage = EndAverageAttack+ rand3 * 2.65f;
 		break;
 	case cDynamic_Creature::Eviscirate:
-		calculatedDamage = (AverageAttack + 20 + pEquipedWeapon->nDamage) * 3.6f;
+		calculatedDamage = EndAverageAttack+ rand3 + 20 * 3.6f;
+		
+		
 		break;
 	case cDynamic_Creature::JumpDown:
 		break;
@@ -429,19 +471,19 @@ void cDynamic_Creature::SetUpDamage ()   //standart damage for all chars
 	case cDynamic_Creature::Landing:
 		break;
 	case cDynamic_Creature::AirEviscirate:
-		calculatedDamage = (AverageAttack + 20 + pEquipedWeapon->nDamage) * 3.6f;
+		calculatedDamage = EndAverageAttack+ rand3 + 20 * 3.6f;
 		break;
 	case cDynamic_Creature::Hit:
 		
 		break;
 	case cDynamic_Creature::AttackBack:
-		calculatedDamage = (AverageAttack + pEquipedWeapon->nDamage) * 4;
+		calculatedDamage = EndAverageAttack+ rand3 * 4;
 		break;
 	case cDynamic_Creature::AirDownEviscirate:
-		calculatedDamage = (AverageAttack + 20+ pEquipedWeapon->nDamage) * 3.6f;
+		calculatedDamage = (EndAverageAttack+ rand3 + 20) * 3.6f;
 		break;
 	case cDynamic_Creature::LANDINGEviscirate:
-		calculatedDamage = (AverageAttack  + pEquipedWeapon->nDamage) * 3.6f;
+		calculatedDamage = EndAverageAttack+ rand3 * 3.6f;
 		break;
 
 
@@ -454,20 +496,20 @@ void cDynamic_Creature::SetUpDamage ()   //standart damage for all chars
 bool cDynamic_Creature::IsLanded()
 {
 
-	if (bOnLanded)
+	if (checkFlag(bOnLanded))
 	{
 		return true;
 	}
 	else
 	{
-		bOnLanded = true;
-		if (bAnimAction)   // <--Means when we action stage don't switch animation on onladed
+		setFlag(bOnLanded);
+		if (checkFlag(bAnimAction))   // <--Means when we action stage don't switch animation on onladed
 		{
 			return false;
 		}
 		enumCounter = 11;
-		isAttack = false;
-		IsOnePlay = false;
+		clearFlag(isAttack);
+		clearFlag(IsOnePlay);
 		frameIndicator = 0;
 		setEnum();
 		return false;
@@ -478,7 +520,7 @@ bool cDynamic_Creature::IsLanded()
 bool cDynamic_Creature::setEnum()
 {
 	
-	if (IsOnePlay || isAttack || bOnLanded )
+	if (checkFlag(IsOnePlay) || checkFlag(isAttack) || checkFlag(bOnLanded) )
 	{
 		switch (enumCounter)
 		{
@@ -603,7 +645,7 @@ bool cDynamic_Creature::setEnum()
 
 	
 
-	if (bOnGround && !bOnLanded)
+	if (checkFlag(bOnGround) && !checkFlag(bOnLanded))
 	{
 
 		if (vx > 0.5f ||vx<-0.5f )
@@ -618,21 +660,21 @@ bool cDynamic_Creature::setEnum()
 
 	/// ///////////////////
 
-	if (!bOnGround && Jumpcounter <= 1 &&!bOnLanded)
+	if (!checkFlag(bOnGround) && Jumpcounter <= 1 &&!checkFlag(bOnLanded))
 	{
 
 		
 		if (vy > 0.1f  )
 		{
 			M_nGraphicState = JumpDown;
-			bOnLanded = false;
+			clearFlag(bOnLanded);
 			IndicateAnim();
 			return true;
 		}
 		if (vy<2.8f && vy>-2.8f)
 		{
 			M_nGraphicState = JumpZenit;
-			bOnLanded = false;
+			clearFlag(bOnLanded);
 			IndicateAnim();
 			return true;
 		}
@@ -640,13 +682,13 @@ bool cDynamic_Creature::setEnum()
 		if (vy < -0.1f)
 		{
 			M_nGraphicState = Jump;
-			bOnLanded = false;
+			clearFlag(bOnLanded);
 			IndicateAnim();
 			return true;
 		}
 	/// ///////////////////
 	}
-	if (vx <= 0.5f && vx >= -0.5f && bOnGround && !bAnimAction )
+	if (vx <= 0.5f && vx >= -0.5f && checkFlag(bOnGround) && !checkFlag(bAnimAction) )
 
 	{
 		M_nGraphicState = Idle;
@@ -671,6 +713,8 @@ void cDynamic_Creature::KnockBack(float dx, float dy, float dist)
 	if (bKnockBack)
 	{
 
+	
+
 	vx = 0;
 	m_fKnockBackDX = dx;
 	m_fKnockBackDY = dy;
@@ -678,19 +722,22 @@ void cDynamic_Creature::KnockBack(float dx, float dy, float dist)
 	
 	if (this->sName !="Pantir")
 	{
-		isDirectionLock = true;
+		setFlag(isDirectionLock);
 	}
 
 
-	bControllable = false; // when we control in scripteditor char
-	bIsAttackable = false;
-	isprojfollow = false;    // keep projectile follow at char 
+	clearFlag(bControllable); // when we control in scripteditor char
+	clearFlag(bIsAttackable);
+	clearFlag(isprojfollow);    // keep projectile follow at char 
 	
-	isAttack = false;
-	 Btarget = false;
-	blueColor = 0;
-	greenColor = 0;
-	IsOnePlay = true;
+	clearFlag(isAttack);
+	clearFlag(Btarget);
+	setBlueColor(0);
+	setGreenColor(0);
+
+	//blueColor = 0;
+	//greenColor = 0;
+	setFlag(IsOnePlay);
 	enumCounter = 13;
 	//frameIndicator = 13;
 	setEnum();
@@ -701,9 +748,45 @@ void cDynamic_Creature::KnockBack(float dx, float dy, float dist)
 
 }
 
+void cDynamic_Creature::setColor(uint8_t Red, uint8_t Green, uint8_t Blue, uint8_t Alpha)
+{
+	color |= (Red << 0);
+	color |= (Green << 8);
+	color |= (Blue << 16);
+	color |= (Alpha << 24);
+}
+
+uint8_t cDynamic_Creature::getRed()
+{
+
+	
+	return color & 0xFF;
+}
+
+uint8_t cDynamic_Creature::getGreen()
+{
+	return (color >> 8) & 0xFF;
+}
+
+uint8_t cDynamic_Creature::getBlue()
+{
+	return (color >> 16) & 0xFF;
+}
+
+void cDynamic_Creature::setRedColor(uint8_t Red)
+{
+	color = (color & 0xFFFFFF00) | Red;
+
+}
+
+uint8_t cDynamic_Creature::getAlpha()
+{
+	return (color >> 24) & 0xFF;
+}
 
 
-cDynamic_creature_Bandit::cDynamic_creature_Bandit() : cDynamic_creature_Enemy("Bandit", RPG_Assets::get().GetSprite("BanditRight"), RPG_Assets::get().GetSprite("BanditLeft"))
+
+cDynamic_creature_Bandit::cDynamic_creature_Bandit(std::string n, olc::Decal* spriteRight, olc::Decal* spriteLeft) : cDynamic_creature_Enemy("Bandit", RPG_Assets::get().GetSprite("BanditRight"), RPG_Assets::get().GetSprite("BanditLeft"))
 {
 	                                       //Bandit constructor
 	
@@ -721,24 +804,36 @@ cDynamic_creature_Bandit::cDynamic_creature_Bandit() : cDynamic_creature_Enemy("
 
 
 	pEquipedWeapon = (cWeapon*)RPG_Assets::get().GetItem("Bandit Sword");
-	hpUpdate = new cDynamic_HpBar(px, py, RPG_Assets::get().GetSprite("HPBarFull"), RPG_Assets::get().GetSprite("HPBarEmprty"), nHealth, this);
+	hpUpdate = new cDynamic_HpBar(px, py,  nHealth, this);
 	
 	LvL = 3;
 
 	
-
-	BasicMovementSpeed = 16;
-	BasicAgility = 19;
-	BasicStrength = 15;
-	BasicIntelect = 13;
-
+	setBasicAgility(19);
+	setBasicInt(13);
+	setBasicStrength(15);
+	//BasicAgility = 19;
+//	BasicStrength = 15;
+	//BasicIntelect = 13;
+	BasicAveAtck = 45;
 	calculateStats();
+
+	//EndMovementspeed = 16;
+	EndAverageAttack = LvlAverageAttack;
+	//EndStrength = gettLvlStrength();
+	//EndIntelligence = getLvlInt();
+	//EndAgility = getLvlAgil();
+	SetEndMovement(16);
+	SetEndStrength(gettLvlStrength());
+	SetEndInt(getLvlInt());
+	SetEndAgility(getLvlAgil());
+
 }
 cDynamic_creature_DireWolf::cDynamic_creature_DireWolf() : cDynamic_creature_Enemy("DireWolf", RPG_Assets::get().GetSprite("DireWolfRight"), RPG_Assets::get().GetSprite("DireWolfLeft"))
 {
 
 	pEquipedWeapon = (cWeapon*)RPG_Assets::get().GetItem("Bandit Sword");
-	hpUpdate = new cDynamic_HpBar(px, py, RPG_Assets::get().GetSprite("HPBarFull"), RPG_Assets::get().GetSprite("HPBarEmprty"), nHealth, this);
+	hpUpdate = new cDynamic_HpBar(px, py, nHealth, this);
 
 	LvL = 1;
 
@@ -748,12 +843,26 @@ cDynamic_creature_DireWolf::cDynamic_creature_DireWolf() : cDynamic_creature_Ene
 	CollbordersY = 0.6f;
 	CollbordersYF = 1.5f;
 
-	BasicMovementSpeed = 20;
-	BasicAgility = 19;
-	BasicStrength = 9;
-	BasicIntelect = 13;
+	SetEndMovement(20);
+	//EndMovementspeed = 20;
+	setBasicAgility(19);
+	setBasicInt(13);
+	setBasicStrength(9);
+	//BasicAgility = 19;
+	//BasicStrength = 9;
+	//BasicIntelect = 13;
+	BasicAveAtck = 30;
 
 	calculateStats();
+
+
+	EndAverageAttack = LvlAverageAttack;
+	SetEndStrength(gettLvlStrength());
+	SetEndInt(getLvlInt());
+	SetEndAgility(getLvlAgil());
+//	EndStrength = gettLvlStrength();
+//	EndIntelligence = getLvlInt();
+//	EndAgility = getLvlAgil();
 }
 
 
@@ -767,10 +876,10 @@ cDynamic_creature_NPCBandit::cDynamic_creature_NPCBandit(std::string sname) : cD
 
 	nHealth = 1;
 	nHealthMax = 1;
-	bDead = false;
+	clearFlag(bDead);
 	m_fStateTick = 0.2f;
-	bOnGround = false;
-
+	clearFlag(bOnGround);
+	clearFlag(bIsAttackable);
 //	bSolidVsMap = true;
 
 		//collision borders
@@ -807,22 +916,22 @@ cDynamic_creature_NPCBandit::cDynamic_creature_NPCBandit(std::string sname) : cD
 bool cDynamic_creature_Enemy::IsLanded()
 {
 
-	if (bOnLanded)
+	if (checkFlag(bOnLanded))
 	{
 		return true;
 	}
 	else
 	{
-		bOnLanded = true;
-		if (bAnimAction)   // <--Means when we action stage don't switch animation on onladed
+		setFlag(bOnLanded);
+		if (checkFlag(bAnimAction))   // <--Means when we action stage don't switch animation on onladed
 		{
 			return false;
 		}
 
 		vx = 0;
 		enumCounter = 11;
-		isAttack = false;
-		IsOnePlay = true;
+		clearFlag(isAttack);
+		setFlag(IsOnePlay);
 		frameIndicator = 0;
 		setEnum();
 		return false;
@@ -934,12 +1043,13 @@ void cDynamic_creature_DireWolf::IndicateAnim()
 void cDynamic_creature_DireWolf::SpecAttack(float targetX, float targetY, float Distance)
 {
 
-	isprojfollow = true;
-	isAttack = true;
+	setFlag(isprojfollow);
+	setFlag(isAttack);
 	enumCounter = 4;     //  <---Attack Throw Dagger
 	vx = (targetX / Distance) * 5.0f;
-	isDirectionLock = true;
+	setFlag(isDirectionLock);
 	sparedVx = -vx;
+	sparedVy = 1.0f;
 	//vy = -10.0f;
 	frameIndicator = 0;
 	//setEnum();
@@ -969,7 +1079,7 @@ void cDynamic_creature_DireWolf::SpecAttack(float targetX, float targetY, float 
 
 void cDynamic_creature_DireWolf::AttackOne()
 {
-	isAttack = true;
+	setFlag(isAttack);
 	enumCounter = 3;     //  <---Attack
 
 	frameIndicator = 0;
@@ -980,7 +1090,7 @@ void cDynamic_creature_DireWolf::AttackOne()
 	ProjCollbordersY = 0.65f;
 	ProjCollbordersYF = 1.8f;
 
-	isprojfollow = false;
+	setFlag(isprojfollow);
 	vx = 0;
 	m_nGraphicCounterY = 2;
 	m_nGraphicCounterX = 0;
@@ -990,6 +1100,20 @@ void cDynamic_creature_DireWolf::AttackOne()
 	m_nShockTime = 0.1f;
 	FxColumn = 1;
 	FXFrame = 3;
+
+	//switch (GetFacingDirection())
+	//{
+	//case 1:       // <--East
+	//	ProjOffsetX = -0.95f;
+	//	ProjOffsetY = 0;
+	//	break;
+	//case 3:       // <--Weast
+	//	ProjOffsetX = 0.85f;
+	//	ProjOffsetY = 0;
+	//	break;
+
+	//}
+
 
 	M_nFacingDirectionVertical = NOTLOOKING;
 	m_nGraphicEndFrame = m_nGraphicCounterX + m_nGraphicAmountFrames;
@@ -1117,14 +1241,19 @@ void cDynamic_creature_Bandit::IndicateAnim()
 void cDynamic_creature_Bandit::SpecAttack(float targetX, float targetY, float Distance)
 {
 	
-	isAttack = true;
-	IsThrow = true;
+	setFlag(isAttack);
+	setFlag(IsThrow);
+	clearFlag(isprojfollow);
 
 	enumCounter = 4;     //  <---Attack Throw Dagger
 	vx = (-targetX / Distance) * 5.0f;
-	isDirectionLock = true;
+	setFlag(isDirectionLock);
 
-	sparedVx = (vx < 0) ? 5 : -5;
+
+	sparedVx = (M_nFacingDirection ==WEST) ? -5 : 5;
+	sparedVy = 1.0f;
+
+	//sparedVx = (vx <= 0) ? 5 : -5;
 
 	vy = -10.0f;
 	frameIndicator = 0;
@@ -1149,8 +1278,38 @@ void cDynamic_creature_Bandit::SpecAttack(float targetX, float targetY, float Di
 	FXFrame = 4;
 	
 	m_nGraphicEndFrame = m_nGraphicCounterX + m_nGraphicAmountFrames;
+	M_nFacingDirectionVertical = NOTLOOKING;
 
 }
+
+cDynamic_creature_Bandit::cDynamic_creature_Bandit() : cDynamic_creature_Enemy("Bandit", RPG_Assets::get().GetSprite("BanditRight"), RPG_Assets::get().GetSprite("BanditLeft"))
+{
+	//collision borders
+	CollbordersX = 0.8f;
+	CollbordersXF = 1.1f;
+	CollbordersY = 0.6f;
+	CollbordersYF = 1.5f;
+	//
+	pEquipedWeapon = (cWeapon*)RPG_Assets::get().GetItem("Bandit Sword");
+	hpUpdate = new cDynamic_HpBar(px, py, nHealth, this);
+	LvL = 3;
+	setBasicAgility(19);
+	setBasicInt(13);
+	setBasicStrength(15);
+
+	BasicAveAtck = 45;
+	calculateStats();
+
+	EndAverageAttack = LvlAverageAttack;
+	
+	SetEndMovement(16);
+	SetEndStrength(gettLvlStrength());
+	SetEndInt(getLvlInt());
+	SetEndAgility(getLvlAgil());
+
+}
+
+
 
 void cDynamic_creature_Bandit::AttackOne()
 {
@@ -1160,13 +1319,17 @@ void cDynamic_creature_Bandit::AttackOne()
 
 	
 
+
+
+
 	ProjCollbordersX = 0.25f;
 	ProjCollbordersXF = 1.75f;
 	ProjCollbordersY = 0.65f;
 	ProjCollbordersYF = 1.8f;
 
 
-	isAttack = true;
+	setFlag(isAttack);
+	
 	vx = 0;
 	m_nGraphicCounterY = 5;
 	m_nGraphicCounterX = 0;
@@ -1177,7 +1340,7 @@ void cDynamic_creature_Bandit::AttackOne()
 
 	FXFrame = 5;
 	FxColumn = 1;
-
+	M_nFacingDirectionVertical = NOTLOOKING;
 	m_nGraphicEndFrame = m_nGraphicCounterX + m_nGraphicAmountFrames;
 
 
@@ -1185,7 +1348,7 @@ void cDynamic_creature_Bandit::AttackOne()
 
 void cDynamic_creature_Bandit::AttackTwo()
 {
-	isAttack = true;
+	setFlag(isAttack);
 	enumCounter = 12;     //  <---Attack Vertical
 
 	frameIndicator = 0;
@@ -1205,8 +1368,9 @@ void cDynamic_creature_Bandit::AttackTwo()
 	attackdirectionX = 0.3f;
 	attackdirectionY = -0.5f;
 	m_nShockTime = 0.1f;
-	FxColumn = 4;  // <--Second column
+	FXFrame = 5;  // <--Second column
 	FxColumn = 2;
+	M_nFacingDirectionVertical = NOTLOOKING;
 	m_nGraphicEndFrame = m_nGraphicCounterX + m_nGraphicAmountFrames;
 
 
@@ -1232,7 +1396,7 @@ void cDynamic_creature_Bandit::DeathFun()
 
 cDynamic_creature_Pantir::cDynamic_creature_Pantir() : cDynamic_Creature("Pantir", RPG_Assets::get().GetSprite("PantirRight"), RPG_Assets::get().GetSprite("PantirLeft"))
 {
-
+	LvL = 1;
 	m_pSpriteGrabLeft = RPG_Assets::get().GetSprite("PantirGrabLeft");
 	m_pSpriteGrabRight = RPG_Assets::get().GetSprite("PantirGrabRight");
 	M_BaseClass = AGILITY;
@@ -1241,32 +1405,78 @@ cDynamic_creature_Pantir::cDynamic_creature_Pantir() : cDynamic_Creature("Pantir
 	Jumpcounter = 0;
 	pEquipedWeapon = (cWeapon*)RPG_Assets::get().GetItem("Pantir's Dagger");
 	
-	
-	bDead = false;
+	pEquipedBoots = (cEquip*)RPG_Assets::get().GetItem("Basic Boots");
+	pEquipedHelmet = (cEquip*)RPG_Assets::get().GetItem("Basic Helment");
+	pEquipedBack = (cEquip*)RPG_Assets::get().GetItem("Basic Back");
+	pEquipedChest = (cEquip*)RPG_Assets::get().GetItem("Basic Chest");
+	pEquipedNeck = (cEquip*)RPG_Assets::get().GetItem("Basic Neck");
+	pEmptySlot = (cEquip*)RPG_Assets::get().GetItem("Empty");
+
+
+	//pEquipedBoots = pEmptySlot;
+	//pEquipedHelmet = pEmptySlot;
+	//pEquipedBack = pEmptySlot;
+	//pEquipedChest = pEmptySlot;
+	//pEquipedNeck = pEmptySlot;
+	//pEquipedWeapon = pEmptySlot;
+	//
+
+	clearFlag(bDead);
 	//Borders for collision
 	CollbordersX = 0.8f;
-	CollbordersXF = 1.1f;
+	CollbordersXF = 1.1f ;
 
-	CollbordersY = 0.6f;
-	CollbordersYF = 1.5f;
+	CollbordersY = 0.6f ;
+	CollbordersYF = 1.5f ;
 	
 
 	
-	energeyAmount = 100;
+
 	m_layer = Friend;
 	
 	
 	fAttackcount = 0;
 
+	 BasicAveAtck = 19.5;
 
-	BasicMovementSpeed = 12;
-	 BasicAgility = 19;
-	 BasicStrength = 15;
-	 BasicIntelect = 13;
+	 setBasicMovement(12);
+	 setBasicAgility(19);
+	 setBasicStrength(15);
+	 setBasicInt(13);
+	// BasicMovementSpeed = 12;
+    // BasicAgility = 19;
+	// BasicStrength = 15;
+	// BasicIntelect = 13;
+	
 
+	 uint8_t movement = getBasicMovement();
+
+	 std::cout << movement << std::endl;
+
+
+	 hpUpdate = new cDynamic_HpBar(this->px, this->py, nHealth, this);
+
+
+	  TakeAttributes(pEquipedBack->Attributes);
+	  TakeAttributes(pEquipedBoots->Attributes);
+	  TakeAttributes(pEquipedHelmet->Attributes);
+	  TakeAttributes(pEquipedChest->Attributes);
+	  TakeAttributes(pEquipedNeck->Attributes);
+	  TakeAttributes(pEquipedWeapon->Attributes);
 
 	 calculateStats();
-	 hpUpdate = new cDynamic_HpBar(this->px, this->py, RPG_Assets::get().GetSprite("HPBarFull"), RPG_Assets::get().GetSprite("HPBarEmprty"), nHealth, this);
+
+
+	 MergeItemLvl();
+	
+
+	/* for (int i = 0; i <5; i++)
+	 {
+	 g_engine->AttachEq(g_engine->Getequip(), i);
+	 }*/
+
+	
+
 }
 
 
@@ -1303,7 +1513,7 @@ void cDynamic_creature_Pantir::IndicateAnim()
 		m_nGraphicAmountFrames = 9;
 		FXFrame = 0;
 		m_nGraphicEndFrame = m_nGraphicCounterX + m_nGraphicAmountFrames;
-
+		//RPG_Assets::get().playSound("Run");
 		break;
 	case Jump:
 		enumCounter = 2;
@@ -1405,7 +1615,7 @@ void cDynamic_creature_Pantir::IndicateAnim()
 		attackdirectionX = 0.1f;
 		attackdirectionY = -1.1f;
 		m_nShockTime = 0.15f;
-		IsThrow = true;
+		setFlag(IsThrow);
 		
 
 
@@ -1422,10 +1632,10 @@ void cDynamic_creature_Pantir::IndicateAnim()
 		case 1:
 			FXFrame = 2;
 			
-			isprojfollow = true;
+			setFlag(isprojfollow);
 			break;
 		case 4:
-			if (!bOnLanded)
+			if (!checkFlag(bOnLanded))
 			{
 			//	FXFrame = 1;
 				frameIndicator = 0;       // here technic droping indicator in 0
@@ -1454,8 +1664,8 @@ void cDynamic_creature_Pantir::IndicateAnim()
 
 		if (frameIndicator == m_nGraphicAmountFrames)
 		{
-			bAnimAction = false;
-			bIsAttackable = true;
+			clearFlag(bAnimAction);
+			setFlag(bIsAttackable);
 		}
 
 		break;
@@ -1465,8 +1675,8 @@ void cDynamic_creature_Pantir::IndicateAnim()
 
 		enumCounter =20;
 		FXFrame = 0;
-		isprojfollow = false;    // keep projectile follow at char 
-		IsThrow = false;
+		clearFlag(isprojfollow);    // keep projectile follow at char 
+		clearFlag(IsThrow);
 		m_nGraphicCounterY =4;
 		m_nGraphicCounterX = 0;
 		m_nGraphicAmountFrames = 6;  //  <---Means how long our projectile should work
@@ -1477,7 +1687,7 @@ void cDynamic_creature_Pantir::IndicateAnim()
 	
 		if (frameIndicator == m_nGraphicAmountFrames-1)
 		{
-			bDead = true;
+			setFlag(bDead);
 		}
 
 		break;
@@ -1542,7 +1752,7 @@ void cDynamic_creature_Pantir::IndicateAnim()
 		SetVerticalDirection(2);
 		
 
-		if (bOnLanded)
+		if (checkFlag(bOnLanded))
 		{
 			//ProjSize
 			ProjCollbordersX = 0.0f;
@@ -1553,18 +1763,18 @@ void cDynamic_creature_Pantir::IndicateAnim()
 
 
 			
-			bAnimAction = false;
-			bIsAttackable = true;
+			clearFlag(bAnimAction);
+			setFlag(bIsAttackable);
 
-			Target->bDraw = true;
+			setFlag(bDraw);
 			FxColumn = 8;
 			PerformAttack();
 			this->vy -=8;
 			Jumpcounter++;
 			//if (Target !=nullptr)
 		//	Target = nullptr;
-			bOnLanded = false;
-			bControllable = true;
+			clearFlag(bOnLanded);
+			setFlag(bControllable);
 			enumCounter = 2;
 
 			break;
@@ -1585,7 +1795,7 @@ void cDynamic_creature_Pantir::IndicateAnim()
 
 
 	case Death:
-		if (bOnLanded)
+		if (checkFlag(bOnLanded))
 		{
 			m_nGraphicCounterY = 5;
 			m_nGraphicCounterX = 13;
@@ -1639,21 +1849,21 @@ bool cDynamic_creature_Pantir::checkFacingDirection(cDynamic* Enemu)
 int cDynamic_creature_Pantir::GetStats(int num)
 {
 	if(num==1)
-	return agility;
+	return getEndAgil();
 	if (num == 2)
-	return strength;
+	return getEndStrength();
 	if (num == 3)
-	return intelligence;
+	return getEndInt();
 	if (num == 4)
-	return Defence;
+	return EndDefence;
 	if (num == 5)
-	return Movementspeed;
+	return getEndMovement();
 	if (num == 6)
-	return AverageAttack;
+	return EndAverageAttack;
 	if (num == 7)
 	return fHpRegeneration;
 	if (num == 8)
-	return versality;
+	
 
 
 	return 0;
@@ -1665,12 +1875,12 @@ void cDynamic_creature_Pantir::SwirlGrab( cDynamic* dyn)
 
 	Target = dyn;
 
-	isprojfollow = false;    // keep projectile follow at char 
-	IsThrow = false;
-	bAnimAction = true;  // <--blocking other animations while it's working
-	bIsAttackable = false;
+	clearFlag(isprojfollow);    // keep projectile follow at char 
+	clearFlag(IsThrow);
+	setFlag(bAnimAction);  // <--blocking other animations while it's working
+	clearFlag(bIsAttackable);
 	
-	bControllable = false;
+	clearFlag(bControllable);
 
 	if (Target != nullptr)
 	{
@@ -1702,18 +1912,39 @@ void cDynamic_creature_Pantir::SwirlGrab( cDynamic* dyn)
 	vy -= 7.0f;
 	Target->vy = this->vy;
 
-	Target->bDraw = false;
+	clearFlag(bDraw);
 
 	enumCounter = 21;
 		
 }
 
 void cDynamic_creature_Pantir::Behaviour(float fElapsedTime, cDynamic* player)
-{
-
+{/*
+	std::cout << "//////////" << std::endl;
+	std::cout << checkFlag(BisProjectile) <<"\t BisProjectile " << std::endl;
+	std::cout << checkFlag(bDraw) << "\tbDraw "<<  std::endl;
+	std::cout << checkFlag(bIsAttackable) << "\tbIsAttackable " << std::endl;
+	std::cout << checkFlag(bRedundant) << "\tbRedundant " << std::endl;
+	std::cout << checkFlag(bDead) << "\tbDead " << std::endl;
+	std::cout << checkFlag(bOnGround) << "\tbOnGround " << std::endl;
+	std::cout << checkFlag(Btarget) << "\tBtarget " << std::endl;
+	std::cout << checkFlag(binitialized) << "\tbinitialized " << std::endl;
+	std::cout << checkFlag(bControllable) << "\tbControllable " << std::endl;
+	std::cout << checkFlag(quested) << "\tquested " << std::endl;
+	std::cout << checkFlag(isAttack) << "\tisAttack " << std::endl;
+	std::cout << checkFlag(IsThrow) << "\tIsThrow " << std::endl;
+	std::cout << checkFlag(IsOnePlay) << "\tIsOnePlay " << std::endl;
+	std::cout << checkFlag(bOnLanded) << "\tbOnLanded " << std::endl;
+	std::cout << checkFlag(bAnimAction) << "\tbAnimAction " << std::endl;
+	std::cout << checkFlag(isprojfollow) << "\tisprojfollow " << std::endl;
+	std::cout << checkFlag(Btarget) << "\tBtarget " << std::endl;
+	std::cout << checkFlag(gravity) << "\tgravity " << std::endl;
+	std::cout << checkFlag(isDirectionLock) << "\tisDirectionLock " << std::endl;
+	std::cout << "//////////" << std::endl;*/
 	
 
-	if (bOnGround)
+
+	if (checkFlag(bOnGround))
 	{
 
 	
@@ -1721,7 +1952,16 @@ void cDynamic_creature_Pantir::Behaviour(float fElapsedTime, cDynamic* player)
 		if (fabs(vx) < 0.01f)
 		{
 			vx = 0.0f;
+		
+			
+				g_engine->WalkSound->stop();
+
+			
 		}
+
+
+
+
 	}
 	else
 	{
@@ -1729,48 +1969,81 @@ void cDynamic_creature_Pantir::Behaviour(float fElapsedTime, cDynamic* player)
 		if (fabs(vx) < 0.01f)
 		{
 			vx = 0.0f;
+			
+			g_engine->WalkSound->stop();
+
 		}
 	}
 	
 
+	if (checkFlag(IsOnePlay) || !checkFlag(bOnGround))
+	{
+		g_engine->WalkSound->stop();
+	}
 	
 	if (vx !=0)
 	{
 		energyCount += fElapsedTime * (25.0);
+
+		if (checkFlag(bOnGround))
+		{
+			
+			
+
+			if (g_engine->WalkSound->getStatus() == sf::Sound::Playing)
+			{
+
+			}
+			else
+			{
+		
+			g_engine->WalkSound->play();
+
+			//g_engine->PlaySounds(g_engine->WalkSound->);
+		//	g_engine->sounds.push_back(g_engine->WalkSound);
+		//	g_engine->currsound.setLoop(true);
+
+			}
+			
+		}
+
 	}
 	else
 	{
-		energyCount += fElapsedTime * 35.0f;
+	energyCount += fElapsedTime * 35.0f;
+	rageCount += fElapsedTime * 2.5f;
+
+
 	}
 	if (energyCount >=1)
 	{
-		energeyAmount += (int)energyCount;
+		energyAmount += (int)energyCount;
 		energyCount = 0.0f;		
 	}
 
-
-	if (energeyAmount >= 100 )
-		energeyAmount = 100;
-		
-	
-	if (energeyAmount <= 0 )
-		energeyAmount = 0;	
-	
-	
-	if ( rageAmount >= 100)
-		rageAmount = 100;
-
-	if ( rageAmount <= 0)
-		rageAmount = 0;
-
-	
-	rageCount += fElapsedTime * 2.5f;
 
 	if (rageCount >= 1)
 	{
 		rageAmount -= (int)rageCount;
 		rageCount = 0.0f;
 	}
+
+	if (energyAmount >= MaxEnergy )
+		energyAmount = MaxEnergy;
+		
+	
+	if (energyAmount <= 0 )
+		energyAmount = 0;	
+	
+	
+	if ( rageAmount >= MaxRage)
+		rageAmount = MaxRage;
+
+	if ( rageAmount <= 0)
+		rageAmount = 0;
+
+	
+
 
 	EnergyHide(fElapsedTime);
 
@@ -1781,7 +2054,7 @@ void cDynamic_creature_Pantir::Behaviour(float fElapsedTime, cDynamic* player)
 	targetTime -= fElapsedTime;
 	}
 
-	if (Target != nullptr&& Target->bDead == true)
+	if (Target != nullptr&& Target->checkFlag(Target->bDead))
 	{
 		targetTime = 0;
 		Target = nullptr;
@@ -1792,10 +2065,173 @@ void cDynamic_creature_Pantir::Behaviour(float fElapsedTime, cDynamic* player)
 
 
 
+cDynamic_creature_BanditArcher::cDynamic_creature_BanditArcher() : cDynamic_creature_Bandit("BanditArcher", RPG_Assets::get().GetSprite("BanditRight"), RPG_Assets::get().GetSprite("BanditLeft"))
+{
+
+	 fSpecAtckdist = 5.0f;
+	 fAttackDist = 5.0f;
+	 vxBorder = 5.0f;
+
+	  BeveOffsetpX = 5;   // offset for behave px
+	  BeveOffsetpY = 0; // py
+	  SetEndMovement(5);
+	
+}
+
+
+void cDynamic_creature_BanditArcher::AttackOne()
+{
+	//setFlag(isAttack);
+	//setFlag(IsThrow);
+	//clearFlag(isprojfollow);
+
+
+	//setFlag(isDirectionLock);
+
+
+	//sparedVx = (M_nFacingDirection == WEST) ? -10 : 10;
+	//sparedVy = -2.0f;
+
+	//enumCounter = 3;     //  <---Attack
+
+	//frameIndicator = 0;
+
+
+	//ProjCollbordersX = 0.75f;
+	//ProjCollbordersXF = 1.25f;
+	//ProjCollbordersY = 0.95f;
+	//ProjCollbordersYF = 1.25f;
+
+
+	//setFlag(isAttack);
+
+	//vx = 0;
+	//m_nGraphicCounterY = 5;
+	//m_nGraphicCounterX = 0;
+	//m_nGraphicAmountFrames = 9;
+	//attackdirectionX = 0.3f;
+	//attackdirectionY = -0.5f;
+	//m_nShockTime = 0.1f;
+
+	//FxColumn = 0;
+	//FXFrame = 4;
+	//M_nFacingDirectionVertical = NOTLOOKING;
+	//m_nGraphicEndFrame = m_nGraphicCounterX + m_nGraphicAmountFrames;
+}
+
+void cDynamic_creature_BanditArcher::AttackTwo()
+{
+//	setFlag(isAttack);
+//	setFlag(IsThrow);
+//	clearFlag(isprojfollow);
+//
+//
+//	setFlag(isDirectionLock);
+//
+//
+//	sparedVx = (M_nFacingDirection == WEST) ? -2 : 2;
+//	sparedVy = -5.0f;
+////	sparedVy = 1.0f;
+//
+//	enumCounter = 12;     //  <---Attack Vertical
+//
+//	frameIndicator = 0;
+//
+//
+//
+//
+//	ProjCollbordersX = 0.75f;
+//	ProjCollbordersXF = 1.25f;
+//	ProjCollbordersY = 0.95f;
+//	ProjCollbordersYF = 1.25f;
+//
+//
+//	vx = 0;
+//	m_nGraphicCounterY = 4;
+//	m_nGraphicCounterX = 0;
+//	m_nGraphicAmountFrames = 9;
+//	attackdirectionX = 0.3f;
+//	attackdirectionY = -0.5f;
+//	m_nShockTime = 0.1f;
+//	FxColumn = 0;
+//	FXFrame = 4;
+//	M_nFacingDirectionVertical = NOTLOOKING;
+//	m_nGraphicEndFrame = m_nGraphicCounterX + m_nGraphicAmountFrames;
+
+}
+
+
+void cDynamic_creature_BanditArcher::SpecAttack(float targetX, float targetY, float Distance)
+{
+
+	setFlag(isAttack);
+	setFlag(IsThrow);
+	clearFlag(isprojfollow);
+
+	enumCounter = 12;     //  <---Attack Throw Dagger
+	vx = 0;
+	//setFlag(isDirectionLock);
+
+	float time =Distance;
+	float vxtest = targetX/Distance ;
+
+	sparedVx = vxtest;
+					//дистанция по y +половину от гравитации, в нашем случае 5, домножая на время 5 в квадрате
+	float vytest = (targetY + 0.5f * 5 * (time * time)) / time;
+	
+	sparedVy =-vytest;
+
+	if (targetX > 0)
+	{
+		M_nFacingDirection = EAST;
+
+	}
+	else
+	{
+		M_nFacingDirection = WEST;
+
+
+	}
+
+	
+	frameIndicator = 0;
+
+
+
+
+	ProjCollbordersX = -0.25f;
+	ProjCollbordersXF = 0.25f;
+	ProjCollbordersY = 0.0f;
+	ProjCollbordersYF = 0.25f;
+
+	m_nGraphicCounterY = 3;
+	m_nGraphicCounterX = 0;
+	m_nGraphicAmountFrames = 6;
+	attackdirectionX = 0.2f;
+	attackdirectionY = -0.5f;
+	m_nShockTime = 0.1f;
+
+
+	FxColumn = 0;
+	FXFrame = 4;
+//	M_nFacingDirectionVertical = NOTLOOKING;  // Need for  correctly spawn prjectile
+	m_nGraphicEndFrame = m_nGraphicCounterX + m_nGraphicAmountFrames;
+}
+
 void cDynamic_creature_Pantir::PerformAttack()
 {
 	if (pEquipedWeapon == nullptr)
 		return;
+
+	
+
+	float halfdmg = GetWeaponAttributes(pEquipedWeapon->Attributes) / 2; // Пример значения для halfdmg
+
+	// Генерация случайных чисел
+	uint16_t rand1 = rand() % static_cast<int>(halfdmg+halfdmg);
+	uint16_t rand2 = rand() % static_cast<int>(halfdmg+halfdmg);
+
+	int16_t rand3 = rand1 - rand2;
 
 	
 
@@ -1810,27 +2246,27 @@ void cDynamic_creature_Pantir::PerformAttack()
 				break;
 			case cDynamic_Creature::Attack:
 
-				this->energeyAmount -= 55;
-				calculatedDamage = (AverageAttack + pEquipedWeapon->nDamage) * 2.65f;
+				this->energyAmount -= 55;
+				calculatedDamage = (EndAverageAttack+rand3 ) * 2.65f;
 				break;
 			case cDynamic_Creature::AttackEasy:
-				this->energeyAmount -=35;
-				calculatedDamage = (AverageAttack - 20+pEquipedWeapon->nDamage) * 5;
+				this->energyAmount -=35;
+				calculatedDamage = (EndAverageAttack + rand3 - 20) * 5;
 				break;
 			case cDynamic_Creature::AttackGreat:
-				this->energeyAmount -= 100;
-				calculatedDamage = (AverageAttack + 20 + pEquipedWeapon->nDamage) * 3;
+				this->energyAmount -= 100;
+				calculatedDamage = (EndAverageAttack + rand3 + 20 ) * 3;
 				break;
 			case cDynamic_Creature::DoubleJump:
-				this->energeyAmount -= 20;
+				this->energyAmount -= 20;
 				break;
 			case cDynamic_Creature::AirAttack:
-				this->energeyAmount -= 35;
-				calculatedDamage = (AverageAttack + pEquipedWeapon->nDamage) * 2.65f;
+				this->energyAmount -= 35;
+				calculatedDamage = (EndAverageAttack + rand3) * 2.65f;
 				break;
 			case cDynamic_Creature::Eviscirate:
-				this->energeyAmount += 15;
-				calculatedDamage = (AverageAttack - 20 + pEquipedWeapon->nDamage) * 3.6f;
+				this->energyAmount += 15;
+				calculatedDamage = (EndAverageAttack + rand3 - 20 ) * 3.6f;
 				this->rageAmount -= 35;
 				break;
 			case cDynamic_Creature::JumpDown:
@@ -1840,36 +2276,36 @@ void cDynamic_creature_Pantir::PerformAttack()
 			case cDynamic_Creature::Landing:
 				break;
 			case cDynamic_Creature::AirEviscirate:
-				this->energeyAmount += 15;
-				calculatedDamage = (AverageAttack - 20 + pEquipedWeapon->nDamage) * 3.6f;
+				this->energyAmount += 15;
+				calculatedDamage = (EndAverageAttack + rand3 - 20) * 3.6f;
 				this->rageAmount -= 35;
 
 				break;
 			case cDynamic_Creature::Hit:
-				this->energeyAmount -= 20;
+				this->energyAmount -= 20;
 				break;
 			case cDynamic_Creature::AttackBack:
-				this->energeyAmount -= 40;
-				calculatedDamage = (AverageAttack+ pEquipedWeapon->nDamage) * 4;
+				this->energyAmount -= 40;
+				calculatedDamage = (EndAverageAttack + rand3) * 4;
 				break;
 			case cDynamic_Creature::UpEviscirate:
-				this->energeyAmount += 15;
-				calculatedDamage = (AverageAttack - 20 + pEquipedWeapon->nDamage) * 3.6f;
+				this->energyAmount += 15;
+				calculatedDamage = (EndAverageAttack + rand3 - 20 ) * 3.6f;
 				this->rageAmount -= 35;
 				break;
 			case cDynamic_Creature::AirDownEviscirate:
-				this->energeyAmount += 15;
-				calculatedDamage = (AverageAttack -20 + pEquipedWeapon->nDamage) * 3.6f;
+				this->energyAmount += 15;
+				calculatedDamage = (EndAverageAttack + rand3 -20 ) * 3.6f;
 				this->rageAmount -= 35;
 				break;
 			case cDynamic_Creature::LANDINGEviscirate:
-				this->energeyAmount += 15;
-				calculatedDamage = (AverageAttack - 20 + pEquipedWeapon->nDamage) * 3.6f;
+				this->energyAmount += 15;
+				calculatedDamage = (EndAverageAttack + rand3 - 20 ) * 3.6f;
 				this->rageAmount -= 35;
 
 			case cDynamic_Creature::Swirl:
-				this->energeyAmount -= 40;
-				calculatedDamage = (AverageAttack - 20 + pEquipedWeapon->nDamage) * 3.6f;
+				this->energyAmount -= 40;
+				calculatedDamage = (EndAverageAttack + rand3 - 20 ) * 3.6f;
 				this->rageAmount -= 35;
 
 
@@ -1901,6 +2337,7 @@ cDynamic_Item::cDynamic_Item(float x, float y, cItem* i) : cDynamic("pickup")   
 	CollbordersY = 0.0f;
 	CollbordersYF = 0.5f;
 
+	setFlag(gravity);
 
 }
 
@@ -1908,9 +2345,9 @@ void cDynamic_Item::OnInteract(cDynamic* player)
 {
 	if (bCollected)
 		return;
-
-	if(g_engine->GetListItem().size() > 23)
+	if(g_engine->GetFreespaceInventory() == 0)
 		return;
+	
 		//m_listItems.size() + 1
 
 	if (item->OnInteract(player) )
@@ -1918,101 +2355,32 @@ void cDynamic_Item::OnInteract(cDynamic* player)
 
 		
 		//Add item to invenotory
-		if (g_engine->GiveItem(item)) //< -- if return true means that full	
+		if (g_engine->GiveItem(item->sName,1)) //< -- if return true means that full	
 			return;
 		
 
 	}
 	
-	this->bDead =true;
+	setFlag(bDead);
 	bCollected = true;
+}
+cDynamic_Item::cDynamic_Item() : cDynamic("pickup")     //Constructror
+{
 }
 void cDynamic_Item::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)
 {
-
 	if (bCollected)
 		return;
-	gfx->DrawPartialDecal({ (px - ox) * 64,(py - oy) *64 }, item->pSprite, {0,0}, {64,64 },{1*0.5,1*0.5});   //offset pulling player back into the screen
+
+	float sprX = item->spriteindex % 32;
+	float sprY = item->spriteindex / 32;
+	gfx->DrawPartialDecal({ (px - ox) * 64,(py - oy) *64 }, item->pSprite, {sprX*64,sprY*64}, {64,64 },{1*0.5,1*0.5});   //offset pulling player back into the screen
 	//gfx->DrawPartialSprite((px - ox) * 16.0f, (py - oy) * 16.0f, item->pSprite, 0, 0, 6, 16);
 
 
 
 }
 
-cDynamic_Projectile::cDynamic_Projectile(float ox, float oy, LAYER mlayer, float velx, float vely,  float duration, olc::Decal* spriteLeft, olc::Decal* spriteRight,  int m_nGraphicState, float m_nGraphicTime, int rageSet ) : cDynamic("projectile")
-{
-	gravity = true;
-	
-	pSpriteRight = spriteRight;
-	pSpriteLeft = spriteLeft;
-	agrsr = nullptr;
-	this->m_GraphicState = setEnum(m_nGraphicState);
-	fDuration = duration;
-	px = ox;
-	py = oy;
-	vx = velx;
-	vy = vely;
-
-
-	HitAmount = 1;
-	
-	bSolidVsMap = true;
-	bIsProjectile = true;
-	knockbacktime = m_nGraphicTime;
-	m_layer = mlayer;
-	mass = 5;
-	rageamount = rageSet;
-
-	Frameindicator=0;
-
-	CollbordersX = 0.25f;
-	CollbordersXF = 2.0f;
-
-	if (duration ==0.0f)      //Setup timer auto, when not 0
-	{
-		SetTimer(m_nGraphicState);
-	}
-	CollbordersY = 0.65f;
-	CollbordersYF = 1.50f;
-
-	
-}
-
-cDynamic_Projectile::cDynamic_Projectile(olc::Decal* spriteLeft, olc::Decal* spriteRight, cDynamic_Creature* Aggressor) : cDynamic("projectile")
-{ 
-	gravity = true;
-
-	pSpriteRight = spriteRight;
-	pSpriteLeft = spriteLeft;
-	this->m_GraphicState = setEnum(Aggressor->FxColumn);
-	SetTimer(Aggressor->FxColumn);
-	px = Aggressor->px;
-	py = Aggressor->py;
-	vx = 0;
-	vy = 0;
-
-
-	bSolidVsMap = true;
-	bIsProjectile = true;
-	knockbacktime = Aggressor->m_nShockTime;
-	m_layer = Aggressor->m_layer;
-	mass = 5;
-	rageamount =10;
-
-	Frameindicator = 0;
-
-	CollbordersX = 0.5f;
-	CollbordersXF = 4.0f;
-
-
-	
-	
-	CollbordersY = 1.3f;
-	CollbordersYF = 2.7f;
-
-
-	agrsr = Aggressor;
-}
 
 void cDynamic_Projectile::SetTimer(int charstate)
 {
@@ -2075,7 +2443,7 @@ void cDynamic_Projectile::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy
 
 	if (animspr >= framespeed)                 //it's speed of frames
 	{
-
+		
 		Frameindicator++;
 
 		animspr -= framespeed;
@@ -2087,51 +2455,82 @@ void cDynamic_Projectile::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy
 			//fDuration = Frameindicator *0.1f+1;
 		
 	}
+	
 
-if (m_FacingDirection == 3)
+	if (checkFlag(IsThrow))  // when projectile on air we calculate angle 
 	{
+	
+		float  preangle = atan2(vy, vx);
+		if (preangle < 0)
+		{
+			preangle += 2 * 3.14;
+		}
+		preangle = floor(preangle * 100) / 100;
 
-	gfx->DrawPartialDecal({ (px - ox) * 64.0f,(py - oy) * 64.0f }, pSpriteRight, { (float)Frameindicator * nSheetSize,(float)m_GraphicState * nSheetSize }, { nSheetSize,nSheetSize });   //offset pulling player back into the screen
-	}
-else
-	{
-	gfx->DrawPartialDecal({ (px - ox) *64.0f,(py - oy) * 64.0f }, pSpriteLeft, { (float)Frameindicator * nSheetSize,(float)m_GraphicState * nSheetSize }, { nSheetSize,nSheetSize });   //offset pulling player back into the screen
 
-	}
-	/*float angle = 0.0f;
-	if (m_FacingDirection ==3)
-	{
-		angle = 0;
+
+		if (!checkFlag(bOnGround))   // when we o the ground we stop calculating angle and frame rate
+		{
+			angle = preangle;
+			Frameindicator = Frameindicator % 6;
+		}
+
+
+		gfx->DrawPartialRotatedDecal({ (px - ox) * (64.0f*g_engine->fscale),(py - oy) * (64.0f*g_engine->fscale) }, pSpriteRight, angle, { nSheetSize / 2 ,nSheetSize / 2 }, { (float)Frameindicator * nSheetSize,(float)m_GraphicState * nSheetSize }, { nSheetSize,nSheetSize });
+
+		//gfx->DrawPartialRotatedDecal({ (px - ox) * 64.0f,(py - oy) * 64.0f }, pSpriteLeft, angle, { 64 / 2,18 / 2 }, { (float)Frameindicator * nSheetSize,(float)m_GraphicState * nSheetSize }, { g_engine->fscale,g_engine->fscale });
+
+
 	}
 	else
 	{
-		angle = 3.14;
+		if (m_FacingDirection == 3)
+
+		{
+
+			gfx->DrawPartialDecal({ (px - ox) * (64.0f*g_engine->fscale),(py - oy) * (64.0f * g_engine->fscale) }, pSpriteRight, { (float)Frameindicator * nSheetSize,(float)m_GraphicState * nSheetSize }, { nSheetSize,nSheetSize });   //offset pulling player back into the screen
+		}
+		else
+		{
+			gfx->DrawPartialDecal({ (px - ox) * (64.0f * g_engine->fscale),(py - oy) * (64.0f * g_engine->fscale) }, pSpriteLeft, { (float)Frameindicator * nSheetSize,(float)m_GraphicState * nSheetSize }, { nSheetSize,nSheetSize });   //offset pulling player back into the screen
+
+		}
 	}
 
-gfx->DrawRotatedDecal({ (px - ox) * 64.0f,(py - oy) * 64.0f }, RPG_Assets::get().GetSprite("Bandit ThrowDaggerFx"), atan2(vy,vx), {128,128});
-std::cout << angle + atan2(vy - py, vx - px) << '\t' << vy << '\t' << vx << '\t'<<px<<'\t' << py << std::endl;*/
+
+//std::cout  << angle << std::endl;
+//gfx->DrawRotatedDecal({ (px - ox) * 64.0f,(py - oy) * 64.0f }, pSpriteLeft, 0.0f, {0,0}); // <--Arrow
 
 }
 
 void cDynamic_Projectile::Update(float fElapsedTime, cDynamic* player)
 {
 
-
-	fDuration -= fElapsedTime;
-	if (fDuration <= 0.0f)
-		bRedundant = true;
-
 		animspr += fElapsedTime;
+		fDuration -= fElapsedTime;
 
 
-		if (bOnGround)
-		{
-			vx = vx / 2;
-		}
+	if (fDuration <= 0.0f)
+
+		setFlag(bRedundant);
+
+
+
 
 		if (repitable)
 		{
 			fDuration = 0.3f;
+		}
+
+		if (checkFlag(bOnGround))  
+		{
+			vx =0;
+		}
+		else      // when  bOngraund = false 
+		{
+		if(checkFlag(IsThrow))  // when projectile in air we add to him time for life 
+		fDuration = 0.3f;
+
 		}
 
 		
@@ -2140,12 +2539,23 @@ void cDynamic_Projectile::Update(float fElapsedTime, cDynamic* player)
 		{
 
 			
-			if (agrsr->isprojfollow == true)
+			if (agrsr->checkFlag(isprojfollow))
 			{
-				
+				py = agrsr->py;
 
-				px = agrsr->px + agrsr->ProjOffsetX;
-				py = agrsr->py + agrsr->ProjOffsetY;
+				if (m_FacingDirection == 3)  // west
+
+				{
+
+					px = agrsr->px + agrsr->CollbordersXF- CollbordersX;
+					
+				}
+				else
+				{  
+					px = agrsr->px - 2.0f + agrsr->CollbordersX+(2.0f - CollbordersXF);
+					
+				}
+
 
 			}
 		}
@@ -2231,58 +2641,182 @@ int cDynamic_Projectile::setEnum(int charstate)
 	return SpriteStateFX;
 }
 
+cDynamic_Projectile::cDynamic_Projectile() : cDynamic("projectile")
+{
+	setFlag(BisProjectile);
+	
+}
+
+
+void cDynamic_Projectile::SetDeafult()
+{
+	pSpriteRight = nullptr;
+	pSpriteLeft = nullptr;
+	clearFlag(binitialized);
+	clearFlag(bRedundant);
+	clearFlag(gravity);
+	clearFlag(IsThrow); // help switch draw method in this class
+	this->m_GraphicState = 0;
+	SetTimer(0);
+	knockbacktime = 0;
+	m_layer = Friend;
+	nDamage = 0;
+	gettarget = 0;
+	px = 0;
+	py = 0;
+	vx = 0;
+	vy = 0;
+	CollbordersX = 0;
+	CollbordersXF = 0;
+	CollbordersY = 0;
+	CollbordersYF = 0;
+	attackDirectionX = 0;
+	attackDirectionY = 0;
+	m_FacingDirection = 0;
+	m_VerticalFacingDirection = 0;
+	HitAmount = 0;  //   < -- we add how many times our projectile should take damage before leave  default 1
+	fDuration = 0;
+	animspr = 0;
+	Frameindicator = 0;
+}
+
+void cDynamic_Projectile::SetSprites(olc::Decal* IpSpriteRight, olc::Decal* IpSpriteLeft)
+{
+	pSpriteRight = IpSpriteRight;
+	pSpriteLeft = IpSpriteLeft;
+}
+
+void cDynamic_Projectile::SetAgressorThowData(cDynamic_Creature* aggresor, uint8_t Time)
+{
+	setFlag(gravity);
+	setFlag(IsThrow); // help switch draw method in this class
+	vx = aggresor->sparedVx;
+	vy = aggresor->sparedVy;
+	angle = atan2(vy, vx);
+	bSolidVsMap = false;
+	agrsr = nullptr;
+	nDamage = aggresor->GetAttack();
+
+	mass = 5;
+	HitAmount = aggresor->Hittimes;  //   < -- we add how many times our projectile should take damage before leave  default 1
+	gettarget = aggresor->checkFlag(aggresor->Btarget);
+	m_VerticalFacingDirection = aggresor->GetFacingDirectionVertical();
+	m_FacingDirection = aggresor->GetFacingDirection();
+	attackDirectionY = aggresor->attackdirectionY;
+
+	CollbordersX = aggresor->ProjCollbordersX;
+	CollbordersXF = aggresor->ProjCollbordersXF;
+	CollbordersY = aggresor->ProjCollbordersY;
+	CollbordersYF = aggresor->ProjCollbordersYF;
+	
+	//p->CollbordersY = 1;
+	bOneHit = true;
+
+	this->m_GraphicState = setEnum(aggresor->FxColumn);
+	fDuration = Time;
+//	HitAmount = 1;
+	knockbacktime = aggresor->m_nShockTime;
+	m_layer = aggresor->m_layer;
+	rageamount = aggresor->rageset;
+	Frameindicator = 0;
+
+	if (Time == 0.0f)      //Setup timer auto, when not 0
+	{
+		SetTimer(aggresor->FxColumn);
+	}
+
+
+}
+
+void cDynamic_Projectile::SetAgressorData(cDynamic_Creature* Aggresor)
+{
+	agrsr = Aggresor;
+	this->m_GraphicState = setEnum(Aggresor->FxColumn);
+	SetTimer(Aggresor->FxColumn);
+	knockbacktime = Aggresor->m_nShockTime;
+	m_layer = Aggresor->m_layer;
+	nDamage = Aggresor->GetAttack();
+	gettarget = Aggresor->checkFlag(Aggresor->Btarget);
+	CollbordersX = Aggresor->ProjCollbordersX;
+	CollbordersXF = Aggresor->ProjCollbordersXF;
+	CollbordersY = Aggresor->ProjCollbordersY;
+	CollbordersYF = Aggresor->ProjCollbordersYF;
+	bOneHit = true;
+	bSolidVsMap = false;
+	HitAmount = 1;
+	attackDirectionY = Aggresor->attackdirectionY;
+	m_FacingDirection = Aggresor->GetFacingDirection();
+	m_VerticalFacingDirection = Aggresor->GetFacingDirectionVertical();
+	HitAmount = Aggresor->Hittimes;  //   < -- we add how many times our projectile should take damage before leave  default 1
+
+
+	
+
+}
+
 void cDynamic_HpBar::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)
 {
 	float hpdiff = charHp / procent;
-
 	charHp = Hpowner->nHealth;
-	px = Hpowner->px;
-	py = Hpowner->py;
-	if (Hpowner->bDead == true)
+
+	if (Hpowner->checkFlag(bDead))
 	{
-		bRedundant = true; 
+		setFlag(bRedundant);  // пометка, что объект мёртв и память нужно освободить
 	}
-	
 
-	
-		gfx->DrawPartialDecal({ (px - ox) * 64.0f+28,(py - oy) * 64.0f+18 }, HpEmpty, { 0,0 }, { (float)HpEmpty->sprite->width,(float)HpEmpty->sprite->height });   //offset pulling player back into the screen
+	// Координаты отрисовки с учетом смещения и масштаба
+	float drawPosX = (px - ox) * (64.0f * g_engine->fscale) + (28 * g_engine->fscale);
+	float drawPosY = (py - oy) * (64.0f * g_engine->fscale) + (18 * g_engine->fscale);
 
-		gfx->DrawPartialDecal({ (px - ox) * 64.0f+28,(py - oy) * 64.0f+18 }, HpFull, {  0,0 }, { hpdiff,(float)HpFull->sprite->height });   //offset pulling player back into the screen
-	
+	// Отрисовка общей рамки с использованием декали
+	gfx->DrawPartialDecal({ drawPosX, drawPosY }, g_engine->D_Ui,
+		{ (float)soursceposX, (float)soursceposY + soursceSizeY },
+		{ (float)soursceSizeX, (float)soursceSizeY },
+		{ g_engine->fscale, g_engine->fscale });
 
+	// Отрисовка полоски здоровья (с учётом оставшегося HP)
+	gfx->DrawPartialDecal({ drawPosX, drawPosY }, g_engine->D_Ui,
+		{ (float)soursceposX, (float)soursceposY },
+		{ hpdiff, (float)soursceSizeY },
+		{ g_engine->fscale, g_engine->fscale });
 
-		std::string sTextCurHp = std::to_string(charHp);
-		std::string StextFullHp = std::to_string(hpMax);
-	
+	// Формирование строки с текущим и максимальным здоровьем
+	std::string sTextCurHp = std::to_string(charHp);
+	std::string sTextFullHp = std::to_string(hpMax);
 
-
-		g_engine->DrawBigText(sTextCurHp + "/" + StextFullHp, (px - ox + 0.36f) * 64.0f + 28, (py - oy) * 64.0f + 16, 0.25, 0.25, olc::WHITE);
-		
-		//g_engine->DrawBigText(StextFullHp, (px - ox+1.5) * 64.0f + 56, (py - oy) * 64.0f + 37, 0.5, 0.5, olc::WHITE);
+	// Отрисовка текста здоровья
+	g_engine->DrawBigText(sTextCurHp + "/" + sTextFullHp,
+		(px - ox + 0.36f) * (64.0f * g_engine->fscale) + (28 * g_engine->fscale),
+		(py - oy) * (64.0f * g_engine->fscale) + (16 * g_engine->fscale),
+		0.25f * g_engine->fscale, 0.25f * g_engine->fscale, olc::WHITE);
 }
 
-cDynamic_HpBar::cDynamic_HpBar(float ox, float oy,  olc::Decal* HpFulls, olc::Decal* HpEmptys, int hp, cDynamic_Creature* hpown) : cDynamic("HpFirst")
+cDynamic_HpBar::cDynamic_HpBar(float ox, float oy,  int hp, cDynamic_Creature* hpown) : cDynamic("HpFirst")
 {
 	hpMax = hp;
-	HpFull = HpFulls;
-	HpEmpty = HpEmptys;
+	//HpFull = HpFulls;
+	//HpEmpty = HpEmptys;
 	px = ox;
 	py = oy;
 	Hpowner = hpown;
-
+	soursceposX = 960;
+	soursceposY = 242;
+	soursceSizeX = 72;
+	soursceSizeY = 9;
 
 	g_engine->AddIndicators(this);
 }
 
 void cDynamic_HpBar::Update(float fElapsedTime, cDynamic* player)
 {
-	
+	px = player->px;
+	py = player->py;
 }
 
 void cDynamic_HpBar::setLevelHp(int par)
 {
 	hpMax = par;
-	procent = (float)hpMax / HpFull->sprite->width;
+	procent = (float)hpMax / soursceSizeX;
 }
 
 cDynamic_Teleport::cDynamic_Teleport(float x, float y, std::string mapName, float tx, float ty) : cDynamic("Teleport")
@@ -2294,7 +2828,7 @@ cDynamic_Teleport::cDynamic_Teleport(float x, float y, std::string mapName, floa
 	sMapName = mapName;
 	
 	bSolidVsMap = false;
-	gravity = false;
+	clearFlag(gravity);
 
 }
 
@@ -2318,10 +2852,10 @@ cDynamic_TextDamage::cDynamic_TextDamage(float px, float py, std::string DamageT
 	this->py = py;
 	this->DamageText = DamageText;
 	Color = color;
-	gravity = false;
+	clearFlag(gravity);
 
 
-	m_layer = Neutral;
+	
 
 
 	
@@ -2341,7 +2875,7 @@ void cDynamic_TextDamage::Update(float fElapsedTime, cDynamic* player )
 	if (time>1)
 	{
 		time = 0;
-		bRedundant = true;
+		setFlag(bRedundant);
 	}
 
 }
@@ -2369,7 +2903,7 @@ void cDynamic_TextDamage::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy
 
 
 
-		gfx->DrawPartialDecal({ (float)((this->px - ox) * 64.0f) + (i * (18* g_engine->fscale)), (float)((this->py - oy) * 64.0f) + (z * 32) }, RPG_Assets::get().GetSprite("font"), {sx, sy}, {32, 32}, {1 * g_engine->fscale,1*g_engine->fscale}, Color);
+		gfx->DrawPartialDecal({ (float)((this->px - ox) * g_engine->CellSize) + (i * (18* g_engine->fscale)), (float)((this->py - oy) * g_engine->CellSize) + (z * 32) }, RPG_Assets::get().GetSprite("font"), {sx, sy}, {32, 32}, {1 * g_engine->fscale,1*g_engine->fscale}, Color);
 		i++;
 	}
 
@@ -2378,28 +2912,65 @@ void cDynamic_TextDamage::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy
 
 }
 
+cDynamic_TextDamage::cDynamic_TextDamage() :cDynamic("Text")
+{
+	clearFlag(gravity);
+	m_layer = Neutral;
+}
+
+void cDynamic_TextDamage::SetDeafult()
+{
+	this->px = 0;
+	this->py = 0;
+	this->DamageText.clear();
+	Color = olc::WHITE;
+	clearFlag(bRedundant);
+	time =0;
+
+}
+
+void cDynamic_creature_Pantir::MergeItemLvl()
+{
+
+
+	SetEndAgility(getItemAgil() + getLvlAgil());
+	SetEndInt(getItemInt() + getLvlInt());
+	SetEndStrength(getItemStr() + gettLvlStrength());
+
+	
+	//EndAgility = getItemAgil() + getLvlAgil();
+//	EndStrength = getItemStr() + gettLvlStrength();
+	//EndIntelligence = getItemInt() + getLvlInt();
+
+	StatsImpact();
+}
+
 void cDynamic_creature_Pantir::MoveJump()
 {
 	vy = -9.0f;
-	bAnimAction = false;    // <--Now jump can deflect animation downjumpevis
-	IsOnePlay = false;
-	isAttack = false;
-	bOnLanded = false;
-	isprojfollow = false;
-	Btarget = false;
+	clearFlag(bAnimAction);    // <--Now jump can deflect animation downjumpevis
+	clearFlag(IsOnePlay);
+	clearFlag(isAttack);
+	clearFlag(bOnLanded);
+	clearFlag(isprojfollow);
+	clearFlag(Btarget);
 	Jumpcounter++;
 	frameIndicator = 0;     // if we change it on 3 - it will be a comboo whith eviscirate but isAttack must be true
 	
+
+	g_engine->PlaySounds("Jump");
+	
+
 	//setEnum();
 }
 
 void cDynamic_creature_Pantir::MoveDoubleJump()
 {
-	IsOnePlay = true;
-	isAttack = false;
-	bOnLanded = false;
-	isprojfollow = false;
-	Btarget = false;
+	setFlag(IsOnePlay);
+	clearFlag(isAttack);
+	clearFlag(bOnLanded);
+	clearFlag(isprojfollow);
+	clearFlag(Btarget);
 	enumCounter = 6;
 	vy = -9.0f;
 	Jumpcounter++;
@@ -2414,10 +2985,10 @@ void cDynamic_creature_Pantir::EnergyMoveAttackAir()
 	{
 
 
-		isAttack = true;
-		IsOnePlay = false;
-		isprojfollow = true;    // keep projectile follow at char 
-		Btarget = false;
+		setFlag(isAttack);
+		clearFlag(IsOnePlay);
+		setFlag(isprojfollow);    // keep projectile follow at char 
+		clearFlag(Btarget);
 	enumCounter = 7;  // <-- Air attack
 	frameIndicator = 0;
 	sparedVx = vx;
@@ -2445,18 +3016,18 @@ void cDynamic_creature_Pantir::EnergyMoveAttackAir()
 	ProjCollbordersYF = 1.5f;
 	//
 
-	switch (GetFacingDirection())
-	{
-	case 1:       // <--East
-		ProjOffsetX = -0.95f;
-		ProjOffsetY = 0;
-		break;
-	case 3:       // <--Weast
-		ProjOffsetX = 0.85f;
-		ProjOffsetY = 0;
-		break;
+	//switch (GetFacingDirection())
+	//{
+	//case 1:       // <--East
+	//	ProjOffsetX = -0.95f;
+	//	ProjOffsetY = 0;
+	//	break;
+	//case 3:       // <--Weast
+	//	ProjOffsetX = 0.85f;
+	//	ProjOffsetY = 0;
+	//	break;
 
-	}
+	//}
 
 }
  }
@@ -2469,13 +3040,14 @@ void cDynamic_creature_Pantir::EnergyMoveAttackLow()
 		
 
 		sparedVx = vx;
-		isAttack = true;
-		IsOnePlay = false;
-		isprojfollow = true;    // keep projectile follow at char 
-		Btarget = false;
+		sparedVy = 1.0f;
+		setFlag(isAttack);
+		clearFlag(IsOnePlay);
+		setFlag(isprojfollow);    // keep projectile follow at char 
+		clearFlag(Btarget);
 		enumCounter = 4; // <--Easy sinister strike
 		frameIndicator = 0;
-		fAttackcount = 0.5f;
+		fAttackcount = 0.5f; // timer for attack easy mode 
 
 		Hittimes = 1;
 
@@ -2486,10 +3058,10 @@ void cDynamic_creature_Pantir::EnergyMoveAttackLow()
 		ProjCollbordersYF = 1.5f;
 		//
 
-
 		m_nGraphicCounterY = 0;
 		m_nGraphicCounterX = 10;
 		m_nGraphicAmountFrames = 4;
+
 		attackdirectionX = 0.2f;
 		attackdirectionY = -0.3f;
 		m_nShockTime = 0.1f;
@@ -2497,39 +3069,85 @@ void cDynamic_creature_Pantir::EnergyMoveAttackLow()
 		FxColumn = 2;
 		rageset = 15;
 
-		switch (GetFacingDirection())
-		{
-		case 1:       // <--East
-			ProjOffsetX = -0.95f;
-			ProjOffsetY = 0;
-			break;
-		case 3:       // <--Weast
-			ProjOffsetX = 0.85f;
-			ProjOffsetY = 0;
-			break;
+		//switch (GetFacingDirection())
+		//{
+		//case 1:       // <--East
+		//	ProjOffsetX = -0.95f;
+		//	ProjOffsetY = 0;
+		//	break;
+		//case 3:       // <--Weast
+		//	ProjOffsetX = 0.85f;
+		//	ProjOffsetY = 0;
+		//	break;
 
-		}
+		//}
 		
 
 
 
 		m_nGraphicEndFrame = m_nGraphicCounterX + m_nGraphicAmountFrames;
+
+		
 	}
+}
+void cDynamic_creature_Pantir::SetHealth(int setHealth)
+{
+	if (setHealth>=nHealthMax)
+	{
+		nHealth = nHealthMax;
+	}
+	else {
+
+	nHealth = setHealth;
+	}
+	
+
+}
+void cDynamic_creature_Pantir::SetEnergy(int setHealth)
+{
+	if (setHealth >= MaxEnergy)
+	{
+		energyAmount= MaxEnergy;
+	}
+	else {
+
+		energyAmount = setHealth;
+	}
+
+	
+}
+void cDynamic_creature_Pantir::SetRage(int setRage)
+{
+	if (setRage >= MaxRage)
+	{
+		
+		rageAmount = MaxRage;
+	}
+	else {
+
+		rageAmount = setRage;
+	}
+
+
 }
 void cDynamic_creature_Pantir::HideStage()
 {
-	if (energeyAmount>50 && bHideMode ==false)
+	if (energyAmount>50 && bHideMode ==false)
 	{
 	moveBonus+= 10;
 	m_layer = Neutral;
-    energeyAmount -= 75;
+    energyAmount -= 75;
 	bHideMode = true;
-	IsOnePlay = false;
-	isAttack = false;
-	Btarget = false;
-	blueColor = 0;
-	greenColor = 0;
-	redColor = 0;
+	clearFlag(IsOnePlay);
+	clearFlag(isAttack);
+	clearFlag(Btarget);
+
+	setBlueColor(0);
+	setGreenColor(0);
+	setRedColor(0);
+	//blueColor = 0;
+//	greenColor = 0;
+	//redColor = 0;
 	}
 
 }
@@ -2538,15 +3156,15 @@ void cDynamic_creature_Pantir::EnergyMoveAttackMid()
 	if (!bHideMode)
 	{
 
-		isAttack = true;
-		IsOnePlay = false;
+		setFlag(isAttack);
+		clearFlag(IsOnePlay);
 		enumCounter = 3; // <-- Mid sinister strike
-		isprojfollow = true;    // keep projectile follow at char 
-		Btarget = false;
+		setFlag(isprojfollow);    // keep projectile follow at char 
+		clearFlag(Btarget);
 		frameIndicator = 0;
 		fAttackcount = 0.5f;
 		sparedVx = vx;
-
+		sparedVy = 1.0f;
 		Hittimes = 1;
 
 		//ProjSize
@@ -2573,18 +3191,18 @@ void cDynamic_creature_Pantir::EnergyMoveAttackMid()
 		m_nGraphicEndFrame = m_nGraphicCounterX + m_nGraphicAmountFrames;
 
 
-		switch (GetFacingDirection())
-		{
-		case 1:       // <--East
-			ProjOffsetX = -0.95f;
-			ProjOffsetY = 0;
-			break;
-		case 3:       // <--Weast
-			ProjOffsetX = 0.85f;
-			ProjOffsetY = 0;
-			break;
+		//switch (GetFacingDirection())
+		//{
+		//case 1:       // <--East
+		//	ProjOffsetX = -0.95f;
+		//	ProjOffsetY = 0;
+		//	break;
+		//case 3:       // <--Weast
+		//	ProjOffsetX = 0.85f;
+		//	ProjOffsetY = 0;
+		//	break;
 
-		}
+		//}
 
 	}
 }
@@ -2593,15 +3211,15 @@ void cDynamic_creature_Pantir::EnergyMoveAttackHigh()
 {
 	if (!bHideMode)
 	{
-		isAttack = true;
-		IsOnePlay = false;
+		setFlag(isAttack);
+		clearFlag(IsOnePlay);
 		enumCounter = 5; // <-- High sinister strike
-		isprojfollow = true;    // keep projectile follow at char 
-		Btarget = false;  // <--- Set projectile take target enemy for blink or other
+		setFlag(isprojfollow);    // keep projectile follow at char 
+		clearFlag(Btarget);  // <--- Set projectile take target enemy for blink or other
 		frameIndicator = 0;
 		fAttackcount = 0.5f;
 		sparedVx = vx;
-
+		sparedVy = 1.0f;
 		Hittimes =2;
 
 		//ProjSize
@@ -2626,18 +3244,18 @@ void cDynamic_creature_Pantir::EnergyMoveAttackHigh()
 
 
 
-		switch (GetFacingDirection())
-		{
-		case 1:       // <--East
-			ProjOffsetX = -0.95f;
-			ProjOffsetY = 0;
-			break;
-		case 3:       // <--Weast
-			ProjOffsetX = 0.85f;
-			ProjOffsetY = 0;
-			break;
+		//switch (GetFacingDirection())
+		//{
+		//case 1:       // <--East
+		//	ProjOffsetX = -0.95f;
+		//	ProjOffsetY = 0;
+		//	break;
+		//case 3:       // <--Weast
+		//	ProjOffsetX = 0.85f;
+		//	ProjOffsetY = 0;
+		//	break;
 
-		}
+		//}
 
 	}
 }
@@ -2647,9 +3265,10 @@ void cDynamic_creature_Pantir::RageMoveAttackUp()
 	if (!bHideMode)
 	{
 		sparedVx = vx;
-		isAttack = true;
-		IsOnePlay = false;
-		isprojfollow = true;    // keep projectile follow at char 
+		sparedVy = 1.0f;
+		setFlag(isAttack);
+		clearFlag(IsOnePlay);
+		setFlag(isprojfollow);    // keep projectile follow at char 
 		enumCounter = 8;     //Eviscirate throw up
 		frameIndicator = 0;
 
@@ -2657,7 +3276,7 @@ void cDynamic_creature_Pantir::RageMoveAttackUp()
 		Hittimes = 2;
 		//
 		if ((g_engine->GetLearnedTalent(5)))	
-		Btarget = true;// <--- Set projectile take target enemy for blink or other
+		setFlag(Btarget);// <--- Set projectile take target enemy for blink or other
 
 
 		targetTime = 0.2f;
@@ -2681,18 +3300,18 @@ void cDynamic_creature_Pantir::RageMoveAttackUp()
 		m_nGraphicEndFrame = m_nGraphicCounterX + m_nGraphicAmountFrames;
 
 
-		switch (GetFacingDirection())
-		{
-		case 1:       // <--East
-			ProjOffsetX = -0.95f;
-			ProjOffsetY = 0;
-			break;
-		case 3:       // <--Weast
-			ProjOffsetX = 0.85f;
-			ProjOffsetY = 0;
-			break;
+		//switch (GetFacingDirection())
+		//{
+		//case 1:       // <--East
+		//	ProjOffsetX = -0.95f;
+		//	ProjOffsetY = 0;
+		//	break;
+		//case 3:       // <--Weast
+		//	ProjOffsetX = 0.85f;
+		//	ProjOffsetY = 0;
+		//	break;
 
-		}
+		//}
 	}
 
 
@@ -2703,12 +3322,12 @@ void cDynamic_creature_Pantir::RageMoveAttackAir()
 	if (!bHideMode)
 	{
 		sparedVx = vx;
-
-		isAttack = true;
-		IsOnePlay = false;
-		Btarget = false; // <--- Set projectile take target enemy for blink or other
+		sparedVy = 1.0f;
+		setFlag(isAttack);
+		clearFlag(IsOnePlay);
+		clearFlag(Btarget); // <--- Set projectile take target enemy for blink or other
 		enumCounter = 12;  // air eviscirate
-		isprojfollow = false;    // keep projectile follow at char 
+		clearFlag(isprojfollow);    // keep projectile follow at char 
 		frameIndicator = 0;
 		rageset = 0;
 		Hittimes = 2;
@@ -2745,13 +3364,14 @@ void cDynamic_creature_Pantir::EnergyMoveAttackBack()
 {
 	if (!bHideMode)
 	{
-		isAttack = true;
-		IsOnePlay = false;
-		Btarget = false; // <--- Set projectile take target enemy for blink or other
+		setFlag(isAttack);
+		clearFlag(IsOnePlay);
+		clearFlag(Btarget); // <--- Set projectile take target enemy for blink or other
 		enumCounter = 16; // <-- BackStab
 		frameIndicator = 0;
 		sparedVx = vx;
-		isprojfollow = true;    // keep projectile follow at char 
+		sparedVy = 1.0f;
+		setFlag(isprojfollow);    // keep projectile follow at char 
 
 		Hittimes = 1;
 
@@ -2767,18 +3387,18 @@ void cDynamic_creature_Pantir::EnergyMoveAttackBack()
 
 
 
-		switch (GetFacingDirection())
-		{
-		case 1:       // <--East
-			ProjOffsetX = -0.95f;
-			ProjOffsetY = 0;
-			break;
-		case 3:       // <--Weast
-			ProjOffsetX = 0.85f;
-			ProjOffsetY = 0;
-			break;
+		//switch (GetFacingDirection())
+		//{
+		//case 1:       // <--East
+		//	ProjOffsetX = -0.95f;
+		//	ProjOffsetY = 0;
+		//	break;
+		//case 3:       // <--Weast
+		//	ProjOffsetX = 0.85f;
+		//	ProjOffsetY = 0;
+		//	break;
 
-		}
+		//}
 	}
 }
 
@@ -2817,17 +3437,30 @@ void cDynamic_creature_Pantir::EnergyHide(float fElapsedTime)
 
 		if (Hidetimer < 0.5f)
 		{
-			redColor = (0.5f - Hidetimer) * 510;
-			greenColor = (0.5f - Hidetimer) * 510;
-			blueColor = (0.5f - Hidetimer) * 510;
+
+			uint8_t Red = getRed();
+			uint8_t Green = getGreen();
+			uint8_t blue = getBlue();
+
+			Red = (0.5f - Hidetimer) * 510;
+			Green = (0.5f - Hidetimer) * 510;
+			blue = (0.5f - Hidetimer) * 510;
+
+			setGreenColor(Green);
+			setRedColor(Red);
+			setBlueColor(blue);
 
 
 			if (Hidetimer <= 0)
 			{
 				m_layer = Friend;
-				redColor = 255;
-				greenColor = 255;
-				blueColor = 255;
+
+				setGreenColor(255);
+				setRedColor(255);
+				setBlueColor(255);
+				//redColor = 255;
+				//greenColor = 255;
+				//blueColor = 255;
 				moveBonus -= 10;
 				bHideMode = false;
 				Hidetimer = 2.0f;
@@ -2841,12 +3474,12 @@ void cDynamic_creature_Pantir::RageMoveAttackJumpUp()
 	{
 	
 
-		isAttack = true;
-		IsOnePlay = false;
-		bAnimAction = false;
-		Btarget = false; // <--- Set projectile take target enemy for blink or other
+		setFlag(isAttack);
+		clearFlag(IsOnePlay);
+		clearFlag(bAnimAction);
+		clearFlag(Btarget); // <--- Set projectile take target enemy for blink or other
 		enumCounter = 17;  //  eviscirate jump Up
-		isprojfollow = false;    // keep projectile follow at char 
+		clearFlag(isprojfollow);    // keep projectile follow at char 
 		frameIndicator = 0;
 
 		vy -= 15;
@@ -2870,16 +3503,16 @@ void cDynamic_creature_Pantir::RageMoveAttackAirDown()
 	{
 
 
-		isAttack = true;
-		IsOnePlay = false;
+		setFlag(isAttack);
+		setFlag(IsOnePlay);
 
-		bAnimAction = true;  // <--blocking other animations while it's working
-		bIsAttackable = false;
+		setFlag(bAnimAction);  // <--blocking other animations while it's working
+		clearFlag(bIsAttackable);
 
-		Btarget = false;  // <--- Set projectile take target enemy for blink or other
+		clearFlag(Btarget);  // <--- Set projectile take target enemy for blink or other
 
 		enumCounter = 18;  //  eviscirate jump down
-		isprojfollow = true;    // keep projectile follow at char 
+		setFlag(isprojfollow);    // keep projectile follow at char 
 		frameIndicator = 0;
 
 		vy = 0;
@@ -2901,9 +3534,9 @@ void cDynamic_creature_Pantir::RageMoveAttackAirDown()
 		m_nShockTime = 0.15f;
 
 		
-			ProjOffsetX = 0.0f;
-		     // <--Weast
-			ProjOffsetY = 0.25f;
+			//ProjOffsetX = 0.0f;
+		 //    // <--Weast
+			//ProjOffsetY = 0.25f;
 		
 
 			FxColumn = 7;
@@ -2917,8 +3550,8 @@ void cDynamic_creature_Pantir::RageMoveAttackAirDown()
 void cDynamic_creature_Pantir::RageMoveAttackLanding()
 {
 	FXFrame = 8;
-	isprojfollow = true;    // keep projectile follow at char 
-	IsThrow = false;
+	setFlag(isprojfollow);    // keep projectile follow at char 
+	clearFlag(IsThrow);
 	m_nGraphicCounterY = 7;
 	m_nGraphicCounterX = 5;
 	m_nGraphicAmountFrames = 9;  //  <---Means how long our projectile should work
@@ -2937,9 +3570,9 @@ void cDynamic_creature_Pantir::RageMoveAttackLanding()
 	ProjCollbordersYF = 1.8f;
 	//
 
-	ProjOffsetX = 0.0f;
+	//ProjOffsetX = 0.0f;
 	// <--Weast
-	ProjOffsetY = 0.0f;
+//	ProjOffsetY = 0.0f;
 
 	FxColumn = 8;
 
@@ -2971,11 +3604,11 @@ void cDynamic_creature_Pantir::BlinkBehind()
 			// Create shadow 
 			cDynamic_creature_Pantir* shadow = new cDynamic_creature_Pantir;
 			shadow->m_layer = Neutral;
-			shadow->isAttack = true;
+			shadow->setFlag(isAttack);
 			shadow->px = this->px;
 			shadow->py = this->py;
 			shadow->enumCounter = 20;
-			shadow->gravity = false;
+			shadow->clearFlag(gravity);
 			shadow->framespeed = 0.1f;
 			shadow->SetFacingDirection(this->GetFacingDirection());
 			g_engine->AddVecDynamic(shadow);
@@ -2992,12 +3625,12 @@ void cDynamic_creature_Pantir::BlinkBehind()
 
 
 			//Copy from jump
-			bAnimAction = false;    // <--Now jump can deflect animation downjumpevis
-			IsOnePlay = false;
-			isAttack = false;
-			bOnLanded = false;
-			isprojfollow = false;
-			Btarget = false;
+			clearFlag(bAnimAction);    // <--Now jump can deflect animation downjumpevis
+			clearFlag(IsOnePlay);
+			clearFlag(isAttack);
+			clearFlag(bOnLanded);
+			clearFlag(isprojfollow);
+			clearFlag(Btarget);
 			Jumpcounter++;
 			frameIndicator = 0;     // if we change it on 3 - it will be a comboo whith eviscirate but isAttack must be true
 			//Copy from jump
@@ -3025,11 +3658,11 @@ void cDynamic_creature_Pantir::BlinkBehind()
 			// Create shadow 
 			cDynamic_creature_Pantir* shadow = new cDynamic_creature_Pantir;
 			shadow->m_layer = Neutral;
-			shadow->isAttack = true;
+			shadow->setFlag(isAttack);
 			shadow->px = this->px;
 			shadow->py = this->py;
 			shadow->enumCounter = 20;
-			shadow->gravity = false;
+			shadow->clearFlag(gravity);
 			shadow->framespeed = 0.1f;
 			shadow->SetFacingDirection(this->GetFacingDirection());
 			g_engine->AddVecDynamic(shadow);
@@ -3046,12 +3679,12 @@ void cDynamic_creature_Pantir::BlinkBehind()
 
 
 			//Copy from jump
-			bAnimAction = false;    // <--Now jump can deflect animation downjumpevis
-			IsOnePlay = false;
-			isAttack = false;
-			bOnLanded = false;
-			isprojfollow = false;
-			Btarget = false;
+			clearFlag(bAnimAction);    // <--Now jump can deflect animation downjumpevis
+			clearFlag(IsOnePlay);
+			clearFlag(isAttack);
+			clearFlag(bOnLanded);
+			clearFlag(isprojfollow);
+			clearFlag(Btarget);
 			Jumpcounter++;
 			frameIndicator = 0;     // if we change it on 3 - it will be a comboo whith eviscirate but isAttack must be true
 			//Copy from jump
@@ -3073,22 +3706,24 @@ void cDynamic_creature_Pantir::BlinkBehind()
 bool cDynamic_creature_Pantir::IsLanded()
 {
 
-	if (bOnLanded)
+	if (checkFlag(bOnLanded))
 	{
 		return true;
 	}
 	else
 	{
-		bOnLanded = true;
+		setFlag(bOnLanded);
 		
+		g_engine->PlaySounds("Landed");
+	
 		
-		if (bAnimAction)   // <--Means when we action stage don't switch animation on onladed
+		if (checkFlag(bAnimAction))   // <--Means when we action stage don't switch animation on onladed
 		{
 			return false;
 		}
 		enumCounter = 11;
-		isAttack = false;
-		IsOnePlay = false;
+		clearFlag(isAttack);
+		clearFlag(IsOnePlay);
 		frameIndicator = 0;
 		setEnum();
 		return false;
@@ -3116,6 +3751,103 @@ void cDynamic_creature_Pantir::DeathFun()
 	
 }
 
+void cDynamic_creature_Pantir::TakeAttributes(unsigned int attributes)
+{
+
+	// pEquipedBack->Attributes
+	uint8_t objAggil = (attributes >> 0) & 0xF;
+	uint8_t objInteleg = (attributes >> 4) & 0xF;
+	//uint8_t objVersality = (pEquipedBack->Attributes >> 8) & 0xF;
+	uint8_t objStrength = (attributes >> 12) & 0xF;
+	uint8_t Dmg = (attributes >> 16) & 0xF;
+
+
+	setItemAgil(getItemAgil() + objAggil);
+	setItemStr(getItemStr() + objStrength);
+	setItemInt(getItemInt() + objInteleg);
+	/*ItemsAgil = ItemsAgil + objAggil;
+	ItemsStr = ItemsStr + objStrength;
+	ItemsInt = ItemsInt + objInteleg;*/
+	ItemAvAtk = ItemAvAtk + Dmg;
+	
+
+
+}
+
+void cDynamic_creature_Pantir::SubstracAttributes(unsigned int attributes)
+{
+
+	// pEquipedBack->Attributes
+	uint8_t objAggil = (attributes >> 0) & 0xF;
+	uint8_t objInteleg = (attributes >> 4) & 0xF;
+	//uint8_t objVersality = (pEquipedBack->Attributes >> 8) & 0xF;
+	uint8_t objStrength = (attributes >> 12) & 0xF;
+	uint8_t Dmg = (attributes >> 16) & 0xF;
+
+	setItemAgil(getItemAgil() - objAggil);
+	setItemStr(getItemStr() - objStrength);
+	setItemInt(getItemInt() - objInteleg);
+//	ItemsAgil = ItemsAgil - objAggil;
+//	ItemsStr = ItemsStr - objStrength;
+//	ItemsInt = ItemsInt - objInteleg;
+	ItemAvAtk = ItemAvAtk - Dmg;
+	
+}
+
+void cDynamic_creature_Pantir::StatsImpact()
+{
+	uint8_t agi = getEndAgil();
+	uint8_t bAgi = getBasicAgil();
+
+	int ImpactAgil = getEndAgil() - getBasicAgil();  // imapct from Items and LvlIncrease  //  we calculate only that part what we have from base stats (From items + Bonus from lvl)
+
+	float addaverage = 0.0f;
+	float addmove = 0.0f;
+	float addHaste = 0.0f;
+	for (size_t i = 0; i < ImpactAgil; i++)  //for agility
+	{
+		addaverage += 0.5f;
+		addmove += 0.5f;
+		addHaste += 0.0025f;
+	}
+	rawDmg = addaverage;
+	rawHaste = addHaste;
+	setItemMove(addmove);
+
+	unsigned int ds = getEndStrength();
+	unsigned int dw = getEndInt();
+	unsigned int da = getEndAgil();
+
+	int ImpactStr = getEndStrength() - getBasicStrength();  // imapct from Items and LvlIncrease
+
+
+	float HelpHealth = 0.0f;
+	float helpDef = 0.0f;
+	for (size_t i = 0; i < ImpactStr; i++)
+	{
+		HelpHealth += 0.6f;
+		helpDef += 0.2f;
+
+	}
+	rawHealth = HelpHealth*25.f;
+	rawDef = helpDef;
+
+	EndAverageAttack = LvlAverageAttack + ItemAvAtk + rawDmg;
+	EndDefence = LvlDefence + rawDef;
+	EndHaste = LvlHaste + rawHaste;
+	SetEndMovement(getLvlMovement() + getItemMove());
+	//EndMovementspeed = getLvlMovement() + getItemMove();
+	nHealthMax = lvlHealthMax + rawHealth;
+	hpUpdate->setLevelHp(nHealthMax);
+
+	if (nHealth > nHealthMax)
+	{
+		nHealth = nHealthMax;
+	}
+	
+	
+}
+
 
 
 cDynamic_creature_Enemy::cDynamic_creature_Enemy(std::string n, olc::Decal* spriteRight, olc::Decal* spriteLeft) : cDynamic_Creature(n, spriteRight, spriteLeft)
@@ -3123,9 +3855,9 @@ cDynamic_creature_Enemy::cDynamic_creature_Enemy(std::string n, olc::Decal* spri
 	m_layer = Enemy;
 	nHealth = 50;
 	nHealthMax = 50;
-	bDead = false;
+	clearFlag(bDead);
 	m_fStateTick = 0.3f;
-	bOnGround = false;
+	clearFlag(bOnGround);
 	Jumpcounter = 0;
 }
 
@@ -3133,10 +3865,36 @@ void cDynamic_creature_Enemy::Behaviour(float fElapsedTime, cDynamic* player)
 {
 	if (bControllable) // when we control in scripteditor
 	{
-		float fTargetX = player->px - px;
-		float fTargetY = player->py - py;
-		float fDistance = sqrtf(fTargetX * fTargetX + fTargetY * fTargetY);
+		float Bevpx, Bevpy;
+		float bvhelper = -1;
 
+		float fTargetX = player->px - px ;  // offset for archer 
+		float fTargetY = player->py - py ;
+
+		float ftargetoffset;
+
+	//	std::cout << fTargetX << std::endl;
+
+		if (fTargetX >0)  // means that mob in right  position
+		{
+			bvhelper = -1;
+			Bevpx = CollbordersXF + BeveOffsetpX * bvhelper;
+
+
+		}
+		else
+		{
+			
+			Bevpx = BeveOffsetpX -CollbordersXF ;
+			//Bevpy = BeveOffsetpY;
+
+		}
+	//	std::cout << Bevpx  << std::endl;
+		ftargetoffset = fTargetX + Bevpx;
+
+
+		float fDistance = sqrtf(fTargetX * fTargetX + fTargetY * fTargetY);
+		float fDistanceOffset = sqrtf(ftargetoffset * ftargetoffset + fTargetY * fTargetY);
 		
 
 		m_fStateTick -= fElapsedTime;
@@ -3149,9 +3907,13 @@ void cDynamic_creature_Enemy::Behaviour(float fElapsedTime, cDynamic* player)
 				{
 
 				
+					vx = 0;
+
+					
 
 
-					if (bOnGround)  // if stay on ground
+
+					if (checkFlag(bOnGround))  // if stay on ground
 					{
 
 						if (player->m_layer == Friend)
@@ -3159,42 +3921,40 @@ void cDynamic_creature_Enemy::Behaviour(float fElapsedTime, cDynamic* player)
 
 
 
-						if (!isAttack && !IsOnePlay)   // if no attack b noplay (hit)
+						if (!checkFlag(isAttack) && !checkFlag(IsOnePlay))   // if no attack b noplay (hit)
 						{
 
 
-
-							vx = (fTargetX / fDistance) *(Movementspeed/4);
+							if (fDistanceOffset >0.3f)
+							{
+							vx = (ftargetoffset / fDistanceOffset) *(getEndMovement()/4);
+							}
 
 							
 							//vy = (fTargetY / fDistance) * 1.0f;
 
-
-							if (vx>0)
+							if (vx > 0)
 							{
 								M_nFacingDirection = EAST;
-								
+
 							}
 							else
 							{
 								M_nFacingDirection = WEST;
-								
-								
 
-								
-								
+
 							}
 
-							if (fDistance < 2.9f && rand() % 5 == 4)  // && rand() % 25 == 5
+							if (fDistanceOffset < fSpecAtckdist && rand() % 5 == 4)  // && rand() % 25 == 5
 							{
 
 								SpecAttack(fTargetX, fTargetY,fDistance);
 
 
 							}
-							else if (fDistance < 1.6f)
+							else if (fDistanceOffset < fAttackDist)
 							{
-								if (rand() % 10 >= 5 && !isAttack)
+								if (rand() % 10 >= 5 && !checkFlag(isAttack))
 								{
 
 									AttackOne();
@@ -3284,14 +4044,14 @@ void cDynamic_creature_Enemy::Behaviour(float fElapsedTime, cDynamic* player)
 			else
 			{
 
-				bDead = true;
+				setFlag(bDead);
 			}
 
 			m_fStateTick += 0.35f;
 
 		}
 
-		if (bOnGround)    
+		if (checkFlag(bOnGround))    
 		{
 
 		if (M_nFacingDirection == EAST)
@@ -3328,7 +4088,7 @@ cDynamic_creature_BossBandit::cDynamic_creature_BossBandit():  cDynamic_creature
 {
 	nSheetSizeX = 256.0f;
 	nSheetSizeY = 256.0f;
-
+	looptimes = 3;
 
 	//collision borders
 	CollbordersX = 0.75f*2;
@@ -3340,24 +4100,37 @@ cDynamic_creature_BossBandit::cDynamic_creature_BossBandit():  cDynamic_creature
 	//
 
 	pEquipedWeapon = (cWeapon*)RPG_Assets::get().GetItem("Bandit Boss Sword");
-	hpUpdate = new cDynamic_HpBar(px, py, RPG_Assets::get().GetSprite("HPBarFull"), RPG_Assets::get().GetSprite("HPBarEmprty"), nHealth, this);
+	hpUpdate = new cDynamic_HpBar(px, py, nHealth, this);
 
 	LvL = 1;
 
 
+	setBasicMovement(20);
+	setBasicAgility(7);
+	setBasicStrength(50);
+	setBasicInt(13);
 
-	BasicMovementSpeed = 20;
-	BasicAgility = 7;
-	BasicStrength = 50;
-	BasicIntelect = 13;
+	//BasicMovementSpeed = 20;
+	//BasicAgility = 7;
+	//BasicStrength = 50;
+	//BasicIntelect = 13;
+	BasicAveAtck = 75;
 
 	calculateStats();
+
+	//EndMovementspeed = getLvlMovement();
+	//EndAgility = getLvlAgil();
+	//EndIntelligence = getLvlInt();
+	SetEndMovement(getLvlMovement());
+	SetEndAgility(getLvlAgil());
+	SetEndInt(getLvlInt());
+	EndAverageAttack = LvlAverageAttack;
 
 }
 
 void cDynamic_creature_BossBandit::Behaviour(float fElapsedTime, cDynamic* player)
 {
-	if (bControllable == 1) // when we control in scripteditor
+	if (checkFlag(bControllable)) // when we control in scripteditor
 	{
 		float fTargetX = player->px - px;
 		float fTargetY = player->py - py;
@@ -3376,14 +4149,14 @@ void cDynamic_creature_BossBandit::Behaviour(float fElapsedTime, cDynamic* playe
 
 
 
-					if (bOnGround)  // if stay on ground
+					if (checkFlag(bOnGround))  // if stay on ground
 					{
-						if (isAttack==false && IsOnePlay==false)   // if isAttack false and isOneplay false
+						if (checkFlag(isAttack)==false && checkFlag(IsOnePlay)==false)   // if isAttack false and isOneplay false
 						{
 
 
 
-							vx = (fTargetX / fDistance) * (Movementspeed / 4);
+							vx = (fTargetX / fDistance) * (getEndMovement() / 4);
 
 
 							//vy = (fTargetY / fDistance) * 1.0f;
@@ -3489,14 +4262,14 @@ void cDynamic_creature_BossBandit::Behaviour(float fElapsedTime, cDynamic* playe
 			else
 			{
 
-				bDead = true;
+				setFlag(bDead);
 			}
 
 			m_fStateTick += 0.3f;
 
 		}
 
-		if (bOnGround)
+		if (checkFlag(bOnGround))
 		{
 
 
@@ -3526,8 +4299,8 @@ void cDynamic_creature_BossBandit::Behaviour(float fElapsedTime, cDynamic* playe
 void cDynamic_creature_BossBandit::SpecAttack(float targetX, float targetY, float Distance)
 {
 
-	isAttack = true;
-	isprojfollow = true;
+	setFlag(isAttack);
+	setFlag(isprojfollow);
 	enumCounter = 4;     //  <---Attack Huricane
 	looptimes = 2;
 	frameIndicator = 0;
@@ -3553,8 +4326,8 @@ void cDynamic_creature_BossBandit::SpecAttack(float targetX, float targetY, floa
 	m_nGraphicCounterX = 0;
 	m_nGraphicAmountFrames = 12;
 
-	ProjOffsetX = 0.0f;
-	ProjOffsetY = 0.0f;
+//	ProjOffsetX = 0.0f;
+//	ProjOffsetY = 0.0f;
 
 
 	attackdif = 1;
@@ -3567,15 +4340,15 @@ void cDynamic_creature_BossBandit::SpecAttack2(float targetX, float targetY, flo
 {
 
 
-	isAttack = true;
-	isprojfollow = true;
+	setFlag(isAttack);
+	setFlag(isprojfollow);
 	enumCounter = 4;     //  <---Attack Huricane
 	looptimes = 2;
 	frameIndicator = 0;
 	FxColumn = -1;    //<--  3 column      place eviscirate
 	vx = 0;
 	sparedVx = (targetX / Distance > 0) ? 5 : -5; //vx storrage
-	
+	sparedVy = 1.0f;
 	m_nShockTime = 0.3f;
 	//IsThrow = true;
 	//isprojfollow = true;
@@ -3594,8 +4367,8 @@ void cDynamic_creature_BossBandit::SpecAttack2(float targetX, float targetY, flo
 	m_nGraphicCounterX = 5;
 	m_nGraphicAmountFrames = 12;
 
-	ProjOffsetX = 0.0f;
-	ProjOffsetY = 0.0f;
+//	ProjOffsetX = 0.0f;
+//	ProjOffsetY = 0.0f;
 
 
 	attackdif = 2; // in indicate state for difference from nunchaki stage
@@ -3609,10 +4382,10 @@ void cDynamic_creature_BossBandit::Mocking()
 {
 
 
-	IsOnePlay = true;
+	setFlag(IsOnePlay);
 	enumCounter = 11;     //  <---Attack Monkey
 	vx = 0;
-	isDirectionLock = true;
+	setFlag(isDirectionLock);
 	looptimes = 3;
 
 }
@@ -3620,9 +4393,9 @@ void cDynamic_creature_BossBandit::Mocking()
 void cDynamic_creature_BossBandit::AttackTwo()
 {
 
-	isAttack = true;
+	setFlag(isAttack);
 	//IsThrow = true;
-	isprojfollow = true;
+	setFlag(isprojfollow);
 	enumCounter = 3;     //  <---Attack   pierce
 
 	frameIndicator = 0;
@@ -3653,18 +4426,18 @@ void cDynamic_creature_BossBandit::AttackTwo()
 	//frameIndicator = 0;
 	//setEnum();
 
-	switch (GetFacingDirection())
-	{
-	case 1:       // <--East
-		ProjOffsetX = -0.25f;
-		ProjOffsetY = 0.5f;
-		break;
-	case 3:       // <--Weast
-		ProjOffsetX = +2.1f;
-		ProjOffsetY = 0.5f;
-		break;
+	//switch (GetFacingDirection())
+	//{
+	//case 1:       // <--East
+	//	ProjOffsetX = -0.25f;
+	//	ProjOffsetY = 0.5f;
+	//	break;
+	//case 3:       // <--Weast
+	//	ProjOffsetX = +2.1f;
+	//	ProjOffsetY = 0.5f;
+	//	break;
 
-	}
+	//}
 
 
 
@@ -3739,6 +4512,7 @@ void cDynamic_creature_BossBandit::IndicateAnim()
 			{
 				frameIndicator = m_nGraphicEndFrame-4;
 				vx = sparedVx;
+				sparedVy = 1.0f;
 				looptimes -= 1;
 			}
 
@@ -3829,7 +4603,7 @@ void VfxLevel::Update(float fElapsedTimeб, cDynamic* player)
 
 	if (timecount>=time)
 	{
-		bRedundant =true;
+		setFlag(bRedundant);
 		AlphaColor = 0;
 	}
 
@@ -3889,7 +4663,7 @@ void VfxShot::Update(float fElapsedTimeб, cDynamic* player)
 
 	if (timecount >= time)
 	{
-		bRedundant = true;
+		setFlag(bRedundant);
 		AlphaColor = 0;
 	}
 
@@ -3938,7 +4712,7 @@ cDynamic_creature_Boar::cDynamic_creature_Boar() : cDynamic_creature_Enemy("Fore
 {
 
 	pEquipedWeapon = (cWeapon*)RPG_Assets::get().GetItem("Bandit Sword");
-	hpUpdate = new cDynamic_HpBar(px, py, RPG_Assets::get().GetSprite("HPBarFull"), RPG_Assets::get().GetSprite("HPBarEmprty"), nHealth, this);
+	hpUpdate = new cDynamic_HpBar(px, py, nHealth, this);
 
 	LvL = 3;
 
@@ -3948,32 +4722,39 @@ cDynamic_creature_Boar::cDynamic_creature_Boar() : cDynamic_creature_Enemy("Fore
 	CollbordersY = 0.6f;
 	CollbordersYF = 1.5f;
 
-	BasicMovementSpeed = 15;
-	BasicAgility = 19;
-	BasicStrength = 30;
-	BasicIntelect = 13;
-
+	setBasicMovement(15);
+	setBasicAgility(19);
+	setBasicStrength(30);
+	setBasicInt(13);
+	
+	SetEndMovement(20);
 	calculateStats();
+	EndAverageAttack = LvlAverageAttack;
+
+	SetEndStrength(gettLvlStrength());
+	SetEndInt(getLvlInt());
+	SetEndAgility(getLvlAgil());
+
 }
 
 void cDynamic_creature_Boar::SpecAttack(float targetX, float targetY, float Distance)
 {
-	isAttack = true;
+	setFlag(isAttack) ;
 	enumCounter = 4;     //  <---Attack
 	framespeed = 0.12f;
 
 
-	bAnimAction = true;
+	setFlag(bAnimAction);
 
 	
-	isprojfollow = true;
+	setFlag(isprojfollow);
 	 
 	
 	
 	
 	m_nShockTime = 0.3f;
 	
-	calculatedDamage = (AverageAttack + pEquipedWeapon->nDamage) * 2.65f;   //set damage for projectile
+	calculatedDamage = (EndAverageAttack) * 20.65f;   //set damage for projectile
 
 	
 	attackdirectionX = 0.3f;
@@ -3981,8 +4762,8 @@ void cDynamic_creature_Boar::SpecAttack(float targetX, float targetY, float Dist
 
 	
 
-	ProjOffsetX = 0.0f;
-	ProjOffsetY = 0.0f;
+	//ProjOffsetX = 0.0f;
+//	ProjOffsetY = 0.0f;
 
 
 	m_nGraphicEndFrame = m_nGraphicCounterX + m_nGraphicAmountFrames;
@@ -4035,7 +4816,7 @@ void cDynamic_creature_Boar::SpecAttack(float targetX, float targetY, float Dist
 void cDynamic_creature_Boar::Behaviour(float fElapsedTime, cDynamic* player)
 {
 
-	if (bControllable == 1) // when we control in scripteditor
+	if (checkFlag(bControllable)) // when we control in scripteditor
 	{
 		float fTargetX = player->px - px;
 		float fTargetY = player->py - py;
@@ -4054,22 +4835,22 @@ void cDynamic_creature_Boar::Behaviour(float fElapsedTime, cDynamic* player)
 
 
 
-					if (bOnGround)  // if stay on ground
+					if (checkFlag(bOnGround))  // if stay on ground
 					{
-						if (!isAttack && !IsOnePlay ) // only when is attack =false and isoneplay = false
+						if (!checkFlag(isAttack) && !checkFlag(IsOnePlay) ) // only when is attack =false and isoneplay = false
 						{
 
 
 							if (BRunready)
 							{
-								vx = savedFx * (Movementspeed / 2);
+								vx = savedFx * (getEndMovement() / 2);
 
 							}
 							else
 							{
 
 
-								vx = (fTargetX / fDistance) * (Movementspeed / 4); // normalize 
+								vx = (fTargetX / fDistance) * (getEndMovement() / 4); // normalize 
 
 
 								//vy = (fTargetY / fDistance) * 1.0f;
@@ -4162,14 +4943,14 @@ void cDynamic_creature_Boar::Behaviour(float fElapsedTime, cDynamic* player)
 			else
 			{
 
-				bDead = true;
+				setFlag(bDead);
 			}
 
 			m_fStateTick += 0.5f;
 
 		}
 
-		if (bOnGround)
+		if (checkFlag(bOnGround))
 		{
 
 			if (M_nFacingDirection == EAST)
@@ -4213,7 +4994,7 @@ void cDynamic_creature_Boar::Behaviour(float fElapsedTime, cDynamic* player)
 
 void cDynamic_creature_Boar::obsticleReaction()
 {
-	IsOnePlay = true;
+	setFlag(IsOnePlay);
 	framespeed = 0.12f;
 
 
@@ -4292,7 +5073,7 @@ void cDynamic_creature_Boar::IndicateAnim()
 
 
 
-			if (animspr >= framespeed - Haste)                 //it's speed of frames
+			if (animspr >= framespeed - EndHaste)                 //it's speed of frames
 			{
 			//std::cout << frameIndicator << std::endl;
 			PerformAttack();
@@ -4338,7 +5119,7 @@ void cDynamic_creature_Boar::IndicateAnim()
 		if (frameIndicator == m_nGraphicEndFrame - 1)
 		{
 			Run = false;
-			bAnimAction = false;
+			clearFlag(bAnimAction);
 		}
 
 		break;
@@ -4403,22 +5184,22 @@ void cDynamic_creature_Boar::IndicateAnim()
 
 bool cDynamic_creature_Boar::IsLanded()
 {
-	if (bOnLanded)
+	if (checkFlag(bOnLanded))
 	{
 		return true;
 	}
 	else
 	{
-		bOnLanded = true;
-		if (bAnimAction)   // <--Means when we action stage don't switch animation on onladed
+		setFlag(bOnLanded);
+		if (checkFlag(bAnimAction))   // <--Means when we action stage don't switch animation on onladed
 		{
 			return false;
 		}
 
 		vx = 0;
 		enumCounter = 11;
-		isAttack = false;
-		IsOnePlay = true;
+		clearFlag(isAttack);
+		setFlag(IsOnePlay);
 		frameIndicator = 0;
 		setEnum();
 		return false;
@@ -4467,7 +5248,7 @@ void VfxDeath::Update(float fElapsedTime, cDynamic* player)
 
 	if (timecount >= time)
 	{
-		bRedundant = true;
+		setFlag(bRedundant);
 		AlphaColor = 0;
 	}
 
@@ -4607,7 +5388,7 @@ void Edynamic_Cloud::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)
 cDynamic_creature_Rider::cDynamic_creature_Rider(olc::Decal* pspriteRight, olc::Decal* pspriteLeft) : cDynamic_creature_Enemy("Rider", pspriteRight, pspriteLeft)
 {
 
-	bIsAttackable = false;
+	clearFlag(bIsAttackable);
 
 	LvL = 1;
 	bSolidVsMap = false;
@@ -4757,7 +5538,7 @@ void cDynamic_creature_Rider::Behaviour(float fElapsedTime, cDynamic* player)
 cDynamic_creature_WereWolf::cDynamic_creature_WereWolf() : cDynamic_creature_Enemy("WereWolf", RPG_Assets::get().GetSprite("WereWolfRight"), RPG_Assets::get().GetSprite("WereWolfLeft"))
 {
 	pEquipedWeapon = (cWeapon*)RPG_Assets::get().GetItem("Bandit Sword");
-	hpUpdate = new cDynamic_HpBar(px, py, RPG_Assets::get().GetSprite("HPBarFull"), RPG_Assets::get().GetSprite("HPBarEmprty"), nHealth, this);
+	hpUpdate = new cDynamic_HpBar(px, py, nHealth, this);
 	 bTransformed = true;
 	LvL = 3;
 
@@ -4767,14 +5548,26 @@ cDynamic_creature_WereWolf::cDynamic_creature_WereWolf() : cDynamic_creature_Ene
 	CollbordersY = 0.6f;
 	CollbordersYF = 1.5f;
 
-	BasicMovementSpeed = 12;
-	BasicAgility = 19;
-	BasicStrength = 22;
-	BasicIntelect = 13;
+	//EndMovementspeed = 12;
+
+	setBasicAgility(19);
+	setBasicInt(13);
+	setBasicStrength(10);
+	//BasicAgility = 19;
+	//BasicIntelect = 13;
+	EndAverageAttack = 50;
+	
 
 	calculateStats();
 	
-	
+	EndAverageAttack = LvlAverageAttack;
+	SetEndStrength(gettLvlStrength());
+	SetEndAgility(getLvlAgil());
+	SetEndInt(getLvlInt());
+	SetEndMovement(12);
+//	EndStrength = gettLvlStrength();
+//	EndIntelligence = getLvlInt();
+//	EndAgility = getLvlAgil();
 
 }
 
@@ -4890,7 +5683,7 @@ void cDynamic_creature_WereWolf::IndicateAnim()
 
 void cDynamic_creature_WereWolf::AttackOne()
 {
-	isAttack = true;
+	setFlag(isAttack);
 	enumCounter = 3;     //  <---Attack
 
 	frameIndicator = 0;
@@ -4901,7 +5694,7 @@ void cDynamic_creature_WereWolf::AttackOne()
 	ProjCollbordersY = 0.65f;
 	ProjCollbordersYF = 1.8f;
 
-	isprojfollow = false;
+	setFlag(isprojfollow);
 	vx = 0;
 	m_nGraphicCounterY = 3;
 	m_nGraphicCounterX = 0;
@@ -5002,4 +5795,155 @@ void cDynamic_creature_WereWolf::DeathFun()
 		g_engine->AddParticle(new VfxDeath(this, m_pSpriteLeft, spritePos, 1));
 	}
 
+}
+
+void cDynamic_creature_Pantir::setItemAgil(uint8_t Agil)
+{
+//	color = (color & 0xFFFFFF00) | Red;
+	ItemAttributes = (ItemAttributes & 0xFFFFFF00) | Agil;
+}
+
+void cDynamic_creature_Pantir::setItemStr(uint8_t Str)
+{
+	ItemAttributes = (ItemAttributes & 0xFFFF00FF) | (Str << 8);
+}
+
+void cDynamic_creature_Pantir::setItemInt(uint8_t Int)
+{
+	ItemAttributes = (ItemAttributes & 0xFF00FFFF) | (Int << 16);
+}
+
+void cDynamic_creature_Pantir::setItemMove(uint8_t Move)
+{
+	ItemAttributes = (ItemAttributes & 0x00FFFFFF) | (Move <<24);
+}
+
+uint8_t cDynamic_creature_Pantir::getItemAgil()
+{
+	return ItemAttributes & 0xFF;
+}
+uint8_t cDynamic_creature_Pantir::getItemStr()
+{
+	return (ItemAttributes >> 8) & 0xFF;
+}
+uint8_t cDynamic_creature_Pantir::getItemInt()
+{
+	return (ItemAttributes >> 16) & 0xFF;
+}
+
+uint8_t cDynamic_creature_Pantir::getItemMove()
+{
+	return (ItemAttributes >> 24) & 0xFF;
+}
+
+void cDynamic_Creature::SetLvlAgility(uint8_t agil)
+{
+	Lvlattributes = (Lvlattributes & 0xFFFFFF00) | agil;    // F means mask 0 measn set 0
+}
+
+void cDynamic_Creature::SetLvlStrength(uint8_t str)
+{
+	Lvlattributes = (Lvlattributes & 0xFFFF00FF) | (str << 8);
+}
+
+void cDynamic_Creature::SetLvlInt(uint8_t Inteleg)
+{
+	Lvlattributes = (Lvlattributes & 0xFF00FFFF) | (Inteleg << 16);
+}
+
+void cDynamic_Creature::SetLvlMovement(uint8_t movement)
+{
+	Lvlattributes = (Lvlattributes & 0x00FFFFFF) | (movement << 24);
+}
+
+uint8_t cDynamic_Creature::getLvlAgil()
+{
+	return Lvlattributes & 0xFF;
+}
+
+uint8_t cDynamic_Creature::gettLvlStrength()
+{
+	return (Lvlattributes >> 8) & 0xFF;
+}
+
+uint8_t cDynamic_Creature::getLvlInt()
+{
+	return (Lvlattributes >> 16) & 0xFF;
+}
+
+uint8_t cDynamic_Creature::getLvlMovement()
+{
+	return (Lvlattributes >> 24) & 0xFF;
+}
+void cDynamic_Creature::SetEndAgility(uint8_t agil)
+{
+	Endattributes = (Endattributes & 0xFFFFFF00) | agil;
+}
+void cDynamic_Creature::SetEndStrength(uint8_t Str)
+{
+	Endattributes = (Endattributes & 0xFFFF00FF) | (Str << 8);
+}
+void cDynamic_Creature::SetEndInt(uint8_t Inteleg)
+{
+	Endattributes = (Endattributes & 0xFF00FFFF) | (Inteleg << 16);
+}
+void cDynamic_Creature::SetEndMovement(uint8_t move)
+{
+	Endattributes = (Endattributes & 0x00FFFFFF) | (move << 24);
+}
+
+uint8_t cDynamic_Creature::getEndAgil()
+{
+	return Endattributes & 0xFF;
+}
+
+uint8_t cDynamic_Creature::getEndStrength()
+{
+	return (Endattributes >> 8) & 0xFF;
+}
+
+uint8_t cDynamic_Creature::getEndInt()
+{
+	return (Endattributes >> 16) & 0xFF;
+}
+
+uint8_t cDynamic_Creature::getEndMovement()
+{
+	return (Endattributes >> 24) & 0xFF;
+}
+void cDynamic_Creature::setBasicAgility(uint8_t agility)
+{
+	BasicAttributes = (BasicAttributes & 0xFFFFFF00) | agility ;
+}
+void cDynamic_Creature::setBasicStrength(uint8_t Strength)
+{
+	BasicAttributes = (BasicAttributes & 0xFFFF00FF) | (Strength << 8);
+}
+void cDynamic_Creature::setBasicInt(uint8_t Int)
+{
+	BasicAttributes = (BasicAttributes & 0xFF00FFFF) | (Int << 16);
+}
+
+void cDynamic_Creature::setBasicMovement(uint8_t move)
+{
+	BasicAttributes = (BasicAttributes & 0x00FFFFFF) | (move << 24);
+}
+uint8_t cDynamic_Creature::getBasicAgil()
+{
+	return BasicAttributes & 0xFF;
+}
+
+uint8_t cDynamic_Creature::getBasicStrength()
+{
+	return (BasicAttributes >> 8) & 0xFF;
+}
+
+uint8_t cDynamic_Creature::getBasicInt()
+{
+	return (BasicAttributes >> 16) & 0xFF;
+}
+
+uint8_t cDynamic_Creature::getBasicMovement()
+{
+	return (BasicAttributes >> 24) & 0xFF;
 }

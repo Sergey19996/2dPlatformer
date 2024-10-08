@@ -2,48 +2,28 @@
 
 
 
+
 RPG_Engine::RPG_Engine()
 {
     sAppName = "Pantrir platformer";
 }
 
-bool RPG_Engine::OnUserCreate()
+void RPG_Engine::Drawcursor(olc::vi2d mouse)
 {
-	hWnd = GetConsoleWindow();
+	const float x = 64 % 32;
+	const float y = 64 / 32;
+	//Mouse
+	DrawPartialDecal({ (float)(mouse.x - 0.15f) , (float)(mouse.y - 0.1f) }, m_Items, { x * 64,y * 64 }, { (float)64,(float)(64) }, { (float)0.5*fscale,(float)0.5*fscale });
+}
 
-	SetMouseFocus(true);
-	cDynamic::g_engine = this;
-	cItem::g_engine = this;
-	cUI::g_engine = this;
-
-
-	cQuest::g_script = &m_script;
-	cQuest::g_engine = this;
-	cComand::g_engine = this;
-
-	cMap::g_script = &m_script;
-	cMap::g_engine = this;
+void RPG_Engine::LoadBaseUiSettings()
+{
 	
-    RPG_Assets::get().LoadSprites();               //Load sprites
-	RPG_Assets::get().LoadItems();
-	LoadenemyInstances();
-	RPG_Assets::get().LoadMaps();
-	RPG_Assets::get().LoadUiElements();
-	RPG_Assets::get().LoadQuests();
-
-    
-
-	m_sprFont = RPG_Assets::get().GetSprite("font");   //take font
-
-
+	/// 
 	
-	m_listQusets.push_front(RPG_Assets::get().GetQuest(0)); // add in lust First Main quest
 
+	//
 
-    m_pPlayer = new cDynamic_creature_Pantir();   //create char 
-
-
-	CalculateExp();
 
 
 	AddUi((RPG_Assets::get().GetUiElements("Experience Indicator")));
@@ -84,7 +64,7 @@ bool RPG_Engine::OnUserCreate()
 	SetLearnedTalent((RPG_Assets::get().GetUiElements("Attack Back")));
 
 	SetLearnedTalent((RPG_Assets::get().GetUiElements("Vanish")));
-	
+
 	//
 
 
@@ -102,25 +82,160 @@ bool RPG_Engine::OnUserCreate()
 	AddUi((RPG_Assets::get().GetUiElements("NewRageIndicator_1")));
 	AddUi((RPG_Assets::get().GetUiElements("NewRageIndicator_2")));
 	AddUi((RPG_Assets::get().GetUiElements("NewRageIndicator_3")));
+	//
 
-	//GiveItem(new cWeapon_PantirSword());
-	//GiveItem(new cWeapon_BrokenSword());
-	/*GiveItem(new cCoin());
-	GiveItem(new cCoin());
-	GiveItem(new cCoin());
-	GiveItem(new cCoin());
-	GiveItem(new cCoin());*/
-	GiveItem(new cSmallWallet());
-	/*GiveItem(new cCoin());
-	GiveItem(new cWeapon_BanditSword());
-	GiveItem(new cCoin());*/
+	m_vecEquip.resize(6);
+	m_vecVisibleDynamics.resize(30);
+
+	for (size_t i = 0; i < 6; i++)
+	{
+		InventaryItem* empty = new InventaryItem();
+		empty->index = i;
+		//empty->bEquiped = true;
+		empty->setFlag(empty->bEquiped);
+		//empty->Item = (cEquip*)RPG_Assets::get().GetItem("Empty");
+		m_vecEquip[i]=empty;
+
+	}
+	// Bind Vector with pointesr in char
 
 
-
-
-	nVisibleTileX = ScreenWidth() / 64;
-	nVisibleTileY = ScreenHeight() / 64;
 	
+
+
+
+	//m_vecEquip[6]->Item =
+//	m_vecEquip.push_back(m_pPlayer->pEquipedNeck);  //  6 equip index
+	//m_vecEquip.push_back(m_pPlayer->pEquipedHelmet); // 5 equip index
+//m_vecEquip.push_back(m_pPlayer->pEquipedWeapon); //1 index
+//	m_vecEquip.push_back(m_pPlayer->pEquipedChest); // 4 equip index
+//	m_vecEquip.push_back(m_pPlayer->pEquipedBack);  // 2 equipindex
+//	m_vecEquip.push_back(m_pPlayer->pEquipedBoots); // 3 equip index
+
+
+
+
+
+	for (size_t i = 0; i < 2; i++)
+	{
+		InventaryItem* empty = nullptr;
+		//empty->index = i;
+		m_vecUi.push_back(empty);
+
+	}
+
+
+	for (int i = 0; i < 24; i++)
+	{
+		InventaryItem* empty = new InventaryItem();
+		empty->index = i;
+
+		m_listItems.push_back(empty);
+	}
+	for (int i = 0; i < 24; i++)
+	{
+		InventaryItem* empty = new InventaryItem();
+		empty->index = i;
+		//empty->bInWarehouse = 1;
+		empty->setFlag(empty->binWarehouse);
+
+		m_listWarehouseItems.push_back(empty);
+	}
+	for (int i = 0; i < 24; i++)
+	{
+		InventaryItem* empty = new InventaryItem();
+		empty->index = i;
+		//empty->bInWarehouse = 1;
+
+		m_listBlackSmithItems.push_back(empty);
+	}
+	for (int i = 0; i < 24; i++)
+	{
+		InventaryItem* empty = new InventaryItem();
+		empty->index = i;
+		//empty->bInWarehouse = 1;
+
+		m_listStoreItems.push_back(empty);
+	}
+
+}
+
+bool RPG_Engine::OnUserCreate()
+{
+	hWnd = GetConsoleWindow();
+	
+
+	SetMouseFocus(true);
+	cDynamic::g_engine = this;
+	cItem::g_engine = this;
+	cUI::g_engine = this;
+	
+	
+	cQuest::g_script = &m_script;
+	cQuest::g_engine = this;
+	cComand::g_engine = this;
+
+	cMap::g_script = &m_script;
+	cMap::g_engine = this;
+	
+    RPG_Assets::get().LoadSprites();               //Load sprites
+	RPG_Assets::get().LoadItems();
+
+	LoadenemyInstances();
+
+	RPG_Assets::get().LoadMaps();
+	RPG_Assets::get().LoadUiElements();
+	RPG_Assets::get().LoadQuests();
+	RPG_Assets::get().LoadMusc();
+    
+
+
+	LoadSoundPool(20);
+	sf::SoundBuffer* buffer = RPG_Assets::get().findSound("Run");
+	WalkSound->setBuffer(*buffer);
+	WalkSound->setVolume(25);
+
+	m_sprFont = RPG_Assets::get().GetSprite("font");   //take font
+
+
+	
+	m_listQusets.push_front(RPG_Assets::get().GetQuest(0)); // add in lust First Main quest
+
+	LoadBaseUiSettings();
+
+    m_pPlayer = new cDynamic_creature_Pantir();   //create char 
+
+
+	m_vecEquip[0]->Item = m_pPlayer->pEquipedNeck;  // if in m_pPlayer pointers have some objects, we show them and let manipulate like change tham on other
+	m_vecEquip[1]->Item = m_pPlayer->pEquipedHelmet;
+	m_vecEquip[2]->Item = m_pPlayer->pEquipedWeapon;
+	m_vecEquip[3]->Item = m_pPlayer->pEquipedChest;
+	m_vecEquip[4]->Item = m_pPlayer->pEquipedBack;
+	m_vecEquip[5]->Item = m_pPlayer->pEquipedBoots;
+	
+
+	
+	GiveItem("Pantir's Dagger",1);
+	GiveItem("Broken Sword",1);
+//	GiveItem("Coin");
+	//GiveItem("Coin");
+	GiveItem("SmallWallet",1);
+	//GiveItem("Energy Elixir");
+	GiveItem("Rage Elixir",3);
+	GiveItem("Health Elixir",3);
+	GiveItem("Energy Elixir",3);
+	//GiveItem("Rage Elixir");
+	//GiveItem("Health Elixir");
+	//GiveItem("Energy Elixir");
+	//GiveItem("Rage Elixir");
+	//GiveItem("Health Elixir");
+
+
+
+	CellSize = 64 * fscale;
+	nVisibleTileX = ScreenWidth() / CellSize;
+	nVisibleTileY = ScreenHeight() / CellSize;
+	batchZeroCharsLayer.reserve((nVisibleTileX + 8) * (nVisibleTileY + 8));
 	//AddUi((RPG_Assets::get().GetUiElements("Jump")));
 
 
@@ -131,13 +246,17 @@ bool RPG_Engine::OnUserCreate()
 
 
 	layer = CreateLayer();
-
+	layerOne = CreateLayer();
+	layerTwo = CreateLayer();
 	
 
-	m_sprPressF = RPG_Assets::get().GetSprite("PressF");
-	m_sprGameCursor = RPG_Assets::get().GetSprite("Pantir's Dagger");
-	
 
+
+
+//	m_sprPressF = RPG_Assets::get().GetSprite("PressF");
+	m_Items = RPG_Assets::get().GetSprite("Items");
+	Inventoryback = RPG_Assets::get().GetSprite("inventory");
+	D_Ui = RPG_Assets::get().GetSprite("FullUi");
 
 
 	// Initialize the raindrops
@@ -160,15 +279,16 @@ bool RPG_Engine::OnUserUpdate(float fElapsedTime)
 {
 	bool Result;
 
-	// Define a fixed time step for updating game logic
-	const float fixedTimeStep = 1.0f / 60.0f; // Assuming 120 updates per second
+	// Define a fixed time step for achieving desired frame rate (60 FPS)
+	const float targetFrameTime = 1.0f / 60.0f; // 60 FPS = 1/60 секунды
 
-
+	// Remove stopped sounds
+	removeStoppedSounds();
 
 	// Perform game logic updates
 	switch (n_nGameMode) {
 	case MODE_TITLE:
-		Result = UpdateTitleScreen(fixedTimeStep);
+		Result = UpdateTitleScreen(fElapsedTime);
 		break;
 	case MODE_LOCAL_MAP:
 	case MODE_INVENTORY:
@@ -177,39 +297,68 @@ bool RPG_Engine::OnUserUpdate(float fElapsedTime)
 	case MODE_SHOP:
 	case MODE_PROFESSION:
 	case MODE_BLACKSMITH:
-		Result = UpdateLocalMap (fixedTimeStep);
+		Result = UpdateLocalMap(fElapsedTime);
 		break;
 	}
 
-	// Calculate sleep duration to achieve desired frame rate
-	float fSleepTime = fixedTimeStep - fElapsedTime;
+	// Check how much time has passed
+	float fSleepTime = targetFrameTime - fElapsedTime; // Calculate remaining time
 
-	// Check if sleep time is needed and sleep if necessary
-	if (fSleepTime > 0.0f) {
-	/*	 Perform more accurate timing or yield CPU instead of sleeping
-		 ...
+	// Sleep if necessary
+//	if (fSleepTime > 0.0f) {
+//		std::this_thread::sleep_for(std::chrono::duration<float>(fSleepTime));
+	//}
 
-		 For demonstration purposes, sleeping is used here*/
-		std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<long long>(fSleepTime * 1000)));
-		
-	}
+	// Display FPS (for debugging)
+	DrawString(ScreenWidth() - 100, 0, std::to_string(GetFPS()), olc::YELLOW, 3);
 
-
-	DrawString(ScreenWidth() - 100, 0, std::to_string(GetFPS()),olc::YELLOW, 3);
+//	std::cout << fElapsedTime << " /n " << fSleepTime << std::endl;
 
 	return Result;
 }
 
+void RPG_Engine::LoadSoundPool(size_t poolSize)
+{
+	for (size_t i = 0; i < poolSize; ++i) {
+
+		sf::Sound* sound = new sf::Sound();
+		m_vecSoundsPool.push_back(sound);
+	}
+}
+
+void RPG_Engine::PlaySounds(std::string buffername)
+{
+	if (!m_vecSoundsPool.empty()) {
+		// Берём первый доступный звук из пула
+		sf::Sound* sound2 = m_vecSoundsPool.back();
+		m_vecSoundsPool.pop_back();  // Убираем его из пула
+
+		sf::SoundBuffer* buf = RPG_Assets::get().findSound(buffername);
+
+		sound2->setBuffer(*buf);
+		sound2->setVolume(25);  // Устанавливаем громкость по необходимости
+		sound2->play();
+		sounds.push_back(sound2);
+	}
+
+}
+
+
 bool RPG_Engine::UpdateTitleScreen(float fElapsedTime)   // <---MAIN MENU Start
 {
-	
+	Clear(olc::BLANK);
 
+	SetDrawTarget(layer);
+	//SetPixelMode(olc::Pixel::ALPHA);
+	//SetPixelMode(olc::Pixel::MASK);
+	
+	
 	//Update script 
 	m_script.ProcessCommands(fElapsedTime);
 
 	olc::vf2d mouse = { float(GetMouseX()), float(GetMouseY()) };
 	DrawPartialDecal({ (float)0, (float)0 }, RPG_Assets::get().GetSprite("MainMenuFarLayer"), { 0,0 }, { (float)RPG_Assets::get().GetSprite("MainMenuFarLayer")->sprite->width, (float)RPG_Assets::get().GetSprite("MainMenuFarLayer")->sprite->height }, {1, 1});   //<-- Draw sprite under rectangle
-	DrawPartialDecal({ (float)0, (float)0 }, RPG_Assets::get().GetSprite("MainMenuMidLayer"), { 0,0 }, { (float)RPG_Assets::get().GetSprite("MainMenuMidLayer")->sprite->width,  (float)RPG_Assets::get().GetSprite("MainMenuMidLayer")->sprite->height }, { 1,1 });
+	DrawPartialDecal({ (float)0, (float)0 }, RPG_Assets::get().GetSprite("MainMenuMidLayer"), { 0,0 }, { (float)RPG_Assets::get().GetSprite("MainMenuMidLayer")->sprite->width,  (float)RPG_Assets::get().GetSprite("MainMenuMidLayer")->sprite->height }, { 1,1});
 	DrawPartialDecal({ (float)0, (float)ScreenHeight()- (float)RPG_Assets::get().GetSprite("MainMenuCloseLayer")->sprite->height }, RPG_Assets::get().GetSprite("MainMenuCloseLayer"), {0,0}, {(float)RPG_Assets::get().GetSprite("MainMenuCloseLayer")->sprite->width, (float)RPG_Assets::get().GetSprite("MainMenuCloseLayer")->sprite->height}, {1,1});
 
 	MainMenuAnim += fElapsedTime;
@@ -228,35 +377,34 @@ bool RPG_Engine::UpdateTitleScreen(float fElapsedTime)   // <---MAIN MENU Start
 	MainMenuY = MainMenuCalc /6;
 
 
-	DrawPartialDecal({ ScreenWidth()/2.0f+75, ScreenHeight()/2.0f}, RPG_Assets::get().GetSprite("MainMenuBardChar"), {MainMenuX * 128.0f,MainMenuY * 128.0f}, {(float)128, (float)128}, {1.4,1.4});
+	DrawPartialDecal({ ScreenWidth()/2.0f+(75*fscale), ScreenHeight()/2.0f-30}, RPG_Assets::get().GetSprite("MainMenuBardChar"), {MainMenuX * 64.0f,MainMenuY * 64.0f}, {(float)64, (float)64}, { (float)1.4,(float)1.4});
 
 
 
-	DrawPartialDecal({ ScreenWidth()-250.0f, ScreenHeight()/2.0f+20}, RPG_Assets::get().GetSprite("MainMenuFirstChar"), {MainMenuX * 128.0f,MainMenuY * 128.0f}, {(float)128, (float)128}, {1.4,1.4});
+	DrawPartialDecal({ ScreenWidth()-(250.0f*fscale), ScreenHeight()/2.0f}, RPG_Assets::get().GetSprite("MainMenuFirstChar"), {MainMenuX * 64.0f,MainMenuY * 64.0f }, {(float)64, (float)64}, { (float)1.4,(float)1.4});
 
 
-	DrawPartialDecal({ScreenWidth()-750.0f, ScreenHeight()/2.0f+20}, RPG_Assets::get().GetSprite("MainMenuSecondChar"), {MainMenuX * 128.0f,MainMenuY * 128.0f}, {(float)128, (float)128}, {1.4,1.4});
+	DrawPartialDecal({ScreenWidth()-(750.0f*fscale), ScreenHeight()/2.0f-(30*fscale)}, RPG_Assets::get().GetSprite("MainMenuSecondChar"), {MainMenuX * 64.0f,MainMenuY * 64.0f }, {(float)64, (float)64}, { (float)1.4,(float)1.4});
 
-	DrawPartialDecal({ ScreenWidth()-158.0f, ScreenHeight()/2.0f-100}, RPG_Assets::get().GetSprite("MainMenuWhisps"), {MainMenuX * 40.0f,MainMenuY * 13.0f}, {(float)40, (float)13}, {1.4,1.4});
+	DrawPartialDecal({ ScreenWidth()-(158.0f*fscale), ScreenHeight()/2.0f-(200*fscale)}, RPG_Assets::get().GetSprite("MainMenuWhisps"), {MainMenuX * (40.0f*fscale),MainMenuY * (13.0f * fscale)}, {(float)40*fscale, (float)13*fscale}, { (float)1.4,(float)1.4});
 
-	DrawPartialDecal({ ScreenWidth()/2+35.0f, ScreenHeight()/2+75.0f}, RPG_Assets::get().GetSprite("MainMenuCampFire"), {MainMenuX * 76.0f,MainMenuY * 94.5f}, {(float)76, (float)94}, {1.4,1.4});
-
+	DrawPartialDecal({ ScreenWidth()/2+(35.0f*fscale), ScreenHeight()/2+(55.0f*fscale)}, RPG_Assets::get().GetSprite("MainMenuCampFire"), {MainMenuX * (76.0f * fscale),MainMenuY * (94.5f * fscale)}, {(float)(76*fscale), (float)94*fscale }, { (float)1.4,(float)1.4});
 
 
 
 	float spelluix, spelluiy;
 	spelluix = 25.0f;
-	spelluiy = ScreenHeight() - 150;
+	spelluiy = ScreenHeight() - (150*fscale);
 
-	DrawPartialDecal({ spelluix, spelluiy }, RPG_Assets::get().GetSprite("SpellUi"), { 0,0 }, { 334,142 },{0.7,1});
+	DrawPartialDecal({ spelluix, spelluiy }, D_Ui, { 832,0 }, { 334,142 },{(float)0.7*fscale,(float)1*fscale});  // spell Ui
 	//DrawBigText("Travel ?", (ScreenWidth() / 2) - 72, ScreenHeight() / 2 - 62, 1, 1, olc::WHITE);
 
 	//DrawBigText("Continue", 50, ScreenHeight() - 250, 1.5, 1.5, olc::GREY);
-	DrawBigText("New Game", spelluix+25, spelluiy +30, 1, 1, olc::WHITE);
+	DrawBigText("New Game", spelluix+(25*fscale), spelluiy +(30*fscale), 1*fscale, 1*fscale, olc::WHITE);
 
-	DrawBigText("Options", spelluix+25, spelluiy + 60, 1, 1, olc::WHITE);
+	DrawBigText("Options", spelluix+(25*fscale), spelluiy + (60*fscale), 1*fscale, 1*fscale, olc::WHITE);
 
-	DrawBigText("Quit", spelluix+25, spelluiy +90, 1, 1, olc::WHITE);
+	DrawBigText("Quit", spelluix+(25*fscale), spelluiy +(90*fscale), 1*fscale, 1*fscale, olc::WHITE);
 
 
 	
@@ -264,21 +412,25 @@ bool RPG_Engine::UpdateTitleScreen(float fElapsedTime)   // <---MAIN MENU Start
 	data.open("Load/CurrSave.txt", std::ofstream::in);
 	if (data.is_open())
 	{
-		DrawBigText("Continue", spelluix + 25, spelluiy, 1, 1, olc::WHITE);
+		DrawBigText("Continue", spelluix + (25*fscale), spelluiy, 1*fscale, 1*fscale, olc::WHITE);
 	}
 	else
 	{
-		DrawBigText("Continue", spelluix + 25, spelluiy, 1, 1, olc::GREY);
+		DrawBigText("Continue", spelluix + (25*fscale), spelluiy, 1*fscale, 1*fscale, olc::GREY);
 	}
 
 	if (GetMouse(0).bPressed) //LeftMouse
 	{
 
-		if ((int)mouse.x >= spelluix + 25 && (int)mouse.y >= spelluiy + 30 && (int)mouse.x <= spelluix + 25 + 208 && (int)mouse.y <= spelluiy + 59) //New Game
+		if ((int)mouse.x >= spelluix + (25*fscale) && (int)mouse.y >= spelluiy + (30*fscale) && (int)mouse.x <= spelluix + (233*fscale) && (int)mouse.y <= spelluiy + (59*fscale)) //New Game
 		{
+
+		
+
 			data.close();
 			m_script.AddCommand((new cComand_HideScreen(2)));
-			m_script.AddCommand((new cComand_Changemap("Forest",-1,25.5)));
+			m_script.AddCommand((new cComand_Changemap("Forest",-1,6)));
+
 			//m_script.AddCommand((new cComand_Changemap("ForestPartTwo", 5, 21.5)));
 			//m_script.AddCommand(new cComand_Changemap("VillageTavern", 12, 9));
 
@@ -311,12 +463,12 @@ bool RPG_Engine::UpdateTitleScreen(float fElapsedTime)   // <---MAIN MENU Start
 		//	n_nGameMode = MODE_LOCAL_MAP;
 		}
 
-		if ((int)mouse.x >= spelluix + 25 && (int)mouse.y >= spelluiy + 90 && (int)mouse.x <= 50 + 200 && (int)mouse.y <= spelluiy + 90 + 30) //New Game
+		if ((int)mouse.x >= spelluix + (25*fscale) && (int)mouse.y >= spelluiy + (90*fscale) && (int)mouse.x <= (250*fscale) && (int)mouse.y <= spelluiy + (120*fscale) ) //New Game
 		{
 			return false;
 		}
 
-		if ((int)mouse.x >= spelluix + 25 && (int)mouse.y >= spelluiy && (int)mouse.x <= 50 + 216 && (int)mouse.y <= spelluiy + 29) //Continue
+		if ((int)mouse.x >= spelluix + (25*fscale) && (int)mouse.y >= spelluiy && (int)mouse.x <= (266*fscale) && (int)mouse.y <= spelluiy + (29*fscale)) //Continue
 		{
 			if (data.is_open())
 			{
@@ -333,36 +485,54 @@ bool RPG_Engine::UpdateTitleScreen(float fElapsedTime)   // <---MAIN MENU Start
 
 		}
 	}
-	if ((int)mouse.x >= spelluix + 25 && (int)mouse.y >= spelluiy && (int)mouse.x <= 50 + 216 && (int)mouse.y <= spelluiy + 29) //Continue
+	if ((int)mouse.x >= spelluix + (25*fscale) && (int)mouse.y >= spelluiy && (int)mouse.x <= (266*fscale) && (int)mouse.y <= spelluiy + (29*fscale)) //Continue
 	{
-		DrawBigText("Continue", spelluix + 25, spelluiy, 1, 1, olc::YELLOW);
+		DrawBigText("Continue", spelluix + (25*fscale), spelluiy, fscale * 1, fscale * 1, olc::YELLOW);
 	}
 
-	if ((int)mouse.x >= spelluix + 25 && (int)mouse.y >= spelluiy + 30 && (int)mouse.x <= spelluix + 25 + 208 && (int)mouse.y <= spelluiy + 59) //New Game
+	if ((int)mouse.x >= spelluix + (25*fscale) && (int)mouse.y >= spelluiy + (30*fscale) && (int)mouse.x <= spelluix +  (233*fscale) && (int)mouse.y <= spelluiy + (59*fscale)) //New Game
 	{
-		DrawBigText("New Game", spelluix + 25, spelluiy + 30, 1, 1, olc::YELLOW);
+		DrawBigText("New Game", spelluix + (25*fscale), spelluiy + (30*fscale), fscale * 1, fscale*1, olc::YELLOW);
 	}
 
-	if ((int)mouse.x >= spelluix + 25 && (int)mouse.y >= spelluiy +90 && (int)mouse.x <= 50 + 200 && (int)mouse.y <= spelluiy + 90+30) //New Game
+	if ((int)mouse.x >= spelluix + (25*fscale) && (int)mouse.y >= spelluiy +(90*fscale) && (int)mouse.x <= (250*fscale)&& (int)mouse.y <= spelluiy + (120*fscale)) //New Game
 	{
-		DrawBigText("Quit", spelluix + 25, spelluiy + 90, 1, 1, olc::YELLOW);
+		DrawBigText("Quit", spelluix + (25*fscale), spelluiy + (90*fscale), fscale * 1, fscale * 1, olc::YELLOW);
 	}
 
 	
 
-	//Mouse
-	DrawPartialDecal({ (float)(mouse.x - 0.15f) , (float)(mouse.y - 0.1f)  }, RPG_Assets::get().GetSprite("Pantir's Dagger"), { 0,0 }, { (float)64,(float)(64) }, {0.5,0.5});
+	 Drawcursor(mouse);
+	
 
 
 	if (bSmoothAppearScreen)
 	{
 
-		DrawPartialDecal({ (float)0, (float)0 }, RPG_Assets::get().GetSprite("DescriptionPattern"), { 0,0 }, { (float)RPG_Assets::get().GetSprite("DescriptionPattern")->sprite->width, (float)RPG_Assets::get().GetSprite("DescriptionPattern")->sprite->height }, { 2,2 }, olc::Pixel{ 255,255,255,(uint8_t)AlphaAppearScreen });
+		DrawDecal({ (float)0, (float)0 }, RPG_Assets::get().GetSprite("DescriptionPattern"), { 2*fscale,2*fscale }, olc::Pixel{ 255,255,255,(uint8_t)AlphaAppearScreen });
 	}
 
 
+	
+
+	//	void clockwiseMask(float felapsedtime, olc::Sprite* test)
+
+
+	//	 sinusoidMask(fElapsedTime, test, 32-16);
+		
+
+	
+
+	EnableLayer(layer, true);
+	SetDrawTarget(nullptr);
+
+	
 
 	// Limit the frame rate to 60 frames per second
+
+	
+
+	DrawRect({ ScreenWidth() / 2, ScreenHeight() / 2 }, { 64,64 });
 	
 
 		
@@ -374,18 +544,25 @@ bool RPG_Engine::UpdateTitleScreen(float fElapsedTime)   // <---MAIN MENU Start
 
 bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 {
+	
 
-	olc::vf2d mouse = { float(GetMouseX()), float(GetMouseY()) };
+//	RPG_Assets::get().removeStoppedSounds();
+
+
+	
+	olc::vi2d mouse = { (GetMouseX()), (GetMouseY()) };
 	//std::cout << enemysPool.size() << std::endl;
 
-	std::cout << m_pPlayer->px << '\t' << m_pPlayer->py << std::endl;
+	
+	
+
 		
 		//std::cout <<fElapsedTime << std::endl;
 
-		if (m_pPlayer->bDead == true)
+		if (m_pPlayer->checkFlag(m_pPlayer->bDead))
 		{
 		//	SaveFunction();
-			m_pPlayer->bDead = false;
+			m_pPlayer->clearFlag(m_pPlayer->bDead);
 			m_pPlayer->nHealth = 1;
 		//	m_pPlayer->SwitchLayer(2);
 			m_script.AddCommand((new  cComand_LoadFunction));
@@ -396,36 +573,82 @@ bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 		//Update script 
 		m_script.ProcessCommands(fElapsedTime);
 
+	
 
-
-		m_vecParticles.erase(                              //check m_vecProjectiles on flag -bredundand and erase it
+		m_vecParticles.erase(
 			remove_if(m_vecParticles.begin(), m_vecParticles.end(),
-				[](const cDynamic* d) {return((cDynamic_Projectile*)d)->bRedundant; }), m_vecParticles.end());
+				[](cDynamic* d) {
+					if (((cDynamic_Projectile*)d)->checkFlag(d->bRedundant)) {
+						delete d;  // Освобождение памяти объекта
+						return true;  // Удалить указатель из контейнера
+					}
+		return false;  // Оставить указатель в контейнере
+				}),
+			m_vecParticles.end());
 
-		m_vecProjectiles.erase(                              //check m_vecProjectiles on flag -bredundand and erase it
+		m_vecProjectiles.erase(
 			remove_if(m_vecProjectiles.begin(), m_vecProjectiles.end(),
-				[](const cDynamic* d) {return((cDynamic_Projectile*)d)->bRedundant; }), m_vecProjectiles.end());
+				[&](cDynamic* d) {
+					if (((cDynamic_Projectile*)d)->checkFlag(d->bRedundant)) {
+						ReturnProjectileToPool(d);
+						return true;
+					}
+		return false;
+				}),
+			m_vecProjectiles.end());
 
-		m_vecIndicators.erase(                              //check m_vecProjectiles on flag -bredundand and erase it
+		m_vecIndicators.erase(
 			remove_if(m_vecIndicators.begin(), m_vecIndicators.end(),
-				[](const cDynamic* d) {return((cDynamic_HpBar*)d)->bRedundant; }), m_vecIndicators.end());
-
+				[](cDynamic* d) {
+					if (((cDynamic_HpBar*)d)->checkFlag(d->bRedundant)) {
+						delete d;
+						return true;
+					}
+		return false;
+				}),
+			m_vecIndicators.end());
 
 
 		m_vecDynamics.erase(                              //check m_vecProjectiles on flag -bredundand and erase it    hp bars the same in vecdynamics
 			remove_if(m_vecDynamics.begin(), m_vecDynamics.end(),
-				[](const cDynamic* d) {return((cDynamic_Creature*)d)->bDead; }), m_vecDynamics.end());
+				[&]( cDynamic* d) {
+					if (((cDynamic_Creature*)d)->checkFlag(d->bDead)) {
 
+						ReturnToPool(d);
+						return true;
+					}
+					
+					return false;
+				}), m_vecDynamics.end());
+				
 
-		m_vecFightText.erase(                              //check m_vecProjectiles on flag -bredundand and erase it    hp bars the same in vecdynamics
+		m_vecFightText.erase(
 			remove_if(m_vecFightText.begin(), m_vecFightText.end(),
-				[](const cDynamic* d) {return((cDynamic_Creature*)d)->bRedundant; }), m_vecFightText.end());
+				[&](cDynamic* d) {
+				if (((cDynamic_TextDamage*)d)->checkFlag(d->bRedundant)) {
+						ReturnTextToPool(d);
+						return true;
+					}
+		return false;  // Оставить в векторе
+				}),
+			m_vecFightText.end());
+		
 
+		m_vecVisibleDynamics.clear();
+		for (auto& source : { &m_vecDynamics })  // <- fill visible m_vec
+			for (auto& dyns : *source)
+			{
+				if (dyns->px >= fCameraPosX - nVisibleTileX && dyns->px <= fCameraPosX + nVisibleTileX && dyns->py >= fCameraPosY - nVisibleTileY && dyns->py <= fCameraPosY + nVisibleTileY)
+				{
 
+					//dyns->Update(fElapsedTime, m_pPlayer);
 
+					cDynamic* entity = dyns;
+					if (dynamic_cast<cDynamic*>(entity))
+						m_vecVisibleDynamics.push_back(entity); // Add the Bandit 
+				}
+			}
 
-
-		//                                            DEATH MECHANIC
 	
 
 		if (GetKey(olc::Key::ESCAPE).bPressed)
@@ -482,7 +705,7 @@ bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 				{
 				//	SetMouseFocus(true);
 
-					if (m_pPlayer->bControllable)
+					if (m_pPlayer->checkFlag(m_pPlayer->bControllable))
 					{
 
 
@@ -491,14 +714,15 @@ bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 
 						if (GetKey(olc::Key::SPACE).bPressed)
 						{
-
-							if (m_pPlayer->energeyAmount >= 15)
+							m_pPlayer->vy = -9.0;
+							if (m_pPlayer->energyAmount >= 15)
 							{
-
+									
 								switch (m_pPlayer->Jumpcounter)
 								{
 								case 0:
 									m_pPlayer->MoveJump();
+									WalkSound->stop();
 									break;
 								case 1:
 									m_pPlayer->MoveDoubleJump();
@@ -519,7 +743,26 @@ bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 
 							m_pPlayer->SetVerticalDirection(2);  // <--South
 						}
+						if (GetKey(olc::Key::Q).bReleased)
+						{
+							if (m_vecUi[0] != nullptr)
+							{
+							if(m_vecUi[0]->Item->OnUse(m_pPlayer,m_listItems,m_vecUi[0]))
+							m_vecUi[0] = nullptr;
 
+							ClearAbsorbedSlots(m_listItems); // find absorbed object and change them on empty sockets
+							}
+						}
+						if (GetKey(olc::Key::E).bReleased)
+						{
+
+							if (m_vecUi[1] != nullptr)
+							{
+								if (m_vecUi[1]->Item->OnUse(m_pPlayer, m_listItems, m_vecUi[1]))
+									m_vecUi[1] = nullptr;
+							ClearAbsorbedSlots(m_listItems); // find absorbed object and change them on empty sockets
+							}
+						}
 					
 						if (GetKey(olc::Key::F1).bPressed)
 						{
@@ -579,7 +822,7 @@ bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 							switch (m_pPlayer->GetFacingDirectionVertical())
 							{
 							case 1:              //<-- Look Up
-								if (!m_pPlayer->bOnGround && !m_pPlayer->bOnLanded)   // air attack
+								if (!m_pPlayer->checkFlag(m_pPlayer->bOnGround) && !m_pPlayer->checkFlag(m_pPlayer->bOnLanded))   // air attack
 								{
 
 								}
@@ -595,7 +838,7 @@ bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 
 								break;
 							case 0:             // <--Look Down
-								if (!m_pPlayer->bOnGround && !m_pPlayer->bOnLanded)   // air attack
+								if (!m_pPlayer->checkFlag(m_pPlayer->bOnGround) && !m_pPlayer->checkFlag(m_pPlayer->bOnLanded))   // air attack
 								{
 									if (m_pPlayer->rageAmount >= 35 && m_pPlayer->enumCounter != 18 && GetLearnedTalent(14))
 									{
@@ -611,7 +854,7 @@ bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 								break;
 							case 3:            // <--No Looking
 
-								if (!m_pPlayer->bOnGround && !m_pPlayer->bOnLanded)   // air attack
+								if (!m_pPlayer->checkFlag(m_pPlayer->bOnGround) && !m_pPlayer->checkFlag(m_pPlayer->bOnLanded))   // air attack
 								{
 									if (m_pPlayer->rageAmount >= 35 && GetLearnedTalent(12) && m_pPlayer->enumCounter != 12)
 									{
@@ -634,7 +877,7 @@ bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 
 						}
 
-						if (!m_pPlayer->isAttack)
+						if (!m_pPlayer->checkFlag(m_pPlayer->isAttack))
 						{
 
 
@@ -646,7 +889,7 @@ bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 							if (GetKey(olc::Key::D).bHeld)
 							{
 
-								m_pPlayer->vx += (m_pPlayer->bOnGround ? 35.0f * m_pPlayer->GetMovement() : 25.0f * m_pPlayer->GetMovement()) * fElapsedTime;
+								m_pPlayer->vx += (m_pPlayer->checkFlag(m_pPlayer->bOnGround) ? 35.0f * m_pPlayer->GetMovement() : 25.0f * m_pPlayer->GetMovement()) * fElapsedTime;
 							}
 
 							if (GetKey(olc::Key::SHIFT).bPressed)
@@ -702,95 +945,132 @@ bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 							if (GetKey(olc::Key::A).bHeld)
 							{
 
-								m_pPlayer->vx += (m_pPlayer->bOnGround ? -35.0f * m_pPlayer->GetMovement() : -25.0f * m_pPlayer->GetMovement()) * fElapsedTime;
+								m_pPlayer->vx += (m_pPlayer->checkFlag(m_pPlayer->bOnGround) ? -35.0f * m_pPlayer->GetMovement() : -25.0f * m_pPlayer->GetMovement()) * fElapsedTime;
+								
 							}
-
+						
 							if (GetMouse(0).bPressed)   // <--LeftAttack
 							{
-								if (!m_pPlayer->bOnGround && !m_pPlayer->bOnLanded)      // <- attack on air
+								if (highlighted != nullptr)
 								{
-
-
-									if (m_pPlayer->energeyAmount >= 35 && GetLearnedTalent(1))   //EnergyAmount - Spellcount 
-										//
-									{
-										m_pPlayer->EnergyMoveAttackAir();
-									}
-
-									float fTestX, fTestY;
-									defineFacingDirection(fTestX, fTestY);
-									for (auto dyns : m_vecDynamics)
-									{
-										if ((fTestX + 0.9f) > dyns->px + dyns->CollbordersXF && (fTestX - 0.9f) < dyns->px + dyns->CollbordersX && fTestY > dyns->py + dyns->CollbordersY && fTestY < dyns->py + dyns->CollbordersYF)
-										{
-											if (!dyns->bOnGround)
-
-												if (dyns->m_layer == 1 && m_pPlayer->checkFacingDirection(dyns) && GetLearnedTalent(6))
-												{
-
-													m_pPlayer->SwirlGrab(dyns);
-
-													break;
-
-												}
-
-
-
-										}
-									}
-
-
-
+									GrabItem = highlighted;
+									//GrabItem->GrabItem = true;
+									GrabItem->setFlag(GrabItem->Grabitem);
 								}
 								else
 								{
 
-									float fTestX, fTestY;
-									defineFacingDirection(fTestX, fTestY);
-									for (auto dyns : m_vecDynamics)
+
+
+									if (!m_pPlayer->checkFlag(m_pPlayer->bOnGround) && !m_pPlayer->checkFlag(m_pPlayer->bOnLanded))      // <- attack on air
 									{
-										if ((fTestX + 0.9f) > dyns->px + dyns->CollbordersXF && (fTestX - 0.9f) < dyns->px + dyns->CollbordersX && fTestY > dyns->py + dyns->CollbordersY && fTestY < dyns->py + dyns->CollbordersYF)
+
+										if (m_pPlayer->energyAmount >= 35 && GetLearnedTalent(1))   //EnergyAmount - Spellcount 
+											//
 										{
+											m_pPlayer->EnergyMoveAttackAir();
 
-											if (dyns->m_layer == 1 && m_pPlayer->checkFacingDirection(dyns) && GetLearnedTalent(4))
+
+
+											PlaySounds("SwordSwingTwo");
+
+
+
+
+										}
+
+										float fTestX, fTestY;
+										defineFacingDirection(fTestX, fTestY);
+										for (auto dyns : m_vecVisibleDynamics)
+										{
+											if ((fTestX + 0.9f) > dyns->px + dyns->CollbordersXF && (fTestX - 0.9f) < dyns->px + dyns->CollbordersX && fTestY > dyns->py + dyns->CollbordersY && fTestY < dyns->py + dyns->CollbordersYF)
 											{
+												if (!dyns->checkFlag(m_pPlayer->bOnGround))
 
-												m_pPlayer->EnergyMoveAttackBack();
+													if (dyns->m_layer == 1 && m_pPlayer->checkFacingDirection(dyns) && GetLearnedTalent(6))
+													{
 
-												break;
+														m_pPlayer->SwirlGrab(dyns);
+
+														break;
+
+													}
+
+
 
 											}
-
-
-
 										}
-									}
 
-									if (m_pPlayer->enumCounter != 16) //  no EnergyMove AttackBack
+
+
+									}
+									else
 									{
 
-
-										if (m_pPlayer->energeyAmount >= 99 && GetLearnedTalent(3))                         // <-- Attack on ground
+										float fTestX, fTestY;
+										defineFacingDirection(fTestX, fTestY);
+										for (auto dyns : m_vecVisibleDynamics)
 										{
-											m_pPlayer->EnergyMoveAttackHigh();
-
-										}
-										else
-										{
-
-											if (m_pPlayer->energeyAmount >= 55 && GetLearnedTalent(2))
+											if ((fTestX + 0.9f) > dyns->px + dyns->CollbordersXF && (fTestX - 0.9f) < dyns->px + dyns->CollbordersX && fTestY > dyns->py + dyns->CollbordersY && fTestY < dyns->py + dyns->CollbordersYF)
 											{
-												m_pPlayer->EnergyMoveAttackMid();
+
+												if (dyns->m_layer == 1 && m_pPlayer->checkFacingDirection(dyns) && GetLearnedTalent(4))
+												{
+
+													m_pPlayer->EnergyMoveAttackBack();
+
+
+													PlaySounds("BackStab");
+
+
+
+													break;
+
+												}
+
+
+
+											}
+										}
+
+										if (m_pPlayer->enumCounter != 16) //  no EnergyMove AttackBack
+										{
+
+
+											if (m_pPlayer->energyAmount >= 99 && GetLearnedTalent(3))                         // <-- Attack on ground
+											{
+												m_pPlayer->EnergyMoveAttackHigh();
+
+												PlaySounds("SwordSwingTwo");
+
+												//currsound = RPG_Assets::get().playSound("SwordSwingTwo");
+												//currsound.play();
+
 											}
 											else
 											{
 
-												if (m_pPlayer->energeyAmount >= 35 && GetLearnedTalent(1))   //EnergyAmount - Spellcount 
+												if (m_pPlayer->energyAmount >= 55 && GetLearnedTalent(2))
+												{
+													m_pPlayer->EnergyMoveAttackMid();
 
+													PlaySounds("SwordSwingTwo");
+
+													//currsound = RPG_Assets::get().playSound("SwordSwing");
+												//	currsound.play();
+												}
+												else
 												{
 
-													m_pPlayer->EnergyMoveAttackLow();
+													if (m_pPlayer->energyAmount >= 35 && GetLearnedTalent(1))   //EnergyAmount - Spellcount 
 
+													{
+
+														m_pPlayer->EnergyMoveAttackLow();
+
+														PlaySounds("SwordSwingTwo");
+
+													}
 												}
 											}
 										}
@@ -798,34 +1078,46 @@ bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 								}
 							}
 
-							if (GetKey(olc::Key::F).bPressed)
-							{
-								float fTestX, fTestY;
-								defineFacingDirection(fTestX, fTestY);
-								for (auto dyns : m_vecVisibleDynamics)
+								if (GetKey(olc::Key::F).bPressed)
 								{
-									if (abs(m_pPlayer->px - dyns->px) < 2 && fTestY > dyns->py + dyns->CollbordersY && fTestY < dyns->py + dyns->CollbordersYF)
+									float fTestX, fTestY;
+									defineFacingDirection(fTestX, fTestY);
+									for (auto dyns : m_vecVisibleDynamics)
 									{
-										if (dyns->m_layer == 4 && dyns->sName != "Pantir")
+										if (abs(m_pPlayer->px - dyns->px) < 2 && fTestY > dyns->py + dyns->CollbordersY && fTestY < dyns->py + dyns->CollbordersYF)
 										{
-											//Iterate through quest stack untill something responds
-											//interactions that are not specified in other quests
-											for (auto& quest : m_listQusets)
-												if (quest->OnInteraction(m_vecVisibleDynamics, dyns, cQuset_MainQuest::TALK))
-												{
-													//bHitSomething = true;
-													break;
-												}
-											//Then check if it is map related
-											m_pCurrentMap->OnInteraction(m_vecVisibleDynamics, dyns, cMap::TALK);
+											if (dyns->m_layer == 4 && dyns->sName != "Pantir")
+											{
+												//Iterate through quest stack untill something responds
+												//interactions that are not specified in other quests
+												for (auto& quest : m_listQusets)
+													if (quest->OnInteraction(m_vecVisibleDynamics, dyns, cQuset_MainQuest::TALK))
+													{
+														//bHitSomething = true;
+														break;
+													}
+												//Then check if it is map related
+												m_pCurrentMap->OnInteraction(m_vecVisibleDynamics, dyns, cMap::TALK);
 
+											}
 										}
 									}
+								}
+							if (GetMouse(0).bReleased)  // when we threw out object from ui 
+							{
+								if (GrabItem != nullptr)
+								{
+									GrabItem->clearFlag(GrabItem->Grabitem);
+									//GrabItem->GrabItem = false;
+									m_vecUi[GrabItem->Uiindex] = nullptr;
+									GrabItem = nullptr;
+
+
 								}
 							}
 						}
 
-						if (m_pPlayer->bOnGround && m_pPlayer->fAttackcount <= 0.5f && m_pPlayer->fAttackcount >= 0.1f)
+						if (m_pPlayer->checkFlag(m_pPlayer->bOnGround) && m_pPlayer->fAttackcount <= 0.5f && m_pPlayer->fAttackcount >= 0.1f)
 						{
 							if (GetMouse(0).bHeld)
 							{
@@ -841,14 +1133,20 @@ bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 							}
 							if (GetMouse(0).bReleased)
 							{
-								if ((0.5f - m_pPlayer->fAttackcount >= 0.17f && 0.5f - m_pPlayer->fAttackcount <= 0.32f && m_pPlayer->energeyAmount >= 55 && m_pPlayer->enumCounter != 3) && GetLearnedTalent(2)) //enumcount ==3 - ATTACKMID
+								
+
+								if ((0.5f - m_pPlayer->fAttackcount >= 0.17f && 0.5f - m_pPlayer->fAttackcount <= 0.32f && m_pPlayer->energyAmount >= 55 && m_pPlayer->enumCounter != 3) && GetLearnedTalent(2)) //enumcount ==3 - ATTACKMID
 								{
 									m_pPlayer->EnergyMoveAttackMid();
+									PlaySounds("SwordSwing");
 								}
-								else if ((0.5f - m_pPlayer->fAttackcount >= 0.0f && 0.5f - m_pPlayer->fAttackcount <= 0.17 && m_pPlayer->energeyAmount >= 35 && m_pPlayer->enumCounter != 4))  // enumcounter ==4 AttackEasy
+								else if ((0.5f - m_pPlayer->fAttackcount >= 0.0f && 0.5f - m_pPlayer->fAttackcount <= 0.17 && m_pPlayer->energyAmount >= 35 && m_pPlayer->enumCounter != 4))  // enumcounter ==4 AttackEasy
 								{
 									m_pPlayer->EnergyMoveAttackLow();
+
+									PlaySounds("SwordSwing");
 								}
+								
 							}
 						}
 					}
@@ -887,16 +1185,16 @@ if (IsFocused())
 
 
 		// Calculate the distance between the current camera position and the player's position
-		float deltaX = (m_pPlayer->px + (GetMouseX() - ScreenWidth() / 2) * mouseSnapFactor) - fCameraPosX;
-		float deltaY = (m_pPlayer->py + (GetMouseY() - ScreenHeight() / 2) * mouseSnapFactor) - fCameraPosY;
+	//	float deltaX = (m_pPlayer->px + (GetMouseX() - ScreenWidth() / 2) * mouseSnapFactor) - fCameraPosX;
+	//	float deltaY = (m_pPlayer->py + (GetMouseY() - ScreenHeight() / 2) * mouseSnapFactor) - fCameraPosY;
 
 		// Snap the camera towards the player and mouse position
-		fCameraPosX = m_pPlayer->px + (GetMouseX() - ScreenWidth() / 2) * mouseSnapFactor;
-		fCameraPosY = m_pPlayer->py -1+ (GetMouseY() - ScreenHeight() / 2) * mouseSnapFactor;
+		fCameraPosX = m_pPlayer->px + ((m_pPlayer->CollbordersXF - m_pPlayer->CollbordersX) / 2);
+		fCameraPosY = m_pPlayer->py + (m_pPlayer->CollbordersYF - m_pPlayer->CollbordersY) / 2;
 
 		// Apply interpolation to smooth out the movement
-		fCameraPosX += deltaX * cameraSpeed;
-		fCameraPosY += deltaY * cameraSpeed;
+	//	fCameraPosX += deltaX * cameraSpeed;
+	//	fCameraPosY += deltaY * cameraSpeed;
 		}
 		else
 		{
@@ -940,20 +1238,23 @@ if (IsFocused())
 		mouseY = ScreenHeight() - 1;
 }
 
+		
 
 			bool bWorkingWithProjectiles = false;
 			bUibackstub = false;
-			for (auto& source : { &m_vecDynamics, &m_vecProjectiles })
+			for (auto& source : { &m_vecVisibleDynamics, &m_vecProjectiles })
 			{
 				for (auto& object : *source) // for every chars in this vector will be calculate their move
 				{
 
 
-					if (object->gravity )
+					if (object->checkFlag(object->gravity) )
 					{
 						object->vy += object->mass * fElapsedTime;                     //Gravitation for everyone
+
 					}
 
+					
 
 
 
@@ -962,13 +1263,17 @@ if (IsFocused())
 					float fNewObjectPosX = object->px + object->vx * fElapsedTime;
 					float fNewObjectPosY = object->py + object->vy * fElapsedTime;
 
+				
+
+					
+
 					//	fCameraPosX = fCameraPosX + fCameraVx * fElapsedTime;
 					//	fCameraPosY = fCameraPosY + fCameraVy * fElapsedTime;
 
 						////Collision
 
-
-
+					
+					
 
 					bool bslope = false;
 				
@@ -1029,20 +1334,20 @@ if (IsFocused())
 								//	fNewObjectPosX += DeltaX;
 								if (fNewObjectPosY + object->CollbordersYF >= object->obsticlepoints->first->y - sloperatio)
 								{
-								
-									object->vy = 2*deltaYx + reservgravity;
+								 
+									object->vy = 49.0f;
 
 									//object->vy = 
 
 									fNewObjectPosY = object->obsticlepoints->second->y - object->CollbordersYF;
 
-									if (!object->bOnGround)                                // <- we trying to make in OnLanded anim
+									if (!object->checkFlag(object->bOnGround))                                // <- we trying to make in OnLanded anim
 									{
 										object->IsLanded();
 									}
 
 									object->Jumpcounter = 0;
-									object->bOnGround = true;
+									object->setFlag(object->bOnGround);
 									bslope = true;
 
 								}
@@ -1081,17 +1386,17 @@ if (IsFocused())
 								if (fNewObjectPosY + object->CollbordersYF >= object->obsticlepoints->first->y - sloperatio)
 								{
 
-
-										if (!object->bOnGround)                                // <- we trying to make in OnLanded anim
+										if (!object->checkFlag(object->bOnGround))                                // <- we trying to make in OnLanded anim
 									{
 										object->IsLanded();
 									} 
 
 									//object->vy = deltaYx+ reservgravity;
 								
+									object->vy = 49.0f;
 									fNewObjectPosY = object->obsticlepoints->first->y - sloperatio - object->CollbordersYF;
 									object->Jumpcounter = 0;
-									object->bOnGround = true;
+									object->setFlag(object->bOnGround);
 									bslope = true;
 
 
@@ -1149,19 +1454,19 @@ if (IsFocused())
 								if (fNewObjectPosY + object->CollbordersYF >= object->obsticlepoints->second->y - sloperatio)
 								{
 
-									object->vy = 2 * deltaYx + reservgravity;
+									object->vy = 49.0f;
 
 									//object->vy = 
 
 									fNewObjectPosY = object->obsticlepoints->first->y - object->CollbordersYF;
 
-									if (!object->bOnGround)                                // <- we trying to make in OnLanded anim
+									if (!object->checkFlag(object->bOnGround))                                // <- we trying to make in OnLanded anim
 									{
 										object->IsLanded();
 									}
 
 									object->Jumpcounter = 0;
-									object->bOnGround = true;
+									object->setFlag(object->bOnGround);
 									bslope = true;
 
 								}
@@ -1206,17 +1511,17 @@ if (IsFocused())
 								if (fNewObjectPosY + object->CollbordersYF >= object->obsticlepoints->second->y - sloperatio)
 								{
 
-								
+									object->vy = 49.0f;
 
 									fNewObjectPosY = object->obsticlepoints->second->y - sloperatio - object->CollbordersYF;
 
-									if (!object->bOnGround)                                // <- we trying to make in OnLanded anim
+									if (!object->checkFlag(object->bOnGround))                                // <- we trying to make in OnLanded anim
 									{
 										object->IsLanded();
 									}
 
 									object->Jumpcounter = 0;
-									object->bOnGround = true;
+									object->setFlag(object->bOnGround);
 									bslope = true;
 
 
@@ -1243,7 +1548,7 @@ if (IsFocused())
 								{
 									object->obsticlepoints = nullptr;
 									fNewObjectPosY = object->py;  //if there won't emprty cell we move right
-									fNewObjectPosY = std::round(fNewObjectPosY * 10.0f) / 10.0f;
+									//fNewObjectPosY = std::round(fNewObjectPosY * 10.0f) / 10.0f;
 									object->vy = 0;
 								}
 							
@@ -1301,13 +1606,13 @@ if (IsFocused())
 
 									fNewObjectPosY = object->obsticlepoints->first->y - sloperatio - object->CollbordersYF;
 
-									if (!object->bOnGround)                                // <- we trying to make in OnLanded anim
+									if (!object->checkFlag(object->bOnGround))                                // <- we trying to make in OnLanded anim
 									{
 										object->IsLanded();
 									}
 
 									object->Jumpcounter = 0;
-									object->bOnGround = true;
+									object->setFlag(object->bOnGround);
 									bslope = true;
 
 
@@ -1355,13 +1660,13 @@ if (IsFocused())
 
 									 fNewObjectPosY = object->obsticlepoints->second->y - sloperatio- object->CollbordersYF;
 
-									 if (!object->bOnGround)                                // <- we trying to make in OnLanded anim
+									 if (!object->checkFlag(object->bOnGround))                                // <- we trying to make in OnLanded anim
 									 {
 										 object->IsLanded();
 									 }
 
 									 object->Jumpcounter = 0;
-									 object->bOnGround = true;
+									 object->setFlag(object->bOnGround);
 									 bslope = true;
 
 
@@ -1379,7 +1684,7 @@ if (IsFocused())
 
 
 									object->obsticlepoints = nullptr;
-									if (!object->bOnGround)                                // <- we trying to make in OnLanded anim
+									if (!object->checkFlag(object->bOnGround))                                // <- we trying to make in OnLanded anim
 									{
 										object->IsLanded();
 									}
@@ -1391,7 +1696,7 @@ if (IsFocused())
 
 									object->vy = 0;
 									object->Jumpcounter = 0;
-									object->bOnGround = true;
+									object->setFlag(object->bOnGround);
 
 								}
 
@@ -1419,7 +1724,7 @@ if (IsFocused())
 									}
 									else
 									{
-										object->bDead = true;
+										object->setFlag(object->bDead);
 
 									}
 
@@ -1431,10 +1736,12 @@ if (IsFocused())
 					}
 
 				
+					
+					
 
 
 					if (object->vy <=-0.1f &&!bslope || object->vy>=0.1f && !bslope)
-						object->bOnGround = false;
+						object->clearFlag(object->bOnGround);
 					
 
 					float fDynamicObjectPosX = fNewObjectPosX;
@@ -1456,7 +1763,7 @@ if (IsFocused())
 						if (object == m_vecDynamics[0] || blockCamera)
 						{
 
-							if (fDynamicObjectPosX + object->CollbordersX < fOffsetX + 2 || fDynamicObjectPosX + object->CollbordersXF > fOffsetX + nVisibleTileX)   // here we don't let character went out from
+							if (fDynamicObjectPosX + object->CollbordersX < fOffsetX + 1 || fDynamicObjectPosX + object->CollbordersXF > fOffsetX + nVisibleTileX)   // here we don't let character went out from
 							{
 								object->vx = 0;
 
@@ -1466,7 +1773,7 @@ if (IsFocused())
 						}
 
 
-						for (auto& dyn : m_vecDynamics)
+						for (auto& dyn : m_vecVisibleDynamics)
 						{
 							if (dyn != object)  //for except cheking himself
 							{
@@ -1500,7 +1807,7 @@ if (IsFocused())
 									if (fDynamicObjectPosX + object->CollbordersX < (dyn->px + dyn->CollbordersXF) && (fDynamicObjectPosX + object->CollbordersXF) > dyn->px + dyn->CollbordersX &&
 										fDynamicObjectPosY + object->CollbordersY < (dyn->py + dyn->CollbordersYF) && (fDynamicObjectPosY + object->CollbordersYF) > dyn->py + dyn->CollbordersY)
 									{
-										if (object == m_vecDynamics[0] && object->bIsAttackable)
+										if (object == m_vecDynamics[0] && object->checkFlag(object->bIsAttackable))
 										{
 
 											// First Check Vertically - Check Left
@@ -1563,7 +1870,7 @@ if (IsFocused())
 										{
 											//we know object is projectile, so dyn is something 
 											//opposite that it has overlapped with
-											if (dyn->bIsAttackable)
+											if (dyn->checkFlag(dyn->bIsAttackable))
 											{
 												//Dynamic object is a creature
 												Damage((cDynamic_Projectile*)object, (cDynamic_Creature*)dyn);
@@ -1578,6 +1885,10 @@ if (IsFocused())
 							}
 						}
 					}
+
+				
+
+
 					object->px = fDynamicObjectPosX;
 					object->py = fDynamicObjectPosY;
 				}
@@ -1585,10 +1896,10 @@ if (IsFocused())
 				PressF = false;
 
 			}
-			//std::cout << m_vecVisibleDynamics.size() << std::endl;
+			
 
-			m_vecVisibleDynamics.clear();
-			for (auto& source : { &m_vecDynamics,&m_vecProjectiles,&m_vecFightText,&m_vecParticles })  // <- run on vecDynamics array and use Update function in every person this array
+			//m_vecVisibleDynamics.clear();
+			for (auto& source : { &m_vecVisibleDynamics,&m_vecProjectiles,&m_vecFightText,&m_vecParticles })  // <- run on vecDynamics array and use Update function in every person this array
 				for (auto& dyns : *source)
 				{
 					if (dyns->px >= fCameraPosX - nVisibleTileX && dyns->px <= fCameraPosX + nVisibleTileX && dyns->py >= fCameraPosY - nVisibleTileY && dyns->py <= fCameraPosY + nVisibleTileY)
@@ -1596,9 +1907,9 @@ if (IsFocused())
 
 						dyns->Update(fElapsedTime, m_pPlayer);
 
-					cDynamic* entity = dyns;
-					if (dynamic_cast<cDynamic_Creature*>(entity)) 
-						m_vecVisibleDynamics.push_back(entity); // Add the Bandit 
+					//cDynamic* entity = dyns;
+				//	if (dynamic_cast<cDynamic_Creature*>(entity)) 
+				//		m_vecVisibleDynamics.push_back(entity); // Add the Bandit 
 					}
 
 					if (dyns->sName != "projectile" && dyns->sName != "Pantir")
@@ -1608,7 +1919,7 @@ if (IsFocused())
 					{
 						//  m_layer 1 - enemy layer
 					case 1:
-						if (dyns->bDead == true)
+						if (dyns->checkFlag(dyns->bDead))
 						{
 							//Iterate through quest stack untill something responds
 							//interactions that are not specified in other quests
@@ -1683,6 +1994,7 @@ if (IsFocused())
 
 			
 			
+		}
 
 
 			//Calculate Top-Leftmost visible tile
@@ -1695,11 +2007,10 @@ if (IsFocused())
 			if (fOffsetX > m_pCurrentMap->nWidth - nVisibleTileX - 2) fOffsetX = m_pCurrentMap->nWidth - nVisibleTileX - 2;
 			if (fOffsetY > m_pCurrentMap->nHeight - nVisibleTileY) fOffsetY = m_pCurrentMap->nHeight - nVisibleTileY;
 
-		}
 
 			//Get offsets for smooth movement
-			float fTileOffsetX = (fOffsetX - (int)fOffsetX) * 64;
-			float fTileOffsetY = (fOffsetY - (int)fOffsetY) * 64;
+			float fTileOffsetX = (fOffsetX - (int)fOffsetX) * CellSize;
+			float fTileOffsetY = (fOffsetY - (int)fOffsetY) * CellSize;
 		
 				Clear(olc::BLANK);
 				//SetDecalMode(olc::DecalMode::NORMAL);
@@ -1708,6 +2019,8 @@ if (IsFocused())
 				 // Update parallax layers based on the current scroll position
       //  UpdateParallax(ScrollingCurrX, scrollingbetweenX, ScrollingBackX, fOffsetX);
 
+				if (m_pCurrentMap->FarParralax != nullptr)
+				{
 
 				//ParallaxLogic
 				ScrollingbeforeX = fOffsetX;
@@ -1731,12 +2044,12 @@ if (IsFocused())
 				WrapCoordinates(ScrollingCurrX, fx);
 
 
-			SetDrawTarget(1);
-			SetPixelMode(olc::Pixel::ALPHA);
+			SetDrawTarget(layer);
+			//SetPixelMode(olc::Pixel::ALPHA);
 
-				DrawPartialDecal({ ScrollingCurrX ,0 }, m_pCurrentMap->FarParralax, { 0,0 }, { (float)ScreenWidth(),(float)ScreenHeight() });
+				DrawDecal({ ScrollingCurrX ,0 }, m_pCurrentMap->FarParralax);
 
-				DrawPartialDecal({ fx - (float)ScreenWidth(),0 }, m_pCurrentMap->FarParralax, { 0,0 }, { (float)ScreenWidth(),(float)ScreenHeight() });
+				DrawDecal({ fx - (float)ScreenWidth(),0 }, m_pCurrentMap->FarParralax);
 
 
 				WrapCoordinates(scrollingbetweenX, scrollingbetweenX);
@@ -1745,9 +2058,9 @@ if (IsFocused())
 
 
 
-				DrawPartialDecal({ scrollingbetweenX ,(ScrollingY+90) - (fOffsetY *3.0f) }, m_pCurrentMap->MidParralax, { 0,0 }, { (float)ScreenWidth(),(float)ScreenHeight() });
+				DrawDecal({ scrollingbetweenX ,(ScrollingY+90) - (fOffsetY *3.0f) }, m_pCurrentMap->MidParralax);
 
-				DrawPartialDecal({ fx - (float)ScreenWidth() , (ScrollingY+90) - (fOffsetY *3.0f) }, m_pCurrentMap->MidParralax, { 0,0 }, { (float)ScreenWidth(),(float)ScreenHeight() });
+				DrawDecal({ fx - (float)ScreenWidth() , (ScrollingY+90) - (fOffsetY *3.0f) }, m_pCurrentMap->MidParralax);
 
 
 
@@ -1757,14 +2070,18 @@ if (IsFocused())
 
 
 
-				DrawPartialDecal({ ScrollingBackX ,(ScrollingY+180) - (fOffsetY*6.0f) }, m_pCurrentMap->CloseParralax, { 0,0 }, { (float)ScreenWidth(),(float)ScreenHeight() });
+				DrawDecal({ ScrollingBackX ,(ScrollingY+180) - (fOffsetY*6.0f) }, m_pCurrentMap->CloseParralax);
 
-				DrawPartialDecal({ fx - (float)ScreenWidth() , (ScrollingY + 180) -(fOffsetY*6.0f) }, m_pCurrentMap->CloseParralax, { 0,0 }, { (float)ScreenWidth(),(float)ScreenHeight() });
+				DrawDecal({ fx - (float)ScreenWidth() , (ScrollingY + 180) -(fOffsetY*6.0f) }, m_pCurrentMap->CloseParralax, { 0,0 });
+				}
 
 				/////////ParallaxLogic
 				// 
 
-
+				
+				
+				//SetDrawTarget(nullptr);
+			
 				if (m_pCurrentMap->sName == "Forest" || m_pCurrentMap->sName == "ForesttLvlPartTwo")
 				{
 					for (auto& source : { &m_vecFarWeather })    // DRAW Rain
@@ -1780,16 +2097,10 @@ if (IsFocused())
 						}
 				}
 				
-					std::vector<TileInfo> batchFirstLayer; // (position, source rectangle) pairs // bool represent static or dynamic layer
-					std::vector<TileInfo> batchSecondLayer; // (position, source rectangle) pairs // bool represent static or dynamic layer
-					std::vector<TileInfo> batchThirdLayer; // (position, source rectangle) pairs // bool represent static or dynamic layer
-					std::vector<TileInfo> batchDynamicLayer; // (position, source rectangle) pairs // bool represent static or dynamic layer
-					std::vector<TileInfo > batchZeroCharsLayer; // (position, source rectangle) pairs // bool represent static or dynamic layer
 
-					batchFirstLayer.reserve((nVisibleTileX + 8)* (nVisibleTileY + 8));
-					batchSecondLayer.reserve((nVisibleTileX + 8)* (nVisibleTileY + 8));
-					batchThirdLayer.reserve((nVisibleTileX + 8)* (nVisibleTileY + 8));
-					batchZeroCharsLayer.reserve((nVisibleTileX + 8)* (nVisibleTileY + 8));
+					
+				
+			
 
 					// Iterate over visible tiles
 					for (int x = -4; x < nVisibleTileX+2 ; x++) {
@@ -1801,63 +2112,81 @@ if (IsFocused())
 		
 						if (idx.ThirdLayer.index !=0)
 							{
-
-							tile.position.x = x;
-							tile.position.y = y;
-							tile.size = idx.ThirdLayer.size;
-							tile.sourceRect = idx.ThirdLayer.sourcerect;
-							tile.textureIndex = 4;
-							tile.textureLayer = 4;
-							batchThirdLayer.push_back(tile);
+							if (bshowThird == true)
+							SetDrawTarget(layer);
 
 					
+							DrawPartialDecal({x * CellSize - fTileOffsetX,y * CellSize - fTileOffsetY }, m_pCurrentMap->pSprite, idx.ThirdLayer.sourcerect, idx.ThirdLayer.size);
 
+							if (bshowThird == true)
+							{
+
+								//SetPixelMode(olc::Pixel::NORMAL);
+								EnableLayer(layer, true);
+								SetDrawTarget(nullptr);
+
+
+								DrawRect({ (int)x * (int)CellSize - (int)fTileOffsetX,(int)y * (int)CellSize - (int)fTileOffsetY }, idx.ThirdLayer.size);
+
+							}
 							}
 
 							if (idx.SecondLayer.index != 0)
 							{
+								if (bshowSecond == true)
+								SetDrawTarget(layer);
 							
-								tile.position.x = x;
-								tile.position.y = y;
-								tile.size = idx.SecondLayer.size;
-								tile.sourceRect = idx.SecondLayer.sourcerect;
-								tile.textureIndex = 3;
-								tile.textureLayer = 3;
-								batchSecondLayer.push_back(tile);
+
+								DrawPartialDecal({ x * CellSize - fTileOffsetX,y * CellSize - fTileOffsetY }, m_pCurrentMap->pSprite, idx.SecondLayer.sourcerect, idx.SecondLayer.size);
+							
+								if (bshowSecond == true)
+								{
+
+									SetPixelMode(olc::Pixel::NORMAL);
+									EnableLayer(layer, true);
+									SetDrawTarget(nullptr);
 
 
-						
+									DrawRect({ (int)x * (int)CellSize - (int)fTileOffsetX,(int)y * (int)CellSize - (int)fTileOffsetY }, idx.SecondLayer.size);
+
+								}
+
 
 							}	
 
 							if (idx.DynamicLayer.index != 0)
 							{
+								//SetDrawTarget(layer);
 
 
-								tile.position.x = x;
-								tile.position.y = y;
-								tile.size = idx.DynamicLayer.size;
-								tile.sourceRect = idx.DynamicLayer.sourcerect;
-								tile.textureIndex = idx.DynamicLayer.index;  // we implement dynamic loguc on index
-								tile.textureLayer = 10;
-								batchDynamicLayer.push_back(tile);
+								idx.DynamicLayer.index -= 10;
 
-
+								DrawPartialDecal({x * CellSize - fTileOffsetX,y * CellSize - fTileOffsetY }, m_pCurrentMap->pDynsprite, { 128.0f * frameIndex,idx.DynamicLayer.index * 128.0f }, { 128,128 }, { fscale,fscale });
 
 							}
 
 							if (idx.FirstLayer.index != 0)
 							{
-								tile.position.x = x;
-								tile.position.y = y;
-								tile.size = idx.FirstLayer.size;
-								tile.sourceRect = idx.FirstLayer.sourcerect;
-								tile.textureIndex = 1;
-								tile.textureLayer = 1;
-								batchFirstLayer.push_back(tile);
+								if (bshowfirst == true)
+								SetDrawTarget(layer);
 
 
+								DrawPartialDecal({ x * CellSize - fTileOffsetX,y * CellSize - fTileOffsetY }, m_pCurrentMap->pSprite, idx.FirstLayer.sourcerect, idx.FirstLayer.size);
 						
+
+
+								if (bshowfirst == true)
+								{
+
+									SetPixelMode(olc::Pixel::NORMAL);
+									EnableLayer(layer, true);
+									SetDrawTarget(nullptr);
+
+
+									DrawRect({ (int)x * (int)CellSize - (int)fTileOffsetX,(int)y * (int)CellSize - (int)fTileOffsetY }, idx.FirstLayer.size);
+
+								}
+
 							}
 
 
@@ -1883,38 +2212,7 @@ if (IsFocused())
 						}
 					}
 					//std::cout << batchDynamicLayer.size() + batchSecondLayer.size() + batchThirdLayer.size() + batchFirstLayer.size()+batchZeroCharsLayer.size() << std::endl;
-					
-					
-
-					for (const auto& source : { &batchThirdLayer,&batchSecondLayer,&batchDynamicLayer ,&batchFirstLayer })
-						for (auto& dyns : *source)
-						{
-							switch (dyns.textureLayer)
-							{
-							default:
-								DrawPartialDecal({ dyns.position.x * 64 - fTileOffsetX,dyns.position.y * 64 - fTileOffsetY }, m_pCurrentMap->pSprite, dyns.sourceRect, dyns.size);
-								break;
-							case 10:  // means dynamic
-
-								dyns.textureIndex -= 10;
-								
-								DrawPartialDecal({ dyns.position.x * 64 - fTileOffsetX,dyns.position.y * 64 - fTileOffsetY }, m_pCurrentMap->pDynsprite, { 256.0f * frameIndex,dyns.textureIndex * 256.0f }, { 256,256 });
-								break;
-							}
-						
-
-							
-							
-
-
-						}
-
-					SetPixelMode(olc::Pixel::NORMAL);
-				EnableLayer(layer, true);
-					SetDrawTarget(nullptr);
-
-
-
+			
 				
 
 					//   spherese check 
@@ -1952,31 +2250,9 @@ if (IsFocused())
 
 
 
-					if (bshowThird == true)
-					{
-						for (const auto& source : { &batchThirdLayer })
-							for (auto& dyns : *source)
-							{
-								DrawRect({ (int)dyns.position.x * 64 - (int)fTileOffsetX,(int)dyns.position.y * 64 - (int)fTileOffsetY }, dyns.size);
-							}
-					}
-					if (bshowSecond == true)
-					{
-						for (const auto& source : { &batchSecondLayer })
-							for (auto& dyns : *source)
-							{
-								DrawRect({ (int)dyns.position.x * 64 - (int)fTileOffsetX,(int)dyns.position.y * 64 - (int)fTileOffsetY }, dyns.size);
-							}
-					}
+				
+					
 
-					if (bshowfirst == true)
-					{
-						for (const auto& source : { &batchFirstLayer })
-							for (auto& dyns : *source)
-							{
-									DrawRect({ (int)dyns.position.x * 64 - (int)fTileOffsetX,(int)dyns.position.y * 64 - (int)fTileOffsetY }, dyns.size);	
-							}
-					}
 
 				
 
@@ -1990,11 +2266,11 @@ if (IsFocused())
 				//Draw Objects
 				
 
-				for (auto& source : { &m_vecFightText,&m_vecDynamics,&m_vecProjectiles,&m_vecParticles })
+				for (auto& source : { &m_vecFightText,&m_vecVisibleDynamics,&m_vecProjectiles,&m_vecParticles })
 					for (auto& dyns : *source)
 						if (dyns->px >= fCameraPosX - nVisibleTileX && dyns->px <= fCameraPosX + nVisibleTileX && dyns->py >= fCameraPosY - nVisibleTileX && dyns->py <= fCameraPosY + nVisibleTileX)   // && m_vecDynamics[0] !=dyns
 						{
-							if (dyns->bDraw)
+							if (dyns->checkFlag(dyns->bDraw))
 							dyns->DrawSelf(this, fOffsetX, fOffsetY);
 							
 						}
@@ -2019,8 +2295,8 @@ if (IsFocused())
 
 					if (bshowZero == true)
 					{
-						SetDrawTarget(1);
-						SetPixelMode(olc::Pixel::ALPHA);
+						SetDrawTarget(layer);
+						//SetPixelMode(olc::Pixel::ALPHA);
 					}
 
 
@@ -2029,7 +2305,7 @@ if (IsFocused())
 
 							
 						
-							DrawPartialDecal({ positions[i].x * 64 - fTileOffsetX,positions[i].y * 64 - fTileOffsetY }, m_pCurrentMap->pSprite, sourceRects[i], sourceSize[i]);
+						DrawPartialDecal({ positions[i].x * CellSize - fTileOffsetX,positions[i].y * CellSize - fTileOffsetY }, m_pCurrentMap->pSprite,  sourceRects[i],  sourceSize[i]);
 							
 
 							if (bshowZero == true)
@@ -2037,49 +2313,52 @@ if (IsFocused())
 							SetPixelMode(olc::Pixel::NORMAL);
 							EnableLayer(layer, true);
 							SetDrawTarget(nullptr);
-							DrawRect({ positions[i].x * 64 - (int)fTileOffsetX,positions[i].y * 64 - (int)fTileOffsetY }, sourceSize[i]);
+							DrawRect({ positions[i].x * (int)CellSize - (int)fTileOffsetX,positions[i].y * (int)CellSize - (int)fTileOffsetY }, sourceSize[i]*fscale);
 							}
 							
 
 						}
+					batchZeroCharsLayer.clear();
 				}
 
 
 
 				
-				//}
+				/*}*/
 
-	//			if (!m_pPlayer->bHideMode)
-		//		{
-		//		m_pPlayer->DrawSelf(this, fOffsetX, fOffsetY);
-		//		}
-
+			/*	if (!m_pPlayer->bHideMode)
+				{
+				m_pPlayer->DrawSelf(this, fOffsetX, fOffsetY);
+				}*/
 			
 
-				//
-				//for (auto& source : { &m_vecFightText,&m_vecDynamics,&m_vecProjectiles,&m_vecParticles }) //Draw chars Collizzion 
-				//	for (auto& dyns : *source)
-				//		if (dyns->px >= fCameraPosX - nVisibleTileX && dyns->px <= fCameraPosX + nVisibleTileX && dyns->py >= fCameraPosY - nVisibleTileX && dyns->py <= fCameraPosY + nVisibleTileX)   // && m_vecDynamics[0] !=dyns
-				//		{
-				//			
+				
+				for (auto& source : { &m_vecFightText,&m_vecVisibleDynamics,&m_vecProjectiles,&m_vecParticles }) //Draw chars Collizzion 
+					for (auto& dyns : *source)
+						if (dyns->px >= fCameraPosX - nVisibleTileX && dyns->px <= fCameraPosX + nVisibleTileX && dyns->py >= fCameraPosY - nVisibleTileX && dyns->py <= fCameraPosY + nVisibleTileX)   // && m_vecDynamics[0] !=dyns
+						{
+							
+							DrawRect((dyns->px - fOffsetX) * CellSize, (dyns->py - fOffsetY) * CellSize, 128*fscale, 128*fscale);
+							
+							
+							
+							DrawLine((dyns->px + dyns->CollbordersX - fOffsetX)* CellSize, (dyns->py + dyns->CollbordersY - fOffsetY)* CellSize, (dyns->px + dyns->CollbordersX - fOffsetX+dyns->vx)* CellSize, (dyns->py + dyns->CollbordersY - fOffsetY+dyns->vy)* CellSize);
+							//DrawRect((dyns->px+dyns->CollbordersX - fOffsetX)* (64 * fscale), (dyns->py+dyns->CollbordersY - fOffsetY)* (64 * fscale), 128 * fscale, 128 * fscale);
 
-				//		
+							DrawLine((dyns->px + dyns->CollbordersX - fOffsetX) * CellSize, (dyns->py + dyns->CollbordersY - fOffsetY) * CellSize, (dyns->px + dyns->CollbordersX - fOffsetX) * CellSize, (dyns->py + dyns->CollbordersYF - fOffsetY) * CellSize);
+							DrawLine((dyns->px + dyns->CollbordersX - fOffsetX) * CellSize, (dyns->py + dyns->CollbordersY - fOffsetY) * CellSize, (dyns->px + dyns->CollbordersXF - fOffsetX) * CellSize, (dyns->py + dyns->CollbordersY - fOffsetY) * CellSize);
+							DrawLine((dyns->px + dyns->CollbordersX - fOffsetX) * CellSize, (dyns->py + dyns->CollbordersYF - fOffsetY) * CellSize, (dyns->px + dyns->CollbordersXF - fOffsetX) * CellSize, (dyns->py + dyns->CollbordersYF - fOffsetY) * CellSize);
+							DrawLine((dyns->px + dyns->CollbordersXF - fOffsetX) * CellSize, (dyns->py + dyns->CollbordersY - fOffsetY) * CellSize, (dyns->px + dyns->CollbordersXF - fOffsetX) * CellSize, (dyns->py + dyns->CollbordersYF - fOffsetY) * CellSize);
 
-
-				//			DrawLine((dyns->px + dyns->CollbordersX - fOffsetX) * 64, (dyns->py + dyns->CollbordersY - fOffsetY) * 64, (dyns->px + dyns->CollbordersX - fOffsetX) * 64, (dyns->py + dyns->CollbordersYF - fOffsetY) * 64);
-				//			DrawLine((dyns->px + dyns->CollbordersX - fOffsetX) * 64, (dyns->py + dyns->CollbordersY - fOffsetY) * 64, (dyns->px + dyns->CollbordersXF - fOffsetX) * 64, (dyns->py + dyns->CollbordersY - fOffsetY) * 64);
-				//			DrawLine((dyns->px + dyns->CollbordersX - fOffsetX) * 64, (dyns->py + dyns->CollbordersYF - fOffsetY) * 64, (dyns->px + dyns->CollbordersXF - fOffsetX) * 64, (dyns->py + dyns->CollbordersYF - fOffsetY) * 64);
-				//			DrawLine((dyns->px + dyns->CollbordersXF - fOffsetX) * 64, (dyns->py + dyns->CollbordersY - fOffsetY) * 64, (dyns->px + dyns->CollbordersXF - fOffsetX) * 64, (dyns->py + dyns->CollbordersYF - fOffsetY) * 64);
-
-
-
-				//		}
+						}
 	
 						
-						
+			
+
+
 				for (auto& source : { &m_vecUiBars })    // DRAW Ui elements above char 
 					for (auto& dyns : *source)
-						dyns->DrawSelf(this, (m_pPlayer->px-fOffsetX)*64, (m_pPlayer->py - fOffsetY+1.5) * 64);
+						dyns->DrawSelf(this, (m_pPlayer->px-fOffsetX)* (64 * fscale), (m_pPlayer->py - fOffsetY+1.5) * (64 * fscale));
 
 			//	std::cout <<m_pPlayer->px << '\t'<< (ScrollingY + 90) - (fOffsetY * 6.0f) <<'\t'<< m_pPlayer->py << std::endl;
 
@@ -2124,19 +2403,25 @@ if (IsFocused())
 			
 
 				if (PressF)
-				DrawPartialDecal({ (m_pPlayer->px + (1.0f*fscale) - fOffsetX) * 64,((m_pPlayer->py-0.2f) - fOffsetY) * 64 }, m_sprPressF, { 0,0 }, { 155,32 },{fscale,fscale});
+				DrawPartialDecal({ (m_pPlayer->px + (1.0f*fscale) - fOffsetX) * CellSize,((m_pPlayer->py-0.2f) - fOffsetY) * CellSize }, D_Ui, { 976,384 }, { 112,30 },{fscale,fscale});
 
 
+				//
 
+				uiCellUpdate(mouse);
 
-				DrawPartialDecal({ (float)(mouse.x - 0.15f), (float)(mouse.y - 0.1f) }, m_sprGameCursor, { 0,0 }, { (float)64,(float)(64) },{fscale,fscale});
+			
+
+				//
+
+				Drawcursor(mouse);
 
 
 
 		
 				if (bPause)
 			{
-				
+					olc::vf2d quitPos{ (ScreenWidth() / 2) - (167 * fscale) ,ScreenHeight() / 2 + (31 * fscale) };
 			
 					switch (n_nGameMode)
 					{
@@ -2144,31 +2429,32 @@ if (IsFocused())
 
 						break;
 					case MODE_LOCAL_MAP:
-						DrawPartialDecal({ ((float)ScreenWidth() / 2) - 167, (float)ScreenHeight() / 2 - 71 }, RPG_Assets::get().GetSprite("SpellUi"), { 0,0 }, { 334,142 });
+						DrawPartialDecal({ ((float)ScreenWidth() / 2) - (167*fscale), (float)ScreenHeight() / 2 - (71*fscale) }, D_Ui, { 832,0 }, { 334,142 },{fscale,fscale});
 						//DrawBigText("Travel ?", (ScreenWidth() / 2) - 72, ScreenHeight() / 2 - 62, 1, 1, olc::WHITE);
 
-						DrawBigText("Quit", (ScreenWidth() / 2) - 167, ScreenHeight() / 2 + 31, 1, 1, olc::WHITE);
+						DrawBigText("Quit", (ScreenWidth() / 2) - (167*fscale), ScreenHeight() / 2 + (31*fscale), 1*fscale, 1*fscale, olc::WHITE);
 
-						DrawBigText("Options", (ScreenWidth() / 2) + 167 - 144, ScreenHeight() / 2 + 31, 1, 1, olc::WHITE);
+						DrawBigText("Options", (ScreenWidth() / 2) + ((167 - 144)*fscale), ScreenHeight() / 2 + (31*fscale), 1*fscale, 1*fscale, olc::WHITE);
 
+						SetPixelMode(olc::Pixel::NORMAL);
+						EnableLayer(layer, true);
+						SetDrawTarget(nullptr);
 
-
-						
+					
+						DrawRect((ScreenWidth() / 2) - (167 * fscale), ScreenHeight() / 2 + (31 * fscale), 40,20);
 
 
 						if (GetMouse(0).bPressed) //LeftMouse
 						{
 
-							if ((int)mouse.x >= (ScreenWidth() / 2) - 167 && (int)mouse.y >= ScreenHeight() / 2 + 31 && (int)mouse.x <= (ScreenWidth() / 2) - 167 + 90 && (int)mouse.y <= ScreenHeight() / 2 + 31 + 32)
+							if ((int)mouse.x >=(int)quitPos.x && (int)mouse.y >= (int)quitPos.y && (int)mouse.x <= (int)quitPos.x+40 && (int)mouse.y <= (int)quitPos.x + 40)
 							{
 								return false;
 							}
 
 						}
-
-						DrawPartialDecal({ (float)(mouse.x - 0.15f), (float)(mouse.y - 0.1f) }, m_sprGameCursor, { 0,0 }, { (float)64,(float)(64) });
-
-						DrawBigText("Pause", ScreenWidth() / 2 - 45, ScreenHeight() / 2 - 71, 1, 1, olc::WHITE);
+						Drawcursor(mouse);
+						DrawBigText("Pause", ScreenWidth() / 2 - (45*fscale), ScreenHeight() / 2 - (71 * fscale) , 1 * fscale, 1 * fscale, olc::WHITE);
 
 					
 						break;
@@ -2199,18 +2485,15 @@ if (IsFocused())
 
 
 
-				int y=0;
+				uint8_t y = 0;
 				for (auto& quest : m_listQusets)  // ui drawing quest right up corner on the screen
 				{
-					y++;
+				
 					DrawBigText(quest->sName, ScreenWidth() - 250, y * 32, 0.35, 0.35, olc::YELLOW);
 					y++;
 					DrawBigText(quest->sDescription, ScreenWidth() - 250, y * 32, 0.25, 0.25);
-					//y -=2;
+					y++;
 				}
-
-
-
 
 
 				if (bSmoothAppearScreen)
@@ -2237,7 +2520,9 @@ if (IsFocused())
 					frameIndex = 0;
 				}
 				//
-
+				SetPixelMode(olc::Pixel::NORMAL);
+				EnableLayer(layer, true);
+				SetDrawTarget(nullptr);
 
 				// Limit the frame rate to 60 frames per second
 			//	Sleep(4); // Sleep for the appropriate time to achieve desired frame rate
@@ -2250,14 +2535,20 @@ if (IsFocused())
 bool RPG_Engine::UpdateWarehouse(float fElapsedTime)
 {
 
-	olc::vf2d mouse = { (float)GetMouseX(), (float)GetMouseY() };
-	olc::vf2d mousefix = { (mouse.x / (64 * fscale)), (mouse.y / (64 * fscale)) };
 
 	
 
 
-	cItem* highlighted = nullptr;
-	cItem* GrabItem = nullptr;
+
+
+	olc::vf2d mouse = { (float)GetMouseX(), (float)GetMouseY() };
+	olc::vf2d mousefix = { (mouse.x / CellSize), (mouse.y / CellSize) };
+
+	
+
+
+	 highlighted = nullptr;
+	 GrabItem = nullptr;
 
 	float squeY = 8 * fscale;
 	float squeX = 4 * fscale;
@@ -2266,35 +2557,80 @@ bool RPG_Engine::UpdateWarehouse(float fElapsedTime)
 	const float ReqSocketsY = (float)(128 / 64) * fscale;
 	const float RqSocketsX = (float)(192 / 64) * fscale;
 	
-	olc::Decal* InventorySockeys = RPG_Assets::get().GetSprite("inventorySockets");
-
-	const float invSocketsWidth = InventorySockeys->sprite->width;
-	const float invSocketsHeigh = InventorySockeys->sprite->height;
 
 
-	DrawPartialDecal({ (float)4 * 64*fscale, (float)(8) * 64*fscale }, InventorySockeys, { 0,0 }, { invSocketsWidth,invSocketsHeigh }, {fscale,fscale});
-	DrawPartialDecal({ (float)5.85 * 64*fscale, (float)(11) * 64*fscale }, RPG_Assets::get().GetSprite("inventoryName"), { 0,0 }, { 274,75 }, { fscale,fscale });
-	DrawPartialDecal({ (float)10 * 64*fscale, (float)4 * 64*fscale }, RPG_Assets::get().GetSprite("PantirEquipSlots"), { 0,0 }, { 128,256 }, { fscale,fscale });   //<-- Draw sprite under rectangle
-	DrawPartialDecal({ (float)10 * 64*fscale, (float)6 * 64*fscale }, m_pPlayer->pEquipedWeapon->pSprite, { 0,0 }, { 64,64 }, { fscale,fscale }); // <--Weapon wearing
-	DrawPartialDecal({ (float)4 * 64*fscale, (float)4 * 64*fscale }, RPG_Assets::get().GetSprite("StatisticShelf"), { 0,0 }, { 384,256 }, { fscale,fscale });   //<-- Draw sprite under rectangle
+	olc::vf2d inventorySockets = { 0,250 };
+
+	DrawPartialDecal({ (float)4 * 64 * fscale, (float)(4) * 64 * fscale }, Inventoryback,{0,0}, {512,523}, {fscale,fscale});  // draw sockets and inventary name
+
 
 	
-	DrawPartialDecal({ (float)14 * 64*fscale, (float)8 * 64*fscale }, InventorySockeys, { 0,0 }, { invSocketsWidth,invSocketsHeigh }, { fscale,fscale });
-	DrawPartialDecal({ (float)15.85 * 64*fscale, (float)11 * 64*fscale }, RPG_Assets::get().GetSprite("WarehouseName"), { 0,0 }, { 274,75 }, { fscale,fscale });
-
-	DrawBigText(std::to_string(m_pPlayer->GetStats(1)), (7) * 64*fscale, (6 + 0.5) * 64*fscale, 0.5*fscale, 0.5*fscale); //Agility
-	DrawBigText(std::to_string(m_pPlayer->GetStats(2)), (7) * 64*fscale, (5 + 0.6) * 64*fscale, 0.5*fscale, 0.5*fscale); //Strength
-	DrawBigText(std::to_string(m_pPlayer->GetStats(3)), (7) * 64*fscale, (7 + 0.3) * 64*fscale, 0.5*fscale, 0.5*fscale); //Intelegence
-	DrawBigText(std::to_string(m_pPlayer->GetStats(4)), (5) * 64*fscale, 7 * 64*fscale, 0.5, 0.5); //Defence
+	DrawPartialDecal({ (float)14 * 64 * fscale, (float)(8) * 64 * fscale }, Inventoryback, inventorySockets, { 512,199 }, { fscale,fscale });  // draw sockets 
+	DrawPartialDecal({ (float)15.85 * 64 * fscale, (float)11 * 64 * fscale }, Inventoryback, { 725,75 }, { 273,76 }, { fscale,fscale });  // draw sockets 
+//	DrawPartialDecal({ (float)14 * 64*fscale, (float)8 * 64*fscale }, InventorySockeys, { 0,0 }, { invSocketsWidth,invSocketsHeigh }, { fscale,fscale });
+//	DrawPartialDecal({ (float)15.85 * 64*fscale, (float)11 * 64*fscale }, RPG_Assets::get().GetSprite("WarehouseName"), { 0,0 }, { 274,75 }, { fscale,fscale });
+	
+	DrawBigText(std::to_string(m_pPlayer->GetStats(2)), (9 ) * 64 * fscale, (5 + 0.3) * 64 * fscale, fscale, fscale); //Strength
+	DrawBigText(std::to_string(m_pPlayer->GetStats(1)), (9 ) * 64 * fscale, (6 + 0.3) * 64 * fscale, fscale, fscale); //Agility
+	DrawBigText(std::to_string(m_pPlayer->GetStats(3)), (9 ) * 64 * fscale, (7 + 0.2) * 64 * fscale, fscale, fscale); //Intelegence
+	DrawBigText(std::to_string(m_pPlayer->GetStats(4)), (5 ) * 64 * fscale, 7 * 64 * fscale, 0.5, 0.5); //Defence
 	//DrawBigText(std::to_string(m_pPlayer->GetStats(5)), (4) * 64, (6) * 64, 0.5, 0.5); //MovementSpeed
-	DrawBigText(std::to_string(m_pPlayer->GetStats(6) + m_pPlayer->pEquipedWeapon->nDamage), (5) * 64 * fscale, (6) * 64 * fscale, 0.5, 0.5); //AverageAttack
+	DrawBigText(std::to_string(m_pPlayer->GetStats(6)), (5) * 64 * fscale, (6) * 64 * fscale, 0.5, 0.5); //AverageAttack
 	//DrawBigText(std::to_string(m_pPlayer->GetStats(7)), (4) * 64, (8) * 64, 0.5, 0.5); //fHpRegeneration
 	//DrawBigText(std::to_string(m_pPlayer->GetStats(8)), (4) * 64, (9) * 64, 0.5, 0.5); //Versality
 
 
+	float EqSqueX = (3 + 7) * fscale;
+	float EqSqueY = (4 + 1) * fscale;
 
-	if ((int)mousefix.x == (10*fscale) && (int)mousefix.y == 6*fscale)
-		highlighted = m_pPlayer->pEquipedWeapon;
+
+
+	for (auto& item : m_vecEquip)
+	{
+
+		int i = item->index;
+		if (item->Item != nullptr)
+		{
+
+			int  x = i % 2;
+			int  y = i / 2;
+
+			float sprcoordX = item->Item->spriteindex % 32;
+			float sprcoordY = item->Item->spriteindex / 32;
+
+
+			//if(item->sName =="Coin")
+		   // AddMoney(item->Item->GoldCount);
+
+
+
+
+			if (item->checkFlag(item->Grabitem) == false)
+			{
+
+				DrawPartialDecal({ (float)(EqSqueX + (x * fscale)) * 64, (EqSqueY + (y * fscale)) * 64 }, item->Item->pSprite, { sprcoordX * 64,sprcoordY * 64 }, { 64,64 }, { fscale,fscale });
+
+				//item->ipy = y;
+
+
+
+				if ((int)mousefix.x == ((EqSqueX / fscale) + x) && (int)mousefix.y == (EqSqueY / fscale) + y)
+					highlighted = item;
+
+			}
+		//	else
+		//	{
+		//		DrawPartialDecal({ (float)(mouse.x - (32 / 2)) , (float)(mouse.y - (32 / 2)) }, item->Item->pSprite, { sprcoordX * 64,sprcoordY * 64 }, { 64,64 }, { fscale,fscale });
+		//		GrabItem = item;
+
+		//	}
+
+		}
+		i++;
+	}
+
+
+
 
 
 
@@ -2304,131 +2640,60 @@ bool RPG_Engine::UpdateWarehouse(float fElapsedTime)
 	DrawWarehouse(WHsqueX, squeY, mouse, mousefix, highlighted, GrabItem, Money);
 	
 	
+		
 
-
-	//if (GetMouse(0).bReleased)
-	//{
-	//	if (GrabItem != nullptr)
-	//	{
-
-
-	//		moveteItems(mouse, squeX, squeY, GrabItem);
-
-	//	}
-	//}
 	
 
 	if (GetMouse(0).bReleased)
 	{
 		if (GrabItem != nullptr)
 		{
-			bool bswitch = false;
+			
 
 			if ((int)mousefix.x >= squeX/fscale && (int)mousefix.y >= squeY/fscale && (int)mousefix.x <= 11 && (int)mousefix.y <= 10) //Inventory
 			{
 
-				if (GrabItem->bInWarehouse)  //when we grabed item from warehouse
+				if (GrabItem->checkFlag(GrabItem->binWarehouse))  //when we grabed item from warehouse
 				{
 				
 				
-					GrabItem->bInWarehouse = false;
-
+					//GrabItem->bInWarehouse = false;
+					GrabItem->clearFlag(GrabItem->binWarehouse);
 					
 
 					int x = (int)mousefix.x - (squeX/fscale) ;    //ere we calculate in local space in Warehouse object  /invnumber 
 					int y = (int)mousefix.y - (squeY / fscale);
 
 
-					std::list<cItem*>::iterator its = m_listItems.begin();
-					for (auto& item : m_listItems)
-					{ //       we compare grabbed item with item in inventary for switch
-
-						++its;
-						if ((item->invnumber - 1) % 8 + item->ipx ==  x && (item->invnumber - 1) / 8 + item->ipy ==  y)
-						{
-							bswitch = true;
-							int reservex = GrabItem->ipx;
-							int reservey = GrabItem->ipy;
-							int reservinv = GrabItem->invnumber;
+					int currIndex = 8 * y + x; // cell in inventary that need to check on reserved  
+					int GrabitemIndex = GrabItem->index;
 
 
-							std::list<cItem*>::iterator it = m_listWarehouseItems.begin();
+					m_listItems[currIndex]->index = GrabItem->index; //switch indexes
+					GrabItem->index = currIndex;  // switch indexes
 
-							for (auto& listitem : m_listWarehouseItems)  // go in warehouse list check cross with mouse 
-							{
+					m_listBlackSmithItems[currIndex]->setFlag(m_listBlackSmithItems[currIndex]->binWarehouse);
 
-								++it;
-								if (listitem->invnumber == GrabItem->invnumber)    // here we find position in inventary our grabbed ex
-								{
-									//listitem->invnumber % 8 + listitem->ipx == GrabItem->invnumber % 8 + GrabItem->ipx
-									//listitem->invnumber / 8 + listitem->ipy == GrabItem->invnumber / 8 + GrabItem->ipy
+					std::swap(m_listItems[currIndex], m_listWarehouseItems[GrabitemIndex]);
 
-									m_listItems.insert(its, GrabItem);
-									m_listWarehouseItems.insert(it, item);     // insert in inventary item from werehouse
+			
 
-									GrabItem->invnumber = item->invnumber;
-									GrabItem->ipx = item->ipx;
-									GrabItem->ipy = item->ipy;
+				//	vector[currIndex]->index = GrabItem->index; //assign index from grabbed object to that place where it shoild be dropped
+				//	GrabItem->index = currIndex;   // assign  index too bject
 
-									item->invnumber = reservinv;
-									item->ipx = reservex;
-									item->ipy = reservey;
+				//	std::swap(vector[currIndex], vector[GrabbedIndex]);
 
-									
-									break;
+				}
+				else
+				{
 
-								}
-
-							}
-
-
-
-							
-							item->bInWarehouse = true;
-							break;
-
-						}
-
-
-					}
-
-
-
-					m_listWarehouseItems.erase(                              //delete object in mlist
-						remove_if(m_listWarehouseItems.begin(), m_listWarehouseItems.end(),
-							[](const cItem* d) {return!((cItem*)d)->bInWarehouse; }), m_listWarehouseItems.end());
-
-
-					m_listItems.erase(                              //delete object in mlist
-						remove_if(m_listItems.begin(), m_listItems.end(),
-							[](const cItem* d) {return((cItem*)d)->bInWarehouse; }), m_listItems.end());
+					moveteItems(mousefix, squeX, squeY, GrabItem, m_listItems);
+				}
 
 
 
 
 
-					if (!bswitch)
-					{
-						m_listItems.push_back(GrabItem);
-
-						for (auto z : m_listWarehouseItems)
-						{
-
-							if (z->invnumber > GrabItem->invnumber)
-							{
-								z->ipx = ((z->invnumber - 1) % 8 + z->ipx) - ((z->invnumber - 2) % 8);   //calculate offset for every object higher invnumber than our grabed 
-								z->ipy = ((z->invnumber - 1) / 8 + z->ipy) - ((z->invnumber - 2) / 8);
-							}
-						}
-
-						GrabItem->invnumber = m_listItems.size();  //Calculate inv for size
-
-						x = (int)mousefix.x -(squeX/fscale) - (GrabItem->invnumber - 1) % 8;    //ere we calculate in local space
-						y = (int)mousefix.y - (squeY / fscale) - (GrabItem->invnumber - 1) / 8;
-
-						GrabItem->ipx = x;
-						GrabItem->ipy = y;
-					}
 
 
 
@@ -2436,127 +2701,46 @@ bool RPG_Engine::UpdateWarehouse(float fElapsedTime)
 
 
 				}
-				else  //drop in the same slot inventary or werehaouse without switch
-			{
-
-					moveteItems(mousefix, squeX, squeY, GrabItem,m_listItems);
-			}
-		}
+			
 
 			if ((int)mousefix.x >= WHsqueX/fscale && (int)mousefix.y >= squeY/fscale && (int)mousefix.x <= 21 && (int)mousefix.y <= 10)   //Warehouse
 			{
 
 
-				if (!GrabItem->bInWarehouse)
+				if (!GrabItem->checkFlag(GrabItem->binWarehouse))
 				{
 					
-					GrabItem->bInWarehouse = true;
-
+					//GrabItem->bInWarehouse = true;
+					GrabItem->setFlag(GrabItem->binWarehouse);
 						
 					int x = (int)mousefix.x  - (WHsqueX/fscale) ;    //calculate drop position for draged object
-					int y = (int)mousefix.y - (squeY / fscale) ;
+					int y = (int)mousefix.y - (squeY / fscale);
 
-			
-
-						std::list<cItem*>::iterator its = m_listWarehouseItems.begin();
-					for (auto& item : m_listWarehouseItems)  // go in warehouse list check cross with mouse 
-					{
-						++its;
-
-
-						if ((item->invnumber - 1) % 8 + item->ipx == x && (item->invnumber - 1) / 8 + item->ipy == y)
-						{
-							bswitch = true;
+					int currIndex = 8 *y + x; // cell in inventary that need to check on reserved  
+					int GrabedIndex = GrabItem->index;
+					
 						
-							
-							int reservex = GrabItem->ipx;
-							int reservey = GrabItem->ipy;
-							int reservinv = GrabItem->invnumber;
+						m_listWarehouseItems[currIndex]->index= GrabItem->index; //switch indexes
+						GrabItem->index = currIndex;  // switch indexes
+						//m_listWarehouseItems[currIndex]->bInWarehouse = false;
+						m_listWarehouseItems[currIndex]->clearFlag(m_listWarehouseItems[currIndex]->binWarehouse);
 
-
-							
-							
-													
-								std::list<cItem*>::iterator it = m_listItems.begin();
-							for (auto& listitem : m_listItems)  // go in warehouse list check cross with mouse 
-							{
-
-								++it;
-								if (listitem->invnumber == GrabItem->invnumber)    // here we find position in inventary our grabbed ex
-								{
-								m_listWarehouseItems.insert(its, GrabItem);
-								m_listItems.insert(it, item);     // insert in inventary item from werehouse
-								GrabItem->invnumber = item->invnumber;
-								GrabItem->ipx = item->ipx;
-								GrabItem->ipy = item->ipy;
-								item->invnumber =reservinv;
-								item->ipx = reservex;
-								item->ipy = reservey;
-
-							
-								break;
-
-								}
-								
-							}
-
-							
-								
-							GrabItem->bInWarehouse = true;
-							item->bInWarehouse = false;
-							break;
-						
-						}
-
+						std::swap(m_listWarehouseItems[currIndex], m_listItems[GrabedIndex]);
 
 					
 
-					}
-
-					m_listWarehouseItems.erase(                              //delete object in mlist
-						remove_if(m_listWarehouseItems.begin(), m_listWarehouseItems.end(),
-							[](const cItem* d) {return!((cItem*)d)->bInWarehouse; }), m_listWarehouseItems.end());
-
-
-					m_listItems.erase(                              //delete object in mlist
-						remove_if(m_listItems.begin(), m_listItems.end(),
-							[](const cItem* d) {return((cItem*)d)->bInWarehouse; }), m_listItems.end());
-
-
-
-					if (!bswitch)
-					{
-						m_listWarehouseItems.push_back(GrabItem);
-
-						for(auto z : m_listItems)
-						{
-
-							if (z->invnumber > GrabItem->invnumber)   // recalculate all invnumbers higher than ouse switch object
-							{
-								z->ipx = ((z->invnumber-1 ) % 8 + z->ipx) - ((z->invnumber - 2) % 8);
-								z->ipy = ((z->invnumber-1 ) / 8 + z->ipy) - ((z->invnumber - 2) / 8);
-							}
-						}
-
-						GrabItem->invnumber = m_listWarehouseItems.size() ;
-
-						x = (int)mousefix.x - (WHsqueX/fscale) - (GrabItem->invnumber - 1) % 8;    //ere we calculate in local space
-						y = (int)mousefix.y -(squeY/fscale)- (GrabItem->invnumber - 1) / 8;
-
-						GrabItem->ipx = x;
-						GrabItem->ipy = y;
-					}
-
 				}
-				else     // Switch in warehouse to warehouse
+				else
 				{
-					 
 					moveteItems(mousefix, WHsqueX, squeY, GrabItem, m_listWarehouseItems);
 
-				
 				}
-			}
-			GrabItem->mouseGrabbed = false;
+
+				
+
+		}
+			//GrabItem->GrabItem = false;
+			GrabItem->clearFlag(GrabItem->Grabitem);
 
 		}
 	}
@@ -2573,9 +2757,9 @@ bool RPG_Engine::UpdateWarehouse(float fElapsedTime)
 		if (GetMouse(0).bPressed)
 		{
 
-	
 
-			highlighted->mouseGrabbed = true;
+			if ((int)mousefix.x >= squeX / fscale && (int)mousefix.y >= squeY / fscale) //Inventory
+			highlighted->setFlag(highlighted->Grabitem);
 			
 		}
 
@@ -2593,22 +2777,35 @@ bool RPG_Engine::UpdateWarehouse(float fElapsedTime)
 
 
 
-		if (GetKey(olc::Key::SPACE).bReleased)     // <---Must remake
-		{
-			// Use selected item 
-			if (!highlighted->bKeyItem)
+			if (GetMouse(1).bPressed)
 			{
-				if (highlighted->OnUse(m_pPlayer))
+				// Use selected item 
+				if (!highlighted->Item->bKeyItem)
 				{
-					// Item has signalled it must be consumed, so remove it
-					TakeItem(highlighted);
+					if (highlighted->checkFlag(highlighted->binWarehouse))
+					{
+
+						if (highlighted->Item->OnUse(m_pPlayer, m_listWarehouseItems))
+						{
+							// Item has signalled it must be consumed, so remove it
+							ClearAbsorbedSlots(m_listWarehouseItems); // find absorbed object and change them on empty sockets
+							//TakeItem(highlighted, m_listWarehouseItems);
+
+							
+
+						}
+					}
+					else if (highlighted->Item->OnUse(m_pPlayer, m_listItems))
+					{
+						ClearAbsorbedSlots(m_listItems); // find absorbed object and change them on empty sockets
+					//	TakeItem(highlighted, m_listItems);
+					}
+					
+
+					
 				}
-			}
-			else
-			{
 
 			}
-		}
 	}
 
 
@@ -2627,13 +2824,11 @@ bool RPG_Engine::UpdateWarehouse(float fElapsedTime)
 	squeX = (4 * fscale) * 64;
 	squeY = (3 * fscale) * 64;
 	DrawBigText(std::to_string(Money), squeX + (64 * fscale), squeY + (16 * fscale), fscale, fscale, olc::YELLOW); //Money
-	DrawPartialDecal({ (float)squeX, (float)squeY }, RPG_Assets::get().GetSprite("Coin"), { 0,0 }, { (float)64,(float)64 }, { fscale,fscale });
+//	DrawPartialDecal({ (float)squeX, (float)squeY }, RPG_Assets::get().GetSprite("Coin"), { 0,0 }, { (float)64,(float)64 }, { fscale,fscale });
 	//
 
 
-	//Mouse
-	DrawPartialDecal({ (float)(mouse.x - 0.15f), (float)(mouse.y - 0.1f) }, RPG_Assets::get().GetSprite("Pantir's Dagger"), { 0,0 }, { (float)64,(float)(64) }, { fscale,fscale });
-
+	
 
 
 
@@ -2642,19 +2837,19 @@ bool RPG_Engine::UpdateWarehouse(float fElapsedTime)
 
 
 	//Mouse
-	DrawPartialDecal({ (float)(mouse.x - 0.15f) , (float)(mouse.y - 0.1f) }, RPG_Assets::get().GetSprite("Pantir's Dagger"), { 0,0 }, { (float)64,(float)(64) }, { fscale,fscale });
+	Drawcursor(mouse);
+
+	//DrawPartialDecal({ (float)(mouse.x - 0.15f) , (float)(mouse.y - 0.1f) }, RPG_Assets::get().GetSprite("Pantir's Dagger"), { 0,0 }, { (float)64,(float)(64) }, { fscale,fscale });
 
 
 
 	return true;
 }
 
-void RPG_Engine::DrawWarehouse(const float offestX, const float offsetY, olc::vf2d mouse, olc::vf2d mouseFixed, cItem*& highlighted, cItem*& Grabitem, int moneyamount)
+void RPG_Engine::DrawWarehouse(const float offestX, const float offsetY, olc::vf2d mouse, olc::vf2d mouseFixed, InventaryItem*& highlighted, InventaryItem*& Grabitem, int moneyamount)
 {
 
-	m_listWarehouseItems.erase(                              //delete  6 Coins from inventary
-		remove_if(m_listWarehouseItems.begin(), m_listWarehouseItems.end(),
-			[](const cItem* d) {return((cItem*)d)->Absorbed; }), m_listWarehouseItems.end());
+	
 
 	Money = moneyamount;
 	int i = 0;
@@ -2663,40 +2858,72 @@ void RPG_Engine::DrawWarehouse(const float offestX, const float offsetY, olc::vf
 
 	for (auto& item : m_listWarehouseItems)
 	{
-		x = i % 8;
+		i = item->index;
+		if (item->checkFlag(item->Breserved))
+		{
 
-		y = i / 8;
+			if (item->Item != nullptr)
+			{
+
+				i = item->index;
+				if (item->checkFlag(item->Breserved))
+				{
+
+					AddMoney(item->Gold);
+					x = i % 8;
+					y = i / 8;
+					float sprcoordX = item->Item->spriteindex % 32;
+					float sprcoordY = item->Item->spriteindex / 32;
+
+
+				
+
+
+
+
+					if (dynamic_cast<cGold*>(item->Item))
+					{
+						cGold* itemHelp = (cGold*)item->Item;
+						AddMoney(itemHelp->GoldCount);
+					}
+
+
+
+					if (item->checkFlag(item->Grabitem) == false)
+					{
+
+						DrawPartialDecal({ (float)(offestX + (x * fscale)) * 64, (offsetY + (y * fscale)) * 64 }, item->Item->pSprite, { sprcoordX*64,sprcoordY*64 }, { 64,64 }, { fscale,fscale });
+
+						//item->ipy = y;
+
+
+
+
+						if (item->Item->MaxStack > 1)
+							DrawBigText(std::to_string(item->currStacks), (float)(offestX + (x * fscale) + 0.05) * 64, (offsetY + (y * fscale)) * 64, fscale * 0.5f, fscale * 0.5f, olc::WHITE); //Money
+						if (item->Gold > 0)
+							DrawBigText(std::to_string(item->Gold), (float)(offestX + (x * fscale) + 0.4) * 64, (offsetY + (y * fscale) + 0.3) * 64, fscale * 0.5f, fscale * 0.5f, olc::YELLOW); //Money
+
+
+
+						if ((int)mouseFixed.x == ((offestX / fscale) + x) && (int)mouseFixed.y == (offsetY / fscale) + y)
+							highlighted = item;
+
+					}
+					else
+					{
+						DrawPartialDecal({ (float)(mouse.x - (32 / 2)) , (float)(mouse.y - (32 / 2)) }, item->Item->pSprite, { sprcoordX * 64,sprcoordY * 64 }, { 64,64 }, { fscale,fscale });
+						Grabitem = item;
+
+					}
+				}
+			}
+		}
 		i++;
-
-		//if(item->sName =="Coin")
-		AddMoney(item->GoldCount);
-
-
-
-		if (item->mouseGrabbed == false)
-		{
-
-			DrawPartialDecal({ (float)(offestX + ((x + item->ipx) * fscale)) * 64, (offsetY + ((y + item->ipy) * fscale)) * 64 }, item->pSprite, { 0,0 }, { 64,64 }, { fscale,fscale });
-			item->invnumber = i;
-			//item->ipy = y;
-
-
-			if ((int)mouseFixed.x == ((offestX / fscale) + (x + item->ipx)) && (int)mouseFixed.y == ((offsetY / fscale) + y + item->ipy))
-				highlighted = item;
-
-		}
-		else
-		{
-			DrawPartialDecal({ (float)(mouse.x - (32 / 2)) , (float)(mouse.y - (32 / 2)) }, item->pSprite, { 0,0 }, { 64,64 }, { fscale,fscale });
-			Grabitem = item;
-
-		}
-
-
 	}
 }
 
-bool RPG_Engine::SetMouseTarget(olc::vf2d mouse)
+bool RPG_Engine::SetMouseTarget(olc::vi2d mouse)
 {
 
 	if (m_pPlayer->Gettarget() == nullptr)
@@ -2751,36 +2978,203 @@ bool RPG_Engine::SetMouseTarget(olc::vf2d mouse)
 
 
 
-bool RPG_Engine::UpdateInventory(float fElapsedTIme)
+void RPG_Engine::uiCellUpdate(olc::vi2d mouse)
 {
 
-	//Clear({51,51,57});
+	 highlighted = nullptr;
+	// GrabItem = nullptr;
+	
+	
+	olc::vi2d mousefix = { (mouse.x / (int)(64 * fscale)),(mouse.y / (int)(64 * fscale)) };
+	uint8_t SelObjSize =64;
 
-	cItem* highlighted = nullptr;
-	cItem* GrabItem = nullptr;
+	uint8_t spriteCoordX = 4 % 32;
+	uint8_t spriteCoordY = 4/32;
+
+
+
+	//uint8_t UiFirstCellX = 64 * fscale / (64 * fscale);
+	uint8_t UiFirstCellY = (ScreenHeight() - (ScreenHeight() / 6)) / (64 * fscale);
+
+//	uint8_t UiSecondCellX = 64 * 3 * fscale / (64 * fscale);
+	//uint8_t UiSecondCellY = (ScreenHeight() - (ScreenHeight() / 6)) / (64 * fscale);
+
+	DrawPartialDecal({ (float)SelObjSize * fscale, (float)ScreenHeight() - (ScreenHeight() / 6) }, m_Items, { (float)spriteCoordX*64,(float)spriteCoordY*64 }, { (float)SelObjSize, (float)SelObjSize }, { fscale*fscale,fscale*fscale });
+	DrawBigText("Q", (float)SelObjSize * fscale + (32 / 2 * (fscale - 0.2f)), (float)ScreenHeight() - (ScreenHeight() / 9), (fscale + 0.2f)*fscale, (fscale + 0.2f)*fscale, olc::WHITE);
+
+
+	DrawPartialDecal({ (float)SelObjSize * 3 * fscale, (float)ScreenHeight() - (ScreenHeight() / 6) }, m_Items, { (float)spriteCoordX * 64,(float)spriteCoordY * 64 }, { (float)SelObjSize, (float)SelObjSize }, { fscale*fscale,fscale*fscale });
+	DrawBigText("E", (float)SelObjSize * 3 * fscale + (32 / 2 * (fscale - 0.2f)), (float)ScreenHeight() - (ScreenHeight() / 9), (fscale + 0.2f)*fscale, (fscale + 0.2f)*fscale, olc::WHITE);
+
+	//std::cout << mousefix.x << '\t' << mousefix.y << std::endl;
+	uint8_t xcoor = 1;
+	for (auto i : m_vecUi)
+	{
+
+		//i->spriteindex
+		
+
+
+		if (i != nullptr)
+		{
+			float x = i->Item->spriteindex % 32;
+			float y = i->Item->spriteindex / 32;
+
+			if (!i->checkFlag(i->Grabitem))
+
+			{
+
+			DrawPartialDecal({ (float)SelObjSize * xcoor * fscale, (float)ScreenHeight() - (ScreenHeight() / 6) }, i->Item->pSprite, { x*64,y*64 }, { (float)SelObjSize, (float)SelObjSize }, { fscale,fscale });
+
+		//	std::cout << SelObjSize * xcoor * fscale / (64*fscale) << '\t' << mousefix.y << std::endl;
+
+			if ((int)mousefix.x == SelObjSize * xcoor * fscale / (64 * fscale) && mousefix.y ==UiFirstCellY)
+			{
+				highlighted = i;
+			}
+
+			}
+			else
+			{
+
+				DrawPartialDecal({ (float)(mouse.x - (32 / 2)) , (float)(mouse.y - (32 / 2)) }, i->Item->pSprite, { x*64,y*64 }, { 64,64 }, { fscale,fscale });
+				GrabItem = i;
+			}
+			
+
+			
+
+
+		}
+		xcoor += 2;
+	}
+	
+	if (highlighted !=nullptr)
+	{
+		float nLinesX = 0;
+		int nLinesY = 3;
+		float nsaveline = 0;
+		float nsaveLine2 = 0;
+		for (auto c : highlighted->Item->sDescription)
+		{
+
+			if (c == 10)  // <-- 10 is /n
+			{
+				if (nsaveLine2 <= nsaveline)
+				{
+					nLinesX = 32 + (nsaveline * 18);
+					nsaveLine2 = nsaveline;
+					nsaveline = 0;
+				}
+				nLinesY++;
+				continue;
+			}
+
+			nsaveline++;     //  32/100 = 0.32-> 1 percent.   32-18 = 14   14/0,32 = 0.43   1-0.43 = 0.57    
+		}
+	//	if (highlighted->bEquipable)
+	//	{
+	//		nLinesY+=3;
+	//	}
+	//	else
+	//	{
+		//	if (nLinesX < 32 + 20 * 18 && !highlighted->bKeyItem)  // fill @press space to use like default value
+		//	{
+		//		nLinesX = 32 + 20 * 18;
+
+	//	}
+	//	}
+		
+	olc::vi2d Discription(ScreenWidth()-(32+nLinesX*fscale), ScreenHeight() - (ScreenHeight() / 6)-(nLinesY*32*fscale)*fscale);
+	DrawDescriptionPattern(highlighted, Discription, mousefix);
+
+	}
+}
+
+bool RPG_Engine::UpdateInventory(float fElapsedTIme)
+{
+	
+
+	highlighted = nullptr;
+	GrabItem = nullptr;
 
 	
 
-	const int inventoryHeight = RPG_Assets::get().GetSprite("inventory")->sprite->height;
-	const int inventoryWidth = RPG_Assets::get().GetSprite("inventory")->sprite->width;
-	 float Scale =fscale;
-	olc::vf2d mouse = { float(GetMouseX()), float(GetMouseY()) };
+	const int inventoryHeight = 523;
+	const int inventoryWidth = 512;
+	float Scale =fscale;
+	olc::vi2d mouse = {(GetMouseX()), (GetMouseY()) };
 
 
-	olc::vf2d mousefix = { (mouse.x / (64 * fscale)),(mouse.y / (64 * fscale)) };
+	olc::vi2d mousefix = { (mouse.x / (int)(64 * fscale)),(mouse.y / (int)(64 * fscale)) };
 	
 	
 
-	 float squeX = (nVisibleTileX / 3)*Scale;
-	 float squeY = (nVisibleTileX / 3)*Scale;
+	float squeX = (nVisibleTileX / 3) * fscale;
+	float squeY = (nVisibleTileX / 3) * fscale;
 
 	
+	 float EqSqueX = (squeX + (6 * fscale)) ;
+	 float EqSqueY = (squeY + (1 * fscale)) ;
+	
+	
 
 
 	
+	DrawPartialDecal({ (float)squeX * 64, (float)(squeY * 64)  },Inventoryback, { 0,0 }, { (float)inventoryWidth,(float)inventoryHeight}, { Scale,  Scale});
 	
-	DrawPartialDecal({ (float)squeX * 64, (float)(squeY * 64)  }, RPG_Assets::get().GetSprite("inventory"), { 0,0 }, { (float)inventoryWidth,(float)inventoryHeight}, { Scale,  Scale});
-	
+
+
+	// DrawPartialDecal({ EqSqueX*64, EqSqueY*64 }, m_pPlayer->pEquipedWeapon->pSprite, { 0,0 }, { (float)inventoryWidth,(float)inventoryHeight }, { Scale,  Scale });
+
+
+	 for (auto& item : m_vecEquip)
+	 {
+		
+		 int i = item->index;
+		 if (item->Item != nullptr)
+		 {
+
+			 int  x = i % 2;
+			 int  y = i / 2;
+			 
+			float sprcoordX = item->Item->spriteindex % 32;
+			float sprcoordY = item->Item->spriteindex / 32;
+
+
+			 //if(item->sName =="Coin")
+			// AddMoney(item->Item->GoldCount);
+
+
+
+
+			 if (item->checkFlag(item->Grabitem) == false)
+			 {
+
+				 DrawPartialDecal({ (float)(EqSqueX + (x * fscale)) * 64, (EqSqueY + (y * fscale)) * 64 }, item->Item->pSprite, { sprcoordX * 64,sprcoordY * 64 }, { 64,64 }, { fscale,fscale });
+
+				 //item->ipy = y;
+
+
+
+				 if ((int)mousefix.x == ((EqSqueX / fscale) + x) && (int)mousefix.y == (EqSqueY / fscale) + y)
+					 highlighted = item;
+
+			 }
+			 else
+			 {
+				 DrawPartialDecal({ (float)(mouse.x - (32 / 2)) , (float)(mouse.y - (32 / 2)) }, item->Item->pSprite, { sprcoordX * 64,sprcoordY * 64 }, { 64,64 }, { fscale,fscale });
+				 GrabItem = item;
+
+			 }
+
+		 }
+		 i++;
+	 }
+
+
+
+
 
 	DrawBigText(std::to_string(m_pPlayer->GetStats(1)), (squeX + Scale + ((inventoryWidth / 64) / 2) * Scale) * 64, (squeY - 0.9 + ((inventoryHeight / 64) / 2) * Scale) * 64, Scale, Scale, olc::YELLOW); //Agility
 	DrawBigText(std::to_string(m_pPlayer->GetStats(2)), (squeX + Scale + ((inventoryWidth / 64) / 2) * Scale) * 64, (squeY - 1.4 + ((inventoryHeight / 64) / 2) * Scale) * 64, Scale, Scale, olc::RED); //Strength
@@ -2788,18 +3182,20 @@ bool RPG_Engine::UpdateInventory(float fElapsedTIme)
 
 	//DrawBigText(std::to_string(m_pPlayer->GetStats(5)), (4) * 64, (6) * 64, 0.5, 0.5); //MovementSpeed
 
-	DrawBigText(std::to_string(m_pPlayer->GetStats(6) + m_pPlayer->pEquipedWeapon->nDamage), (squeX - 1.3 + ((inventoryWidth / 64) / 2) * Scale) * 64, (squeY - 1.1 + ((inventoryHeight / 64) / 2) * Scale) * 64, Scale-0.2, Scale - 0.2); //AverageAttack
+	DrawBigText(std::to_string(m_pPlayer->GetStats(6)), (squeX - 1.3 + ((inventoryWidth / 64) / 2) * Scale) * 64, (squeY - 1.1 + ((inventoryHeight / 64) / 2) * Scale) * 64, Scale-0.2, Scale - 0.2); //AverageAttack
 	DrawBigText(std::to_string(m_pPlayer->GetStats(4)), (squeX - 1.3 + ((inventoryWidth / 64) / 2) * Scale) * 64, (squeY - 0.5 + ((inventoryHeight / 64) / 2) * Scale) * 64, Scale-0.2, Scale-0.2); //Defence
 
 	//DrawBigText(std::to_string(m_pPlayer->GetStats(7)), (4) * 64, (8) * 64, 0.5, 0.5); //fHpRegeneration
 	//DrawBigText(std::to_string(m_pPlayer->GetStats(8)), (4) * 64, (9) * 64, 0.5, 0.5); //Versality
-
+	
+	
+	
+	// std::cout << offestX << '\t' << offsetY << std::endl;
 	
 
-
-
-	if ((int)mousefix.x == 10*fscale && (int)mousefix.y == 6*fscale)
-		highlighted = m_pPlayer->pEquipedWeapon;
+	
+	//if ((int)mousefix.x == 10*fscale && (int)mousefix.y == 6*fscale)
+	//	highlighted = m_pPlayer->pEquipedWeapon;
 
 
 	const float YcellOffset = (squeY + (inventoryHeight / 64 - 4) * Scale); // <-- offset from higher point of inventory picture to cells where they drawing
@@ -2822,7 +3218,7 @@ bool RPG_Engine::UpdateInventory(float fElapsedTIme)
 				//grab = true;
 			//	GrabItem = highlighted;
 
-				highlighted->mouseGrabbed = true;
+				highlighted->setFlag(highlighted->Grabitem);
 				//highlighted = nullptr;
 		}
 
@@ -2837,12 +3233,13 @@ bool RPG_Engine::UpdateInventory(float fElapsedTIme)
 		if (GetMouse(1).bPressed)
 		{
 			// Use selected item 
-			if (!highlighted->bKeyItem)
+			if (!highlighted->Item->bKeyItem)
 			{
-				if (highlighted->OnUse(m_pPlayer))
+				if (highlighted->Item->OnUse(m_pPlayer, m_listItems,highlighted))
 				{
+					ClearAbsorbedSlots(m_listItems); // find absorbed object and change them on empty sockets
 					// Item has signalled it must be consumed, so remove it
-					TakeItem(highlighted);
+					//TakeItem(highlighted,m_listItems);
 				}
 			}
 			
@@ -2854,31 +3251,34 @@ bool RPG_Engine::UpdateInventory(float fElapsedTIme)
 	{
 		if (GrabItem != nullptr)
 		{
+			
 
-
-			moveteItems(mousefix, squeX, YcellOffset, GrabItem,m_listItems);
+			moveteItems(mousefix, squeX, YcellOffset, EqSqueX, EqSqueY, GrabItem,m_listItems, m_vecEquip);
 
 		}
 	}
 	
 	// MONEY
 	
-	DrawBigText(std::to_string(Money), (float)(squeX + ((RPG_Assets::get().GetSprite("Coin")->sprite->width * Scale) / 64)) * 64, (float)(squeY + 0.1-((RPG_Assets::get().GetSprite("Coin")->sprite->height * Scale) / 64)) * 64, Scale, Scale, olc::YELLOW); //Money
-	DrawPartialDecal({ (float)squeX*64, (float)(squeY-((RPG_Assets::get().GetSprite("Coin")->sprite->height*Scale)/64))*64 }, RPG_Assets::get().GetSprite("Coin"), { 0,0 }, { (float)64,(float)64 }, { Scale ,Scale });
+	float coinsprX = 3 % 32;
+	float coinsprY = 3 / 32;
+
+	DrawBigText(std::to_string(Money), (float)(squeX + ((64 * Scale) / 64)) * 64, (float)(squeY + 0.1-((64 * Scale) / 64)) * 64, Scale, Scale, olc::YELLOW); //Money
+	DrawPartialDecal({ (float)squeX*64, (float)(squeY-((64*Scale)/64))*64 }, m_Items, { coinsprX*64,coinsprY }, { (float)64,(float)64 }, { Scale ,Scale });
 	//
 
 
 	
-
+	
 	//Mouse
-	DrawPartialDecal({ (float)(mouse.x ) , (float)(mouse.y )  }, RPG_Assets::get().GetSprite("Pantir's Dagger"), { 0,0 }, { (float)64,(float)(64)}, { Scale ,Scale });
+		Drawcursor(mouse);
 
 
 
 	return true;
 }
 
-void RPG_Engine::DrawInventory(float offestX, float offsetY,olc::vf2d mouse,cItem*& Highlighted )
+void RPG_Engine::DrawInventory(float offestX, float offsetY,olc::vi2d mouse,InventaryItem*& Highlighted )
 {
 	Money = 0;
 	int x = 0;
@@ -2889,119 +3289,443 @@ void RPG_Engine::DrawInventory(float offestX, float offsetY,olc::vf2d mouse,cIte
 		x = i % 8;
 
 		y = i / 8;
+		float sprcoordX = item->Item->spriteindex % 32;
+		float sprcoordY = item->Item->spriteindex / 32;
 		i++;
-		//if(item->sName =="Coin")
-		AddMoney(item->GoldCount);
+
+		if (dynamic_cast<cGold*>(item->Item))
+		{
+			cGold* itemHelp = (cGold*)item->Item;
+			AddMoney(itemHelp->GoldCount);
+		}
 
 
 
-		DrawPartialDecal({ (float)(offestX + ((x + item->ipx) * fscale)) * 64, (offsetY + (((float)y + item->ipy) * fscale)) * 64 }, item->pSprite, { 0,0 }, { 64,64 }, { fscale,fscale });
-		item->invnumber = i;
+		DrawPartialDecal({ (float)(offestX + (x  * fscale)) * 64, (offsetY + ((float)y  * fscale)) * 64 }, item->Item->pSprite, { sprcoordX * 64,sprcoordY * 64 }, { 64,64 }, { fscale,fscale });
+		item->index = i;
 		//item->ipy = y;
 
 
-		if ((int)mouse.x == (offestX + (x + item->ipx) * fscale) && (int)mouse.y == offsetY + ((y + item->ipy) * fscale))
+		if ((int)mouse.x == (offestX + x  * fscale) && (int)mouse.y == offsetY + (y  * fscale))
 			Highlighted = item;
 
 
 	}
 }
 
-void RPG_Engine::DrawInventory(float offestX, float offsetY, olc::vf2d mouse, olc::vf2d mouseFixed, cItem*& highlighted, cItem*& Grabitem)
+void RPG_Engine::DrawInventory(float offestX, float offsetY, olc::vi2d mouse, olc::vi2d mouseFixed, InventaryItem*& highlighted, InventaryItem*& Grabitem)
 {
-	m_listItems.erase(                              //delete  6 Coins from inventary
-		remove_if(m_listItems.begin(), m_listItems.end(),
-			[](const cItem* d) {return((cItem*)d)->Absorbed; }), m_listItems.end());
+
+	
 
 	Money = 0;
 	int i = 0;
 	int x = 0;
 	int y = 0;
 	
+
 	for (auto& item : m_listItems)
 	{
-		x = i % 8;
-
-		y = i / 8;
-		i++;
-
-		//if(item->sName =="Coin")
-		AddMoney(item->GoldCount);
-
-
-
-		if (item->mouseGrabbed == false)
+		if (item->Item !=nullptr)
 		{
 
-			DrawPartialDecal({ (float)(offestX + ((x + item->ipx) * fscale)) * 64, (offsetY  + ((y + item->ipy) * fscale)) * 64 }, item->pSprite, { 0,0 }, { 64,64 }, { fscale,fscale });
-			item->invnumber = i;
-			//item->ipy = y;
+		i = item->index;
+		if (item->checkFlag(item->Breserved))
+		{
 
+	AddMoney(item->Gold);
+		x = i % 8;
+		y = i / 8;
+		float sprcoordX = item->Item->spriteindex % 32;
+		float sprcoordY = item->Item->spriteindex / 32;
+
+
+	//	if (dynamic_cast<cGold*>(item->Item))
+	//	{
+			cGold* itemHelp = (cGold*)item->Item;
+
+			//item->currStacks
+			
+	//	}
+
+
+
+		if (item->checkFlag(item->Grabitem) == false)
+		{
+
+			DrawPartialDecal({ (float)(offestX + (x  * fscale)) * 64, (offsetY  + (y  * fscale)) * 64 }, item->Item->pSprite, { sprcoordX*64,sprcoordY*64 }, { 64,64 }, { fscale,fscale });
+			
+			//item->ipy = y;
 			
 
-			if ((int)mouseFixed.x == ((offestX / fscale) + (x + item->ipx)) && (int)mouseFixed.y == ((offsetY / fscale) + y + item->ipy))
+			if (item->Item->MaxStack>1)
+			DrawBigText( std::to_string(item->currStacks), (float)(offestX + (x * fscale)+0.05) * 64, (offsetY + (y * fscale)) * 64, fscale*0.5f, fscale*0.5f,olc::WHITE); //Money
+			if (item->Gold > 0)
+			DrawBigText(std::to_string(item->Gold), (float)(offestX + (x * fscale)+0.4) * 64, (offsetY + (y * fscale)+0.3) * 64, fscale*0.5f, fscale*0.5f, olc::YELLOW); //Money
+
+			if (mouseFixed.x == ((offestX / fscale) + x ) && mouseFixed.y == (offsetY / fscale) + y )
 				highlighted = item;
 			
 		}
 		else
 		{
-			DrawPartialDecal({ (float)(mouse.x - (32 / 2)) , (float)(mouse.y - (32 / 2)) }, item->pSprite, { 0,0 }, { 64,64 }, { fscale,fscale });
+			DrawPartialDecal({ (float)(mouse.x - (32 / 2)) , (float)(mouse.y - (32 / 2)) }, item->Item->pSprite, { sprcoordX * 64,sprcoordY * 64 }, { 64,64 }, { fscale,fscale });
 			Grabitem = item;
 
 		}
 
+		}
+		i++;
+		}
 
-	}
+		}
+	
+
 }
 
-void RPG_Engine::moveteItems(olc::vf2d mouse, float x, float y, cItem*& GrabItem,std::list<cItem*> vector)
+void RPG_Engine::moveteItems(olc::vi2d mouse, float x, float y, InventaryItem*& GrabItem,std::vector<InventaryItem*>& vector)
 {
-	const int cellsCoordX = (int)mouse.x - (x / fscale);     // Coordinates x and y where first cell begins
-	const int cellsCoordY = (int)mouse.y - (y / fscale);
+	const int cellsCoordX = mouse.x - (x / fscale);     // Coordinates x and y where first cell begins 0,0; 0,1; 0,2
+	const int cellsCoordY = mouse.y - (y / fscale);
 
 	bool bswitch = false;
 
-
+	
 	if (cellsCoordX >= 0 && cellsCoordY >= 0 && cellsCoordX <= 7 && cellsCoordY <= 2)
 	{
 
+		int currIndex = 8 * cellsCoordY + cellsCoordX; // cell in inventary that need to check on reserved  
+		int GrabbedIndex = GrabItem->index;
+		//int x = cellsCoordX - ((GrabItem->invnumber - 1) % 8);    //ere we calculate in local space
+		//int y = cellsCoordY - ((GrabItem->invnumber - 1) / 8);
 
-		int x = cellsCoordX - ((GrabItem->invnumber - 1) % 8);    //ere we calculate in local space
-		int y = cellsCoordY - ((GrabItem->invnumber - 1) / 8);
 
 
 
+		
 
-		for (auto& item : vector)
+	
+
+		if (currIndex != GrabbedIndex)   //for except point in one slot
 		{
-			if ((item->invnumber - 1) % 8 + item->ipx == (GrabItem->invnumber - 1) % 8 + x && (item->invnumber - 1) / 8 + item->ipy == (GrabItem->invnumber - 1) / 8 + y)
+
+
+
+			vector[currIndex]->index = GrabItem->index; //assign index from grabbed object to that place where it shoild be dropped
+			GrabItem->index = currIndex;   // assign  index too bject
+
+			std::swap(vector[currIndex], vector[GrabbedIndex]);
+			
+		}
+		
+			
+
+			
+
+		
+
+
+	}
+
+		GrabItem->clearFlag(GrabItem->Grabitem);
+}
+
+void RPG_Engine::moveteItems(olc::vi2d mouse, float x, float y,float eqX,float eqY, InventaryItem*& grabitem, std::vector<InventaryItem*>& vector, std::vector<InventaryItem*>& EqVector)
+{
+	const int cellsInvCoordX = mouse.x - (x / fscale);     // Coordinates x and y where first cell in inv begins 0,0; 0,1; 0,2
+	const int cellsInvCoordY = mouse.y - (y / fscale);
+
+
+	const int cellsEqCoordX = mouse.x - (eqX / fscale);     // Coordinates x and y where first cell in eq begins 0,0; 0,1; 0,2
+	const int cellsEqCoordY = mouse.y - (eqY / fscale);
+
+
+
+	uint8_t UiFirstCellX = 64 * fscale / (64 * fscale);
+	uint8_t UiFirstCellY = (ScreenHeight() - (ScreenHeight() / 6)) / (64 * fscale);
+
+	uint8_t UiSecondCellX = 64 * 3 * fscale / (64 * fscale);
+	uint8_t UiSecondCellY = (ScreenHeight() - (ScreenHeight() / 6)) / (64 * fscale);
+	
+	//std::cout << "Invenotry -" << '\t' << cellsInvCoordX << '\t' << cellsInvCoordY << std::endl;
+	//std::cout << "Equip -" << '\t' << cellsEqCoordX << '\t' << cellsEqCoordY << std::endl;
+	std::cout << "Equip -" << '\t' << (int)mouse.x << '\t' << (int)mouse.y << std::endl;
+
+	if (cellsEqCoordX >= 0 && cellsEqCoordY >= 0 && cellsEqCoordX <= 1 && cellsEqCoordY <= 2)   // Equip
+	{
+		int currIndex = 2 * cellsEqCoordY + cellsEqCoordX; // cell in Equip inventary that need to check on reserved  
+		int GrabbedIndex = grabitem->index;
+		if (!grabitem->checkFlag(grabitem->bEquiped)) // when not from eqVector
+			if (EqVector[currIndex]->Item != nullptr)  // when we drop in empty slot
 			{
-				bswitch = true;
-
-				int reservex = ((GrabItem->invnumber - 1) % 8 + GrabItem->ipx) - ((item->invnumber - 1) % 8);
-				int reservey = ((GrabItem->invnumber - 1) / 8 + GrabItem->ipy) - ((item->invnumber - 1) / 8);
-
+				if (EqVector[currIndex]->Item->equipIndex == grabitem->Item->equipIndex) // when we drags weapon from eqinv to weapon in our inventary
+				{
+					cItem* help = EqVector[currIndex]->Item;
 
 
-				GrabItem->ipx = ((item->invnumber - 1) % 8 + item->ipx) - ((GrabItem->invnumber - 1) % 8);
-				GrabItem->ipy = ((item->invnumber - 1) / 8 + item->ipy) - ((GrabItem->invnumber - 1) / 8);
-				item->ipx = reservex;
-				item->ipy = reservey;
+					EqVector[currIndex]->Item = grabitem->Item;
+					vector[GrabbedIndex]->Item = help;
 
+
+
+
+					AttachEq(EqVector, currIndex);
+
+
+
+				}
+			}
+			else
+
+			{
+				if (grabitem->Item->equipIndex == currIndex + 1)  // for be shure that we drop exact equal equip they started from 1 so we add 1 for this
+				{
+
+					EqVector[currIndex]->Item = grabitem->Item;
+					EqVector[currIndex]->setFlag(EqVector[currIndex]->Breserved);
+
+
+					AttachEq(EqVector, currIndex);
+
+					vector[GrabbedIndex]->Item = nullptr;
+					vector[GrabbedIndex]->clearFlag(vector[GrabbedIndex]->Breserved);
+
+				}
+
+			}
+
+	}
+
+	if (cellsInvCoordX >= 0 && cellsInvCoordY >= 0 && cellsInvCoordX <= 7 && cellsInvCoordY <= 2 ) // frop in inventary
+	{
+
+		int currIndex = 8 * cellsInvCoordY + cellsInvCoordX; // cell in inventary that need to check on reserved  
+		int GrabbedIndex = grabitem->index;
+		//int x = cellsCoordX - ((GrabItem->invnumber - 1) % 8);    //ere we calculate in local space
+		//int y = cellsCoordY - ((GrabItem->invnumber - 1) / 8);
+
+		if (grabitem->checkFlag(grabitem->bEquiped)) // when  we droped equiped object in inventory
+		{
+			if (vector[currIndex]->Item !=nullptr)  // when we drop in empty slot
+			{
+
+			if (vector[currIndex]->Item->equipIndex == grabitem->Item->equipIndex)  // when we drop weapon from eqinv to weapon in our inventary
+			{
+
+				cItem* help = vector[currIndex]->Item;
+
+
+				vector[currIndex]->Item = grabitem->Item;
+				EqVector[GrabbedIndex]->Item = help;
+
+				/*grabitem->bEquiped = false;
+				vector[currIndex]->Item->equipIndex = grabitem->Item->equipIndex;
+				vector[currIndex]->bEquiped = true;
+				grabitem->index = currIndex;
+				vector[currIndex]->index = GrabbedIndex;
+				std::swap(vector[currIndex], EqVector[GrabbedIndex]);
+				AttachEq(EqVector, GrabbedIndex);*/
+				AttachEq(EqVector, GrabbedIndex);
+			}
+
+			}
+			else
+			{
+				vector[currIndex]->Item = grabitem->Item;  
+				vector[currIndex]->setFlag(vector[currIndex]->Breserved);
+
+			//	EqVector[GrabbedIndex]->Item = RPG_Assets::get().GetItem("Empty");
+				EqVector[GrabbedIndex]->Item = nullptr;
+
+				AttachEq(EqVector, GrabbedIndex);
+				EqVector[GrabbedIndex]->clearFlag(EqVector[GrabbedIndex]->Breserved);
 			}
 
 
 		}
-		if (!bswitch)
+		else
 		{
-			GrabItem->ipx = x;
-			GrabItem->ipy = y;
+			if (currIndex != GrabbedIndex)   //for except point in one slot
+			{
+
+
+
+				vector[currIndex]->index = grabitem->index; //assign index from grabbed object to that place where it shoild be dropped
+				grabitem->index = currIndex;   // assign  index too bject
+
+				std::swap(vector[currIndex], vector[GrabbedIndex]);
+
+			}
 		}
+			
+			
+		
+
+
+
+
+
+
+	}
+
+	if ((int)mouse.x >= UiFirstCellX && (int)mouse.y >= UiFirstCellY && (int)mouse.x <= UiFirstCellX && (int)mouse.y <= UiFirstCellY)
+	{
+		//cItem* helper = grabitem->Item;
+
+		m_vecUi[0] = grabitem;
+		m_vecUi[0]->Uiindex = 0;
+
+	}
+	if ((int)mouse.x >= UiSecondCellX && (int)mouse.y >= UiSecondCellY && (int)mouse.x <= UiSecondCellX && (int)mouse.y <= UiSecondCellY)
+	{
+		//cItem* helper = grabitem->Item;
+
+		m_vecUi[1] = grabitem;
+		m_vecUi[1]->Uiindex = 1;
+
 	}
 
 
-	GrabItem->mouseGrabbed = false;
 
+
+
+
+
+
+
+
+
+
+
+
+	grabitem->clearFlag(grabitem->Grabitem);
+	//grabitem->GrabItem = false;
+}
+
+bool RPG_Engine::AttachEq(std::vector<InventaryItem*>& EqVector,int Currindex)    // here two cases of work this method. 
+{																				  // when we drop in slot equel index object we substract first object that was before
+	InventaryItem* ex = nullptr;                                                  // than we add new object
+	switch (Currindex)
+	{
+
+	case 0:
+		ex = EqVector[0];
+		if (dynamic_cast<cEquip*>(ex->Item)) {   //when slot is empty we point at specific empty pointer in pantir class
+			m_pPlayer->SubstracAttributes(m_pPlayer->pEquipedNeck->Attributes);
+			m_pPlayer->pEquipedNeck = (cEquip*)ex->Item;
+			m_pPlayer->TakeAttributes(ex->Item->Attributes);
+			m_pPlayer->MergeItemLvl();
+			return true;
+		}
+		else
+		{
+			m_pPlayer->SubstracAttributes(m_pPlayer->pEquipedNeck->Attributes);       // substract that attributes what was in neck
+			m_pPlayer->pEquipedNeck = m_pPlayer->pEmptySlot;                          //than say look at empty object 
+			m_pPlayer->MergeItemLvl();                                                // in vector we have nullptr that let put there equel item
+			return true;
+		}
+
+		break;
+
+	case 1:
+		ex = EqVector[1];
+		if (dynamic_cast<cEquip*>(ex->Item)) {
+			m_pPlayer->SubstracAttributes(m_pPlayer->pEquipedHelmet->Attributes);
+			m_pPlayer->pEquipedHelmet = (cEquip*)ex->Item;
+			m_pPlayer->TakeAttributes(ex->Item->Attributes);
+			m_pPlayer->MergeItemLvl();
+			return true;
+		}
+		else
+		{
+			m_pPlayer->SubstracAttributes(m_pPlayer->pEquipedHelmet->Attributes);
+			m_pPlayer->pEquipedHelmet = m_pPlayer->pEmptySlot;
+			m_pPlayer->MergeItemLvl();
+			return true;
+		}
+
+		break;
+	case 2:
+
+		ex = EqVector[2];
+		if (dynamic_cast<cEquip*>(ex->Item)) {
+			m_pPlayer->SubstracAttributes(m_pPlayer->pEquipedWeapon->Attributes);
+			m_pPlayer->pEquipedWeapon = (cWeapon*)ex->Item;
+			m_pPlayer->TakeAttributes(ex->Item->Attributes);
+			m_pPlayer->MergeItemLvl();
+			return true;
+		}
+		else
+		{
+			m_pPlayer->SubstracAttributes(m_pPlayer->pEquipedWeapon->Attributes);
+			m_pPlayer->pEquipedWeapon = m_pPlayer->pEmptySlot;
+			m_pPlayer->MergeItemLvl();
+			return true;
+		}
+		break;
+	case 3:
+		ex = EqVector[3];
+		if (dynamic_cast<cEquip*>(ex->Item)) {
+			m_pPlayer->SubstracAttributes(m_pPlayer->pEquipedChest->Attributes);
+			m_pPlayer->pEquipedChest = (cEquip*)ex->Item;
+			m_pPlayer->TakeAttributes(m_pPlayer->pEquipedChest->Attributes);
+			m_pPlayer->MergeItemLvl();
+			return true;
+		}
+		else
+		{
+			m_pPlayer->SubstracAttributes(m_pPlayer->pEquipedChest->Attributes);
+			m_pPlayer->pEquipedChest = m_pPlayer->pEmptySlot;
+			m_pPlayer->MergeItemLvl();
+			return true;
+		}
+		break;
+	case 4:
+
+		ex = EqVector[4];
+		if (dynamic_cast<cEquip*>(ex->Item)) {
+			m_pPlayer->SubstracAttributes(m_pPlayer->pEquipedBack->Attributes);
+			m_pPlayer->pEquipedBack = (cEquip*)ex->Item;
+			m_pPlayer->TakeAttributes(m_pPlayer->pEquipedBack->Attributes);
+			m_pPlayer->MergeItemLvl();
+			return true;
+		}
+		else
+		{
+			m_pPlayer->SubstracAttributes(m_pPlayer->pEquipedBack->Attributes);
+			m_pPlayer->pEquipedBack = m_pPlayer->pEmptySlot;
+			m_pPlayer->MergeItemLvl();
+			return true;
+		}
+		break;
+	case 5:
+		ex = EqVector[5];
+		if (dynamic_cast<cEquip*>(ex->Item)) {
+			m_pPlayer->SubstracAttributes(m_pPlayer->pEquipedBoots->Attributes);
+			m_pPlayer->pEquipedBoots = (cEquip*)ex->Item;
+			m_pPlayer->TakeAttributes(ex->Item->Attributes);
+			m_pPlayer->MergeItemLvl();
+			return true;
+		}
+		else
+		{
+			m_pPlayer->SubstracAttributes(m_pPlayer->pEquipedBoots->Attributes);
+			m_pPlayer->pEquipedBoots = m_pPlayer->pEmptySlot;
+			m_pPlayer->MergeItemLvl();
+			return true;
+		}
+		break;
+
+
+	default:
+		return false;
+		break;
+	}
+
+	
+
+
+//	m_pPlayer->calculateStats();
 }
 
 void RPG_Engine::FillBatch(int TileIndex, int layer, int x, int y,  std::vector<TileInfo>& Before, std::vector<TileInfo>& After)
@@ -3069,33 +3793,76 @@ void RPG_Engine::FillBatch(int TileIndex, int layer, int x, int y,  std::vector<
 }
 
 
+void RPG_Engine::ClearAbsorbedSlots(std::vector<InventaryItem*>& m_listItems)
+{
+	
+	
+
+
+	for (int i = 0; i <absorbCounter; i++)
+	{
+	
+
+		for (auto it2 = m_listItems.begin(); it2 != m_listItems.end(); it2++)  // we go checking all list
+		{
+			InventaryItem* check = *it2;   // add access to data
+
+
+			if (check->checkFlag(check->Babsorbed))   // check on absorb
+			{
+				//check->Absorbed = false;
+				check->clearFlag(check->Babsorbed);
+				check->Item = nullptr;
+				//cEmptySlot* empty = new cEmptySlot();     //create empty space clost 
+				//empty->index = check->index;    //copy index in empty
+
+				//m_listItems[check->index] = empty;  // record in vector  created object on chek position;
+				
+				//delete check;
+				break;
+			}
+
+		}
+
+	}
+	absorbCounter = 0;
+}
+
 bool RPG_Engine::UpdateShop(float fElapsedTime)                                                                                                       // < ----SHOP
 {
-	olc::vf2d mouse = { float(GetMouseX()), float(GetMouseY()) };
+	ClearAbsorbedSlots(m_listItems);
 
 
-	olc::vf2d mousefix = { (mouse.x / (64 * fscale)),(mouse.y / (64 * fscale)) };
+
+	olc::vi2d mouse = { (GetMouseX()), (GetMouseY()) };
+
+
+	olc::vi2d mousefix = { (mouse.x / (int)(64 * fscale)),(mouse.y / (int)(64 * fscale)) };
+
+
+
+	olc::vf2d inventorysockets = { 0,250 };  // coordinates whith inv name
+	
+	
+
+	DrawPartialDecal({ (float)4 * 64*fscale, (float)(8) * 64*fscale }, Inventoryback, inventorysockets, {512.0f,267.0f}, {fscale,fscale});
+
+	
+
+
+	//DrawPartialDecal({ (float)5.85 * 64*fscale, (float)(11) * 64*fscale }, RPG_Assets::get().GetSprite("inventoryName"), { 0,0 }, { 274,75 },{fscale,fscale});
+
+
+	DrawPartialDecal({ (float)14 * 64 * fscale, (float)(8) * 64 * fscale }, Inventoryback, inventorysockets, { 512,192}, { fscale,fscale });  // sockets 
+	DrawPartialDecal({ (float)15.85 * 64*fscale, (float)(11) * 64*fscale }, Inventoryback, { 724,0 }, { 275,75 },{fscale,fscale}); //storeName
+
+
 
 
 	
-	olc::Decal* inventory = RPG_Assets::get().GetSprite("inventorySockets");
 	
-
-	DrawPartialDecal({ (float)4 * 64*fscale, (float)(8) * 64*fscale }, inventory, { 0,0 }, { (float)inventory->sprite->width,(float)inventory->sprite->height },{fscale,fscale});
-
-	DrawPartialDecal({ (float)5.85 * 64*fscale, (float)(11) * 64*fscale }, RPG_Assets::get().GetSprite("inventoryName"), { 0,0 }, { 274,75 },{fscale,fscale});
-
-
-	DrawPartialDecal({ (float)14 * 64*fscale, (float)(8) * 64*fscale }, inventory, { 0,0 }, { (float)inventory->sprite->width,(float)inventory->sprite->height },{fscale,fscale});
-	DrawPartialDecal({ (float)15.85 * 64*fscale, (float)(11) * 64*fscale }, RPG_Assets::get().GetSprite("StoreName"), { 0,0 }, { 274,75 },{fscale,fscale});
-
-
-
-
-	
-	
-	cItem* highlighted = nullptr;
-	cItem* GrabItem = nullptr;
+	 highlighted = nullptr;
+	 GrabItem = nullptr;
 
 	float squeY = 8*fscale;
 	float squeX = 4*fscale;
@@ -3140,14 +3907,15 @@ bool RPG_Engine::UpdateShop(float fElapsedTime)                                 
 			//grab = true;
 		//	GrabItem = highlighted;
 
-			highlighted->mouseGrabbed = true;
+			//highlighted->GrabItem = true;
+			highlighted->setFlag(highlighted->Grabitem);
 			//highlighted = nullptr;
 		}
 
 
 		DrawDescriptionPattern(highlighted, mouse,mousefix);
 		
-		std::cout << (int)mousefix.x << '\t' << (int)mousefix.y << '\t' << squeX / fscale << '\t' << squeX / fscale + 8 << '\t' << squeY / fscale <<'\t' << squeY / fscale + 3 << std::endl;
+		//std::cout << (int)mousefix.x << '\t' << (int)mousefix.y << '\t' << squeX / fscale << '\t' << squeX / fscale + 8 << '\t' << squeY / fscale <<'\t' << squeY / fscale + 3 << std::endl;
 
 			if (GetMouse(1).bPressed)
 		{
@@ -3155,14 +3923,15 @@ bool RPG_Engine::UpdateShop(float fElapsedTime)                                 
 				{
 
 					// Use selected item 
-					if (!highlighted->bKeyItem)        //Try Sell Item
+					if (!highlighted->Item->bKeyItem)        //Try Sell Item
 					{
+						highlighted->Item->OnSell();
 
-
-						if (highlighted->OnSell())
+						if (SaleItem(highlighted->Item->sTradePrice*highlighted->currStacks, highlighted))
 						{
 							// Item has signalled it must be consumed, so remove it
-							TakeItem(highlighted);
+							//TakeItem(highlighted);
+							
 						}
 					}
 				}
@@ -3170,13 +3939,13 @@ bool RPG_Engine::UpdateShop(float fElapsedTime)                                 
 				if ((int)mousefix.x >= storesqueX/fscale && (int)mousefix.x <= storesqueX/fscale+8 && (int)mousefix.y  >= squeY/fscale && (int)mousefix.y <= squeY/fscale+3)  // Store decription
 				{
 					// Use selected item 
-					if (!highlighted->bKeyItem)        //Try Sell Item
+					if (!highlighted->Item->bKeyItem)        //Try Sell Item
 					{
 
 
-						if (highlighted->OnBuy())     // must cheking on amount money ant consume them
+						if (highlighted->Item->OnBuy())     // must cheking on amount money ant consume them
 						{
-							TakeItem(highlighted->sTradeBuyPrice);
+							
 						}
 					}
 				}
@@ -3190,12 +3959,14 @@ bool RPG_Engine::UpdateShop(float fElapsedTime)                                 
 	squeX = 4 * 64*fscale;
 	squeY = 7* 64*fscale;
 	DrawBigText(std::to_string(Money), squeX + (64*fscale), squeY + (16*fscale), fscale, fscale, olc::YELLOW); //Money
-	DrawPartialDecal({ (float)squeX, (float)squeY }, RPG_Assets::get().GetSprite("Coin"), { 0,0 }, { (float)64,(float)64 },{fscale,fscale});
+	
+	DrawPartialDecal({ (float)squeX, (float)squeY }, m_Items, {3.0f*64.0f,0}, {(float)64,(float)64}, {fscale,fscale});  //Gold
 	//
 
 
 //Mouse
-	DrawPartialDecal({ (float)(mouse.x - 0.15f) , (float)(mouse.y - 0.1f)  }, RPG_Assets::get().GetSprite("Pantir's Dagger"), { 0,0 }, { (float)64,(float)(64) },{fscale,fscale});
+	Drawcursor(mouse);
+	//DrawPartialDecal({ (float)(mouse.x - 0.15f) , (float)(mouse.y - 0.1f)  }, RPG_Assets::get().GetSprite("Pantir's Dagger"), { 0,0 }, { (float)64,(float)(64) },{fscale,fscale});
 
 
 
@@ -3204,27 +3975,42 @@ bool RPG_Engine::UpdateShop(float fElapsedTime)                                 
 	return true;
 }
 
-void RPG_Engine::DrawStoreInventory(float sX, float sY, olc::vf2d mousefix, cItem*& highlighted)
+
+void RPG_Engine::DrawStoreInventory(float sX, float sY, olc::vi2d mousefix, InventaryItem*& highlighted)
 {
+
 	int x = 0;
 	int y = 0;
 	int i = 0;
 
 	for (auto& item : m_listStoreItems)
 	{
-		x = i % 8;
 
-		y = i / 8;
-		i++;
+		if (item->Item != nullptr)
+		{
 
-		DrawPartialDecal({ (float)(sX + ((x + item->ipx) * fscale)) * 64, (sY + ((y + item->ipy) * fscale)) * 64 }, item->pSprite, { 0,0 }, { 64,64 }, { fscale,fscale });
-		item->invnumber = i;
-		//item->ipy = y;
+			if (item->checkFlag(item->Breserved))
+			{
+
+				x = i % 8;
+
+				y = i / 8;
+
+				float sprcoordX = item->Item->spriteindex % 32;
+				float sprcoordY = item->Item->spriteindex / 32;
+
+				i++;
+
+				DrawPartialDecal({ (float)(sX + x * fscale) * 64, (sY + y * fscale) * 64 }, item->Item->pSprite, { sprcoordX*64, sprcoordY*64 }, { 64,64 }, { fscale,fscale });
+				//	item->invnumber = i;
+					//item->ipy = y;
 
 
 
-		if ((int)mousefix.x == ((sX / fscale) + (x + item->ipx)) && (int)mousefix.y == ((sY / fscale) + y + item->ipy))
-			highlighted = item;
+				if ((int)mousefix.x == ((sX / fscale) + x) && (int)mousefix.y == ((sY / fscale) + y))
+					highlighted = item;
+			}
+		}
 	}
 }
 
@@ -3234,25 +4020,27 @@ bool RPG_Engine::UpdateProfession(float fElapsedTime)   //<--profession
 
 	olc::vf2d mouse = { float(GetMouseX()), float(GetMouseY()) };
 
-	const float TalentPlateWidth = RPG_Assets::get().GetSprite("Talent Plate")->sprite->width;
-	const float TalentPlateHeigh = RPG_Assets::get().GetSprite("Talent Plate")->sprite->height;
+	const float TalentPlateWidth = 960;
+	const float TalentPlateHeigh = 768;
 
-	olc::Decal* HrzStickEmptry = RPG_Assets::get().GetSprite("Horizontal StickEmpty");
-	olc::Decal* HrzStickFull = RPG_Assets::get().GetSprite("Horizontal StickFill");
-
-
-	olc::Decal* VertStickEmptry = RPG_Assets::get().GetSprite("Vertical StickEmpty");
-	olc::Decal* VertStickFull = RPG_Assets::get().GetSprite("Vertical StickFill");
+//	olc::Decal* HrzStickEmptry = RPG_Assets::get().GetSprite("Horizontal StickEmpty");
+//	olc::Decal* HrzStickFull = RPG_Assets::get().GetSprite("Horizontal StickFill");
 
 
-	olc::Decal* SelectedObject = RPG_Assets::get().GetSprite("SelectedObject");
+//	olc::Decal* VertStickEmptry = RPG_Assets::get().GetSprite("Vertical StickEmpty");
+//	olc::Decal* VertStickFull = RPG_Assets::get().GetSprite("Vertical StickFill");
+
+
+//	olc::Decal* SelectedObject = RPG_Assets::get().GetSprite("SelectedObject");
 
 	float BaseposX = (float)(ScreenWidth() / 2 - ((TalentPlateWidth / 2)*fscale));
 	float BasePosY = (float)(ScreenHeight() / 2 - ((TalentPlateHeigh / 2)*fscale));
 
 	
 
-	DrawPartialDecal({ BaseposX,  BasePosY }, RPG_Assets::get().GetSprite("Talent Plate"), {0,0}, { TalentPlateWidth,TalentPlateHeigh },{fscale,fscale});
+
+	DrawPartialDecal({ BaseposX,  BasePosY }, D_Ui, { (float)0,(float)142 }, { TalentPlateWidth,TalentPlateHeigh }, { fscale,fscale });
+	//DrawPartialDecal({ BaseposX,  BasePosY }, RPG_Assets::get().GetSprite("Talent Plate"), {0,0}, { TalentPlateWidth,TalentPlateHeigh },{fscale,fscale});
 
 
 
@@ -3260,51 +4048,51 @@ bool RPG_Engine::UpdateProfession(float fElapsedTime)   //<--profession
 	/////////  STICK DRAWING /////  START
 
 	//Low-Mid Attack
-	DrawPartialDecal({ BaseposX + (222*fscale),  BasePosY + (576*fscale) }, HrzStickEmptry, { 0,0 }, { (float)4,(float)74 }, { fscale,fscale });
+	DrawPartialDecal({ BaseposX + (222*fscale),  BasePosY + (576*fscale) }, D_Ui, { 1227,0 }, { (float)4,(float)74 }, { fscale,fscale });
 
 	if(GetLearnedTalent(2)) //  <-- MidAttack 
 	{
-	DrawPartialDecal({ BaseposX + (222*fscale),  BasePosY + (576*fscale) }, VertStickFull, { 0,0 }, { (float)4,(float)74 }, { fscale,fscale });
+	DrawPartialDecal({ BaseposX + (222*fscale),  BasePosY + (576*fscale) }, D_Ui, { 1223,0 }, { (float)4,(float)74 }, { fscale,fscale });
 
 	//Mid-High Attack
-	DrawPartialDecal({ BaseposX + (126*fscale),  BasePosY + (542*fscale) }, HrzStickEmptry, { 0,0 }, { (float)74,(float)4 }, { fscale,fscale });
+	DrawPartialDecal({ BaseposX + (126*fscale),  BasePosY + (542*fscale) }, D_Ui, { 0,910 }, { (float)74,(float)4 }, { fscale,fscale });
 	}
 	if(GetLearnedTalent(3))
-	DrawPartialDecal({ BaseposX + (126*fscale),  BasePosY + (542*fscale) }, VertStickFull, { 0,0 }, { (float)74,(float)4 }, { fscale,fscale });
+	DrawPartialDecal({ BaseposX + (126*fscale),  BasePosY + (542*fscale) }, D_Ui, { 0,914 }, { (float)74,(float)4 }, { fscale,fscale });
 
 
 	//BackStab-ShadowStab Attack
 	if (GetLearnedTalent(4))
 	{
 
-		DrawPartialDecal({ BaseposX + (31*fscale),  BasePosY + (670*fscale) }, HrzStickEmptry, { 0,0 }, { (float)74,(float)4 }, { fscale,fscale });
-		DrawPartialDecal({ BaseposX + (31*fscale),  BasePosY + (414*fscale) }, HrzStickEmptry, { 0,0 }, { (float)74,(float)4 }, { fscale,fscale });
-		DrawPartialDecal({ BaseposX + (30*fscale),  BasePosY + (415*fscale) }, VertStickEmptry, { 0,0 }, { (float)4,(float)257 }, { fscale,fscale });
+		DrawPartialDecal({ BaseposX + (31*fscale),  BasePosY + (670*fscale) }, D_Ui, { 0,910 }, { (float)74,(float)4 }, { fscale,fscale });
+		DrawPartialDecal({ BaseposX + (31*fscale),  BasePosY + (414*fscale) }, D_Ui, { 0,910 }, { (float)74,(float)4 }, { fscale,fscale });
+		DrawPartialDecal({ BaseposX + (30*fscale),  BasePosY + (415*fscale) }, D_Ui, { 1227,0 }, { (float)4,(float)257 }, { fscale,fscale });
 
 	}
 	if (GetLearnedTalent(5))
 	{
 
-	DrawPartialDecal({ BaseposX + (31*fscale),  BasePosY + (670*fscale) }, VertStickFull, { 0,0 }, { (float)74,(float)4 }, { fscale,fscale });
-	DrawPartialDecal({ BaseposX + (31*fscale),  BasePosY +(414*fscale) }, VertStickFull, { 0,0 }, { (float)74,(float)4 }, { fscale,fscale });
-	DrawPartialDecal({ BaseposX + (30*fscale),  BasePosY + (415*fscale) }, VertStickFull, { 0,0 }, { (float)4,(float)257 }, { fscale,fscale });
-	DrawPartialDecal({ BaseposX + (95*fscale),  BasePosY + (251*fscale) }, VertStickEmptry, { 0,0 }, { (float)4,(float)138 }, { fscale,fscale });
+	DrawPartialDecal({ BaseposX + (31*fscale),  BasePosY + (670*fscale) }, D_Ui, { 0,914 }, { (float)74,(float)4 }, { fscale,fscale });
+	DrawPartialDecal({ BaseposX + (31*fscale),  BasePosY +(414*fscale) }, D_Ui, { 0,914 }, { (float)74,(float)4 }, { fscale,fscale });
+	DrawPartialDecal({ BaseposX + (30*fscale),  BasePosY + (415*fscale) }, D_Ui, { 1223,0 }, { (float)4,(float)257 }, { fscale,fscale });
+	DrawPartialDecal({ BaseposX + (95*fscale),  BasePosY + (251*fscale) }, D_Ui, { 1227,0 }, { (float)4,(float)138 }, { fscale,fscale });
 	}
 
 	if (GetLearnedTalent(6))
 	{
-		DrawPartialDecal({ BaseposX + (95*fscale),  BasePosY + (251*fscale) }, VertStickFull, { 0,0 }, { (float)4,(float)138 }, { fscale,fscale });
+		DrawPartialDecal({ BaseposX + (95*fscale),  BasePosY + (251*fscale) }, D_Ui, { 1223,0 }, { (float)4,(float)138 }, { fscale,fscale });
 	}
 
 
 	//RighAttack-RightAirAttack
-	DrawPartialDecal({ BaseposX + (351*fscale),  BasePosY + (572*fscale) }, VertStickEmptry, { 0,0 }, { (float)4,(float)74 }, { fscale,fscale });
+	DrawPartialDecal({ BaseposX + (351*fscale),  BasePosY + (572*fscale) }, D_Ui, { 1227,0 }, { (float)4,(float)74 }, { fscale,fscale });
 	if (GetLearnedTalent(12))
 	{
 
-	DrawPartialDecal({ BaseposX + (351*fscale),  BasePosY + (572*fscale) }, VertStickFull, { 0,0 }, { (float)4,(float)74 }, { fscale,fscale }, olc::Pixel(255, 0, 0));   //offset pulling player back into the screen
+	DrawPartialDecal({ BaseposX + (351*fscale),  BasePosY + (572*fscale) }, D_Ui, { 1223,0 }, { (float)4,(float)74 }, { fscale,fscale }, olc::Pixel(255, 0, 0));   //offset pulling player back into the screen
 	
-	DrawPartialDecal({ BaseposX + (351*fscale),  BasePosY +(315*fscale) }, VertStickEmptry, { 0,0 }, { (float)4,(float)202 }, { fscale,fscale }, olc::Pixel(255, 0, 0));   //offset pulling player back into the screen
+	DrawPartialDecal({ BaseposX + (351*fscale),  BasePosY +(315*fscale) }, D_Ui, { 1227,0 }, { (float)4,(float)202 }, { fscale,fscale }, olc::Pixel(255, 0, 0));   //offset pulling player back into the screen
 
 
 	}
@@ -3312,12 +4100,12 @@ bool RPG_Engine::UpdateProfession(float fElapsedTime)   //<--profession
 	//Flight//Landing
 	if (GetLearnedTalent(13))
 	{
-	DrawPartialDecal({ BaseposX + (351*fscale),  BasePosY + (315*fscale) }, VertStickFull, { 0,0 }, { (float)4,(float)202 }, { fscale,fscale }, olc::Pixel(255, 0, 0));   //offset pulling player back into the screen
+	DrawPartialDecal({ BaseposX + (351*fscale),  BasePosY + (315*fscale) }, D_Ui, { 1223,0 }, { (float)4,(float)202 }, { fscale,fscale }, olc::Pixel(255, 0, 0));   //offset pulling player back into the screen
 
-	DrawPartialDecal({ BaseposX + (351*fscale),  BasePosY + (123*fscale) }, VertStickEmptry, { 0,0 }, { (float)4,(float)138 }, { fscale,fscale }, olc::Pixel(255, 0, 0));   //offset pulling player back into the screen
+	DrawPartialDecal({ BaseposX + (351*fscale),  BasePosY + (123*fscale) }, D_Ui, { 1227,0 }, { (float)4,(float)138 }, { fscale,fscale }, olc::Pixel(255, 0, 0));   //offset pulling player back into the screen
 	}
 	if (GetLearnedTalent(14))
-	DrawPartialDecal({ BaseposX + (351*fscale),  BasePosY + (123*fscale) }, VertStickFull, { 0,0 }, { (float)4,(float)138 }, { fscale,fscale }, olc::Pixel(255, 0, 0));   //offset pulling player back into the screen
+	DrawPartialDecal({ BaseposX + (351*fscale),  BasePosY + (123*fscale) }, D_Ui, { 1223,0 }, { (float)4,(float)138 }, { fscale,fscale }, olc::Pixel(255, 0, 0));   //offset pulling player back into the screen
 	
 
 
@@ -3339,49 +4127,49 @@ bool RPG_Engine::UpdateProfession(float fElapsedTime)   //<--profession
 				/// SELECT RECTANGLE START
 	if (mouse.x >= BaseposX + (192*fscale) && mouse.x <= BaseposX + ((192 + 64)*fscale) && mouse.y >= BasePosY + (512*fscale) && mouse.y <= BasePosY + ((512 + 64)*fscale))    // <-- Mid
 	{
-		DrawPartialDecal({ BaseposX + (192*fscale), BasePosY + (512*fscale) }, SelectedObject, { 0,0 }, { (float)64,(float)(64) }, { fscale,fscale });
+		DrawPartialDecal({ BaseposX + (192*fscale), BasePosY + (512*fscale) }, m_Items, { 256,0 }, { (float)64,(float)(64) }, { fscale,fscale });
 	}
 
 	if (mouse.x >= BaseposX + (64*fscale) && mouse.x <= BaseposX + ((64 + 64)*fscale) && mouse.y >= BasePosY + (512*fscale) && mouse.y <= BasePosY + ((512 + 64)*fscale))    // <-- High
 	{
-		DrawPartialDecal({ BaseposX + (64*fscale), BasePosY + (512*fscale) }, SelectedObject, { 0,0 }, { (float)64,(float)(64) }, { fscale,fscale });
+		DrawPartialDecal({ BaseposX + (64*fscale), BasePosY + (512*fscale) }, m_Items, { 256,0 }, { (float)64,(float)(64) }, { fscale,fscale });
 	}
 
 	if (mouse.x >= BaseposX + (64*fscale) && mouse.x <= BaseposX + ((64 + 64)*fscale) && mouse.y >= BasePosY + (640*fscale) && mouse.y <= BasePosY + ((640 + 64)*fscale))    // <-- Backstab
 	{
-		DrawPartialDecal({ BaseposX + (64*fscale), BasePosY + (640*fscale) }, SelectedObject, { 0,0 }, { (float)64,(float)(64) }, { fscale,fscale });
+		DrawPartialDecal({ BaseposX + (64*fscale), BasePosY + (640*fscale) }, m_Items, { 256,0 }, { (float)64,(float)(64) }, { fscale,fscale });
 	}
 
 	if (mouse.x >= BaseposX + (64*fscale) && mouse.x <= BaseposX + ((64 + 64)*fscale) && mouse.y >= BasePosY + (384*fscale) && mouse.y <= BasePosY + ((384 + 64)*fscale))    // <-- ShadowStap
 	{
-		DrawPartialDecal({ BaseposX + (64*fscale), BasePosY + (384*fscale) }, SelectedObject, { 0,0 }, { (float)64,(float)(64) }, { fscale,fscale });
+		DrawPartialDecal({ BaseposX + (64*fscale), BasePosY + (384*fscale) }, m_Items, { 256,0 }, { (float)64,(float)(64) }, { fscale,fscale });
 	}
 
 	if (mouse.x >= BaseposX + (64*fscale) && mouse.x <= BaseposX + ((64 + 64)*fscale) && mouse.y >= BasePosY + (192*fscale) && mouse.y <= BasePosY + ((192 + 64)*fscale))    // <-- Swirl
 	{
-		DrawPartialDecal({ BaseposX + (64*fscale), BasePosY + (192*fscale) }, SelectedObject, { 0,0 }, { (float)64,(float)(64) }, { fscale,fscale });
+		DrawPartialDecal({ BaseposX + (64*fscale), BasePosY + (192*fscale) }, m_Items, { 256,0 }, { (float)64,(float)(64) }, { fscale,fscale });
 	}
 
 	if (mouse.x >= BaseposX + (192*fscale) && mouse.x <= BaseposX + ((192 + 64)*fscale) && mouse.y >= BasePosY + ((384)*fscale) && mouse.y <= BasePosY + ((384 + 64)*fscale))    // <-- Vanish
 	{
-		DrawPartialDecal({ BaseposX + (192*fscale), BasePosY + (384*fscale) }, SelectedObject, { 0,0 }, { (float)64,(float)(64) }, { fscale,fscale });
+		DrawPartialDecal({ BaseposX + (192*fscale), BasePosY + (384*fscale) }, m_Items, { 256,0 }, { (float)64,(float)(64) }, { fscale,fscale });
 	}
 
 
 	if (mouse.x >= BaseposX + (320*fscale) && mouse.x <= BaseposX + ((320 + 64)*fscale) && mouse.y >= BasePosY + (512*fscale) && mouse.y <= BasePosY + ((512 + 64)*fscale))    // <-- RightAir
 	{
-		DrawPartialDecal({ BaseposX + (320*fscale),  BasePosY + (512*fscale) }, SelectedObject, { 0,0 }, { (float)64,(float)(64) }, { fscale,fscale });
+		DrawPartialDecal({ BaseposX + (320*fscale),  BasePosY + (512*fscale) }, m_Items, { 256,0 }, { (float)64,(float)(64) }, { fscale,fscale });
 	}
 
 
 	if (mouse.x >= BaseposX + (320*fscale) && mouse.x <= BaseposX + ((320 + 64)*fscale) && mouse.y >= BasePosY + (256*fscale) && mouse.y <= BasePosY + ((256 + 64)*fscale))    // <-- RightFLIGHTUP
 	{
-		DrawPartialDecal({ BaseposX + (320*fscale), BasePosY + (256*fscale) }, SelectedObject, { 0,0 }, { (float)64,(float)(64) }, { fscale,fscale });
+		DrawPartialDecal({ BaseposX + (320*fscale), BasePosY + (256*fscale) }, m_Items, { 256,0 }, { (float)64,(float)(64) }, { fscale,fscale });
 	}
 
 	if (mouse.x >= BaseposX + (320*fscale) && mouse.x <= BaseposX + ((320 + 64)*fscale) && mouse.y >= BasePosY + (64*fscale) && mouse.y <= BasePosY + ((64 + 64)*fscale))    // <-- RightATTACK LANDING
 	{
-	DrawPartialDecal({ BaseposX + (320*fscale),  BasePosY + (64*fscale) }, SelectedObject, { 0,0 }, { (float)64,(float)(64) },{fscale,fscale});
+	DrawPartialDecal({ BaseposX + (320*fscale),  BasePosY + (64*fscale) }, m_Items, { 256,0 }, { (float)64,(float)(64) },{fscale,fscale});
 		
 	}
 
@@ -3443,8 +4231,10 @@ bool RPG_Engine::UpdateProfession(float fElapsedTime)   //<--profession
 
 
 
+	Drawcursor(mouse);
+
 	//Mouse
-	DrawPartialDecal({ (float)(mouse.x - 0.15f), (float)(mouse.y - 0.1f) }, RPG_Assets::get().GetSprite("Pantir's Dagger"), { 0,0 }, { (float)64,(float)(64) },{fscale,fscale});
+	//DrawPartialDecal({ (float)(mouse.x - 0.15f), (float)(mouse.y - 0.1f) }, RPG_Assets::get().GetSprite("Pantir's Dagger"), { 0,0 }, { (float)64,(float)(64) },{fscale,fscale});
 
 
 
@@ -3455,6 +4245,7 @@ bool RPG_Engine::UpdateProfession(float fElapsedTime)   //<--profession
 
 bool RPG_Engine::UpdateBlackSmith(float fElapsedTime)
 {
+	ClearAbsorbedSlots(m_listItems);
 
 	
 	olc::vf2d mouse = { (float)GetMouseX(), (float)GetMouseY() };
@@ -3491,10 +4282,10 @@ bool RPG_Engine::UpdateBlackSmith(float fElapsedTime)
 	// Draw Consumables
 
 
-	cItem* highlighted = nullptr;
-	cItem* Selected = nullptr;
+	highlighted = nullptr;
+	InventaryItem* Selected = nullptr;
 
-	cItem* GrabItem = nullptr;
+	GrabItem = nullptr;
 
 
 	
@@ -3511,8 +4302,8 @@ bool RPG_Engine::UpdateBlackSmith(float fElapsedTime)
 
 	
 
-
-
+	
+	
 	if ((int)mousefix.x >= SmithsqueX/fscale) // half screeb
 	{
 
@@ -3525,7 +4316,8 @@ bool RPG_Engine::UpdateBlackSmith(float fElapsedTime)
 			if (highlighted != nullptr)
 			{
 
-				highlighted->objectselected = true;  // Here mousegrabed works in two dif case. in our invenotry we grabbed in blacksmith we craft
+				//highlighted->Objectselect = true;  // Here mousegrabed works in two dif case. in our invenotry we grabbed in blacksmith we craft
+				highlighted->setFlag(highlighted->Objectselected);
 				Selected = highlighted;
 			}
 			else
@@ -3533,22 +4325,23 @@ bool RPG_Engine::UpdateBlackSmith(float fElapsedTime)
 				if (Selected != nullptr)
 				{
 					if (GetMouse(1).bPressed)
-						Selected->objectselected = false;
-
-					if (mouse.x > (CraftBottomX / (64 * fscale)) * fscale && mouse.x <= (int)(CraftBottomX / (64 * fscale)) * fscale + 1 && mouse.y >= squeY - ReqSocketsY + (1 * fscale) && mouse.y <= squeY - ReqSocketsY + (1.5 * fscale))  // Craft Word description
+						Selected->clearFlag(Selected->Objectselected);
+						//Selected->Objectselect = false;
+						
+					if (mousefix.x >= CraftBottomX / (64 * fscale)-0.5 && mousefix.x <= CraftBottomX / (64 * fscale) + 0.5 && mousefix.y >= CraftBottomY / (64 * fscale)-0.5 && mousefix.y <= CraftBottomY / (64 * fscale) + 0.5)  // Craft Word description
 					{
 
 
 
 						// Use selected item 
-						if (!Selected->bKeyItem)        //Try Sell Item
+						if (!Selected->Item->bKeyItem)        //Try Sell Item
 						{
 
 
-							if (Selected->OnCraft(1))     // must cheking on objects on onventory ant consume them
+							if (Selected->Item->OnCraft(1))     // must cheking on objects on onventory ant consume them
 							{
 
-								TakeItem(Selected->sCraftRequaries);
+								TakeItem(Selected->Item->sCraftRequaries);
 
 							}
 						}
@@ -3566,12 +4359,12 @@ bool RPG_Engine::UpdateBlackSmith(float fElapsedTime)
 		{
 		if (GetMouse(1).bPressed)
 			// Use selected item 
-			if (!highlighted->bKeyItem)
+			if (!highlighted->Item->bKeyItem)
 			{
-				if (highlighted->OnUse(m_pPlayer))
+				if (highlighted->Item->OnUse(m_pPlayer,m_listItems))
 				{
 					// Item has signalled it must be consumed, so remove it
-					TakeItem(highlighted);
+					TakeItem(highlighted,m_listItems);
 				}
 			}
 
@@ -3580,8 +4373,8 @@ bool RPG_Engine::UpdateBlackSmith(float fElapsedTime)
 			{
 
 
-
-				highlighted->mouseGrabbed = true;
+			highlighted->setFlag(highlighted->Grabitem);
+				//highlighted->GrabItem = true;
 			
 			}
 		}
@@ -3613,7 +4406,7 @@ bool RPG_Engine::UpdateBlackSmith(float fElapsedTime)
 
 		DrawPartialDecal({ (SmithsqueX + RqSocketsX) * 64, squeY * 64 - DescrUiHeigh }, SpellUi, { 0,0 }, { 334,142 }, { 0.5f * fscale,0.6f * fscale });
 
-		if (Selected->OnCraft(0))
+		if (Selected->Item->OnCraft(0))
 		{
 			DrawBigText("Craft", CraftBottomX, CraftBottomY, fscale, fscale, { 169,223,227 });
 
@@ -3623,7 +4416,7 @@ bool RPG_Engine::UpdateBlackSmith(float fElapsedTime)
 			DrawBigText("Craft", CraftBottomX, CraftBottomY, fscale, fscale, olc::GREY);
 		}
 
-		DrawPartialDecal({ (SmithsqueX + ((Selected->invnumber % 8)) * fscale) * 64, (float)(squeY + ((Selected->invnumber / 8) * fscale)) * 64 }, RPG_Assets::get().GetSprite("SelectedObject"), { 0,0 }, { (float)64,(float)(64) }, { fscale,fscale });
+		DrawPartialDecal({ (SmithsqueX + ((Selected->index % 8)) * fscale) * 64, (float)(squeY + ((Selected->index / 8) * fscale)) * 64 }, RPG_Assets::get().GetSprite("SelectedObject"), { 0,0 }, { (float)64,(float)(64) }, { fscale,fscale });
 		DrawPartialDecal({ SmithsqueX * 64, (float)(squeY - ReqSocketsY) * 64 }, Inventory, { 0,0 }, { 192,128 }, { fscale,fscale });
 		DrawPartialDecal({ SmithsqueX * 64 - (12 * fscale), (float)(squeY - ReqSocketsY) * 64 - ((75 + 1) * fscale) }, RPG_Assets::get().GetSprite("RequiredName"), { 0,0 }, { 274,75 }, { fscale,fscale });
 
@@ -3664,7 +4457,7 @@ bool RPG_Engine::UpdateBlackSmith(float fElapsedTime)
 		return true;
 }
 
-void RPG_Engine::DrawBlacksmithInentory(float offestX, float offsetY, olc::vf2d mouse, cItem*& Selected,cItem*& Highlighted)
+void RPG_Engine::DrawBlacksmithInentory(float offestX, float offsetY, olc::vi2d mouse, InventaryItem*& Selected,InventaryItem*& Highlighted)
 {
 	int i = 0;
 	int x = 0;
@@ -3679,13 +4472,13 @@ void RPG_Engine::DrawBlacksmithInentory(float offestX, float offsetY, olc::vf2d 
 		i++;
 
 
-		DrawPartialDecal({ (float)(offestX + (x + item->ipx) * fscale) * 64, (offsetY + ((float)y + item->ipy) * fscale) * 64 }, item->pSprite, { 0,0 }, { 64,64 }, { fscale,fscale });
+		DrawPartialDecal({ (float)(offestX + (x ) * fscale) * 64, (offsetY + (float)y  * fscale) * 64 }, item->Item->pSprite, { 0,0 }, { 64,64 }, { fscale,fscale });
 
-		if (item->objectselected == true)  // item has boolean so thank's that we can find selected object
+		if (item->checkFlag(item->Objectselected))  // item has boolean so thank's that we can find selected object
 			Selected = item;
 
 
-		if ((int)mouse.x == ((offestX / fscale) + (x + item->ipx)) && (int)mouse.y == ((offsetY / fscale) + y + item->ipy))
+		if (mouse.x == ((offestX / fscale) + x ) && mouse.y == (offsetY / fscale) + y )
 			Highlighted= item;
 	}
 
@@ -3695,7 +4488,7 @@ void RPG_Engine::DrawBlacksmithInentory(float offestX, float offsetY, olc::vf2d 
 
 	
 
-void RPG_Engine::DrawCraftedRequires(float offestX, float offsetY, olc::vf2d mouse,  cItem*& Selected, cItem*& Highlighted)
+void RPG_Engine::DrawCraftedRequires(float offestX, float offsetY, olc::vi2d mouse,  InventaryItem*& Selected, InventaryItem*& Highlighted)
 {
 	std::string ItemName;
 	std::string ItemAmount;
@@ -3706,7 +4499,7 @@ void RPG_Engine::DrawCraftedRequires(float offestX, float offsetY, olc::vf2d mou
 	int y = 0;
 	int i = 0;
 
-	for (auto c : Selected->sCraftRequaries)
+	for (auto c : Selected->Item->sCraftRequaries)
 	{
 
 		if (c == 10)    //<---  \n  mean end first object
@@ -3721,12 +4514,12 @@ void RPG_Engine::DrawCraftedRequires(float offestX, float offsetY, olc::vf2d mou
 
 
 			if (mouse.x == (offestX + x ) && mouse.y == (offsetY + y ))
-				Highlighted = RPG_Assets::get().GetItem(ItemName);
+				Highlighted->Item = RPG_Assets::get().GetItem(ItemName);
 
 
 			for (auto& item : m_listItems)   // Count in our inventory this item
 			{
-				if (item->sName == ItemName)
+				if (item->Item->sName == ItemName)
 				{
 					domain++;
 				}
@@ -3757,22 +4550,22 @@ void RPG_Engine::DrawCraftedRequires(float offestX, float offsetY, olc::vf2d mou
 }
 
 
-void RPG_Engine::DrawDescriptionPattern(cItem* highlighted, olc::vf2d mouse, olc::vf2d mousefix)
+void RPG_Engine::DrawDescriptionPattern(InventaryItem* highlighted, olc::vi2d mouse, olc::vf2d mousefix)
 {
 
 	
 		float nLinesX = 0;
-		int nLinesY = 0;
+		int nLinesY = 3;
 		float nsaveline = 0;
 		float nsaveLine2 = 0;
-		for (auto c : highlighted->sDescription)
+		for (auto c : highlighted->Item->sDescription)
 		{
 
 			if (c == 10)  // <-- 10 is /n
 			{
 				if (nsaveLine2 <= nsaveline)
 				{
-					nLinesX = nsaveline - (((nsaveline / 32) - 1) * 14);
+					nLinesX = 32 + (nsaveline * 18);
 					nsaveLine2 = nsaveline;
 					nsaveline = 0;
 				}
@@ -3780,24 +4573,33 @@ void RPG_Engine::DrawDescriptionPattern(cItem* highlighted, olc::vf2d mouse, olc
 				continue;
 			}
 
-			nsaveline += 32.0f;     //  32/100 = 0.32-> 1 percent.   32-18 = 14   14/0,32 = 0.43   1-0.43 = 0.57    
+			nsaveline++;     //  32/100 = 0.32-> 1 percent.   32-18 = 14   14/0,32 = 0.43   1-0.43 = 0.57    
 		}
-		if (nLinesX < 27 * 19)  // fill @press space to use like default value
+		if (highlighted->Item->equipIndex>0)
 		{
-			nLinesX = 27 * 19;
+			nLinesY--;
 		}
+		else
+		{
+		if (nLinesX < 32 + 22 * 18 && !highlighted->Item->bKeyItem)  // fill @press space to use like default value
+		{
+			nLinesX = 32 + 22 * 18;
+
+		}
+		}
+			
 		const float mouseoffset = (64 * fscale);
-
-		DrawPartialDecal({ (float)(mouse.x + mouseoffset) , (float)(mouse.y + mouseoffset) }, RPG_Assets::get().GetSprite("DescriptionPattern"), { 0,0 }, { (float)nLinesX,(float)(nLinesY +6) * (64*fscale) }, { fscale,fscale });
-
+		
+		DrawPartialDecal({ (float)(mouse.x + mouseoffset) , (float)(mouse.y + mouseoffset) }, RPG_Assets::get().GetSprite("DescriptionPattern"), { 0,0 }, { (float)nLinesX,(float)(nLinesY) * (64*fscale) }, { fscale,fscale });
+	
 
 		//DrawString(4 * 64, squeY - 64, highlighted->sName, olc::WHITE,3);
-		DrawBigText(highlighted->sName, (mouse.x + mouseoffset), mouse.y + mouseoffset, fscale, fscale);
+		DrawBigText(highlighted->Item->sName, (mouse.x + mouseoffset), mouse.y + mouseoffset, fscale, fscale);
 
 		//DrawString(8, 190, "SELECTED", olc::WHITE,3);
 		//DrawString(4*64, squeY-32, highlighted->sDescription, olc::WHITE,2);
 
-		DrawBigText(highlighted->sDescription, (mouse.x + mouseoffset), mouse.y + (32*fscale) + mouseoffset, fscale, fscale, { 169,223,227 });
+		DrawBigText(highlighted->Item->sDescription, (mouse.x + mouseoffset), mouse.y + (32*fscale) + mouseoffset, fscale, fscale, { 169,223,227 });
 
 		
 
@@ -3813,15 +4615,19 @@ void RPG_Engine::DrawDescriptionPattern(cItem* highlighted, olc::vf2d mouse, olc
 		case MODE_WAREHOUSE:
 		case MODE_BLACKSMITH:
 		case MODE_INVENTORY:
-			// Warehouse
-			if (!highlighted->bKeyItem)
+			// Warehouse.
+			if (!highlighted->Item->equipIndex>0)
+			{
+
+			if (!highlighted->Item->bKeyItem )
 			{
 				//DrawString(80, squeY-160, "(Press SPACE to use)", olc::WHITE,2);
-				DrawBigText("(Press Right Button to use)", (mouse.x + (64 * fscale)), (mouse.y + ((nLinesY + 7)*fscale) * (64*fscale)), fscale - 0.1, fscale - 0.1, { 218,14,0,255 });
+				DrawBigText("(Useable)", (mouse.x + (64 * fscale)), (mouse.y + ((nLinesY + 1)*fscale) * (64*fscale)), fscale - 0.1, fscale - 0.1, { 218,14,0,255 });
 			}
 			else
 			{
-				DrawBigText("(Can't Use)", (mouse.x + (64 * fscale)), (mouse.y + ((nLinesY + 7)*fscale) * (64*fscale)) , fscale - 0.1, fscale - 0.1, { 218,14,0,255 });
+				DrawBigText("(Can't Use)", (mouse.x + (64 * fscale)), (mouse.y + ((nLinesY + 1)*fscale) * (64*fscale)) , fscale - 0.1, fscale - 0.1, { 218,14,0,255 });
+			}
 			}
 			//
 			break;
@@ -3829,15 +4635,15 @@ void RPG_Engine::DrawDescriptionPattern(cItem* highlighted, olc::vf2d mouse, olc
 			//shop
 			if ((int)mousefix.x >= 4  && (int)mousefix.x <= 4 + 8 && (int)mousefix.y >= 8  && (int)mousefix.y <= 8 + 3)  // Inventory decription
 			{
-				if (!highlighted->bKeyItem)
+				if (!highlighted->Item->bKeyItem)
 				{
 					//DrawString(80, squeY-160, "(Press SPACE to use)", olc::WHITE,2);
-					DrawBigText("(Press Right Button to use)", (mouse.x + (64 * fscale)), (mouse.y + ((nLinesY + 7) * fscale) * (64 * fscale)), fscale - 0.1, fscale - 0.1, { 218,14,0,255 });
-					DrawBigText("Price " + std::to_string(highlighted->sTradePrice), (mouse.x + (64 * fscale)), mouse.y, fscale, fscale, olc::YELLOW); //Money
+			//		DrawBigText("(Press Right Button to use)", (mouse.x + (64 * fscale)), (mouse.y + ((nLinesY + 1) * fscale) * (64 * fscale)), fscale - 0.1, fscale - 0.1, { 218,14,0,255 });
+					DrawBigText("Sale:" + std::to_string(highlighted->Item->sTradePrice*highlighted->currStacks), (mouse.x + (64 * fscale)), (mouse.y + ((nLinesY + 1) * fscale) * (64 * fscale)), fscale, fscale, olc::YELLOW); //Money
 				}
 				else
 				{
-					DrawBigText("(Can't Use)", (mouse.x + (64 * fscale)), (mouse.y + ((nLinesY + 7) * fscale) * (64 * fscale)), fscale - 0.1, fscale - 0.1, { 218,14,0,255 });
+					DrawBigText("(Can't Use)", (mouse.x + (64 * fscale)), (mouse.y + ((nLinesY + 1) * fscale) * (64 * fscale)), fscale - 0.1, fscale - 0.1, { 218,14,0,255 });
 				}
 			}
 
@@ -3846,8 +4652,8 @@ void RPG_Engine::DrawDescriptionPattern(cItem* highlighted, olc::vf2d mouse, olc
 
 
 				//DrawString(80, squeY-160, "(Press SPACE to use)", olc::WHITE,2);
-				DrawBigText("(Press Right Button to Buy)", (mouse.x + (64 * fscale)), (mouse.y + ((nLinesY + 7) * fscale) * (64 * fscale)), 0.9 * fscale, 0.9 * fscale, { 218,14,0,255 });
-				DrawBigText("Price " + std::to_string(highlighted->sTradeBuyPrice), (mouse.x + (64 * fscale)), mouse.y , fscale, fscale, olc::YELLOW); //Money
+			//	DrawBigText("(Press Right Button to use)", (mouse.x + (64 * fscale)), (mouse.y + ((nLinesY + 1) * fscale) * (64 * fscale)), fscale - 0.1, fscale - 0.1, { 218,14,0,255 });
+				DrawBigText("Buy:" + std::to_string(highlighted->Item->sTradeBuyPrice), (mouse.x + (64 * fscale)), (mouse.y + ((nLinesY + 1) * fscale) * (64 * fscale)), fscale, fscale, olc::YELLOW); //Money
 
 
 			}
@@ -4098,6 +4904,8 @@ bool RPG_Engine::SaveFunction()
 
 }
 
+
+
 bool RPG_Engine::LoadFunction()
 {
 	std::ifstream data;
@@ -4176,7 +4984,7 @@ bool RPG_Engine::LoadFunction()
 		
 	
 
-		ScrollingCurrX = fCameraPosX;
+		//ScrollingCurrX = fCameraPosX;
 
 		//	n_nGameMode = MODE_LOCAL_MAP;
 		return false;
@@ -4221,9 +5029,14 @@ void RPG_Engine::ChangeMap(std::string sMapName, float x, float y)
 
     m_vecDynamics.clear();
 	m_vecProjectiles.clear();
-	m_listBlackSmithItems.clear();
-	m_listStoreItems.clear();
-	
+	//m_listBlackSmithItems.clear();
+	//m_listStoreItems.clear();
+	for (auto& slot : m_listStoreItems) // clean lyxary shop
+	{
+		slot->resetsocket();
+	}
+
+
 	//m_listQusets.clear();
 	//m_listItems.clear();
 
@@ -4290,114 +5103,225 @@ void RPG_Engine::defineFacingDirection(float& fTestX, float& fTestY)
 	}
 }
 
-bool RPG_Engine::GiveItem(cItem* item)
+bool RPG_Engine::SaleItem(int Price, InventaryItem* Sale)
 {
 
+	TakeItem(Sale,m_listItems);  // first step  we need change on empty slot object, which must be absorbed, it helps save slot
+	
+	int helpprice = Price;
+
 	
 
-	//GrabItem->ipx = ((item->invnumber - 1) % 8 + item->ipx) - ((GrabItem->invnumber - 1) % 8);
-
-	
-	item->invnumber = m_listItems.size()+1;
-	
-	
-
-
-				for (int z = 1; z <24; )   // we start cicle from first slot
-				{
-					int zx = (z-1) % 8;    // transfer index in world coordinate
-					int zy = (z-1) / 8;
-					bool Breserved = false;
-
-					for (auto s : GetListItem())    //start cheking every slot on reserve
-					{
-
-						int sx = (s->invnumber - 1) % 8 + s->ipx;   // <--Transfer in world coordinate offset
-						int sy = (s->invnumber - 1) / 8 + s->ipy;
-
-						if (sx ==zx && sy==zy )   // situation when the slot reserved we add index on next slot
-						{
-							Breserved = true;
-							z++;
-							break;
-						}
-					
-
-					} // when we go through all list and didn't find reserv slot
-
-					if (Breserved ==false)
-					{
-						item->ipx = zx-((item->invnumber - 1) % 8);
-						item->ipy = zy-((item->invnumber-1) / 8);
-						break;
-					}
-				
-					
-
-				}
-
-
-
-	m_listItems.push_back(item);   //push the pointer 
-
-
+	GiveItem("Coin", Price);
 
 	return false;
 }
 
-
-bool RPG_Engine::ByeItem(cItem* item)
+bool RPG_Engine::GiveItem(std::string Name,uint8_t count)
 {
+	
+	
 
-	item->invnumber = m_listItems.size() + 1;
+	uint8_t hcount = count;   // how many objects need to give
+	cItem* Item = RPG_Assets::get().GetItem(Name);     // that item what we want to add in our inventary
 
-	for (int z = 1; z < 24; )   // we start cicle from first slot
-	{
-		int zx = (z - 1) % 8;    // transfer index in world coordinate
-		int zy = (z - 1) / 8;
-		bool Breserved = false;
+//	Item->MaxStack                                     // how much they cant stuck in one slot
+	
 
-		for (auto s : m_listItems)    //start cheking every slot on reserve
+
+	
+	
+		for (auto invItem : m_listItems)  //for money 
 		{
 
-			int sx = (s->invnumber - 1) % 8 + s->ipx;   // <--Transfer in world coordinate offset
-			int sy = (s->invnumber - 1) / 8 + s->ipy;
-
-			if (sx == zx && sy == zy)   // situation when the slot reserved we add index on next slot
+			if (invItem->Item == Item)   // if we find in our inv element eq that what we want to add 
 			{
-				Breserved = true;
-				z++;
-				break;
+				if (dynamic_cast<cGold*>(invItem->Item))  // when item wallet or coint
+
+				{
+
+					cGold* helper = (cGold*)invItem->Item;    // we switch sale on cgold for achive MaxGold Parametr
+
+					if (invItem->Gold > 0 && invItem->Gold < helper->MaxGold)   // this socket has more than 0 - means wallet or gold stack
+					{
+
+
+						int8_t reminder = invItem->Gold + hcount - helper->MaxGold;    //  we take reminder for cases when we want to sal for 3 gold object in wallet where 58 gold
+
+						if (reminder > 0)  // means that more than max gold in this socket
+						{
+							invItem->Gold = helper->MaxGold;   //set plase on high money
+							hcount = reminder;    //substract from price max gold 
+							continue;   // go check next slot
+						}
+						else if (reminder == 0)
+						{
+							invItem->Gold = helper->MaxGold;
+							return false;
+						}
+						else
+						{
+							invItem->Gold += hcount;
+							hcount = 0;
+							return false;
+						}
+
+						//	Item->OnInteract(m_pPlayer);   // add gold
+						return false;
+						break;
+
+
+					}
+				}
+				else    //when object not coin or wallet
+				{
+					if (invItem->Item->MaxStack>1)
+					{
+
+
+					int8_t reminder = invItem->currStacks + hcount - invItem->Item->MaxStack; //we the same calculate reminder  only for stacks
+
+					if (reminder > 0)  // means that more than max gold in this socket
+					{
+						invItem->currStacks = invItem->Item->MaxStack;   //set plase on high money
+						hcount = reminder;    //substract from price max gold 
+						continue;   // go check next slot
+					}
+					else if (reminder == 0)
+					{
+						invItem->currStacks = invItem->Item->MaxStack;
+						return false;
+					}
+					else
+					{
+						invItem->currStacks += hcount;
+						hcount = 0;
+						return false;
+					}
+
+					}
+				}
+			}
+		}
+
+
+		
+
+
+
+	for (auto it = m_listItems.begin(); it != m_listItems.end(); it++)
+	{
+		
+		InventaryItem* entity = *it;
+
+		if (entity->checkFlag(entity->Breserved) == false )   // when slot is empty 
+		{
+
+
+			entity->setFlag(entity->Breserved);    // we set it in reserved
+			 
+			m_listItems[entity->index]->Item = RPG_Assets::get().GetItem(Name);   // attach item in slot
+			m_listItems[entity->index]->Gold = m_listItems[entity->index]->Item->Gold;   // and in slot we add   gold that keep in library   0 for other objects and one or more for gold
+			hcount--;
+			if (hcount!=0)   //when we came here from first cylw and count still not 0
+			{
+				GiveItem(Name, hcount);  // we add new object in array and call function back for calculate all for new coin for example
+			}
+	
+
+		return false;
+		}
+		else if(entity->checkFlag(entity->Babsorbed) == true)   // when object was absorbed 
+		{
+		
+			entity->clearFlag(entity->Babsorbed);      // we clear absrob flag
+			m_listItems[entity->index]->Item = RPG_Assets::get().GetItem(Name);   //and attach item here
+			m_listItems[entity->index]->Gold = m_listItems[entity->index]->Item->Gold;
+			absorbCounter--;
+			hcount--;
+			if (hcount != 0)   //when we came here from first cylw and count still not 0
+			{
+				GiveItem(Name, hcount);  // we add new object in array and call function back for calculate all for new coin for example
 			}
 
 
-		} // when we go through all list and didn't find reserv slot
+			return false;
 
-		if (Breserved == false)
-		{
-			item->ipx = zx - ((item->invnumber - 1) % 8);
-			item->ipy = zy - ((item->invnumber - 1) / 8);
-			break;
-		}
+		} 
 
 	}
+	
+	
 
-	m_listItems.push_back(item);   //push the pointer 
 
-	return false;
+
+	return true;
 }
+//
+//bool RPG_Engine::FillList(cItem * item,int number)
+//{
+//	if (number <=24)
+//	{
+//	m_listItems.assign(number, item);
+//	return true;
+//	}
+//
+//	return false;
+//}
 
+bool RPG_Engine::ByeItem(InventaryItem * item)
 
-
-bool RPG_Engine::GiveWarehouseItem(cItem* item)
 {
-	item->bInWarehouse = true;
-	m_listWarehouseItems.push_back(item);   //push the pointer 
+
+	//item->invnumber = m_listItems.size() + 1;
+
+	//for (int z = 1; z < 24; )   // we start cicle from first slot
+	//{
+	//	int zx = (z - 1) % 8;    // transfer index in world coordinate
+	//	int zy = (z - 1) / 8;
+	//	bool Breserved = false;
+
+	//	for (auto s : m_listItems)    //start cheking every slot on reserve
+	//	{
+
+	//		int sx = (s->invnumber - 1) % 8 + s->ipx;   // <--Transfer in world coordinate offset
+	//		int sy = (s->invnumber - 1) / 8 + s->ipy;
+
+	//		if (sx == zx && sy == zy)   // situation when the slot reserved we add index on next slot
+	//		{
+	//			Breserved = true;
+	//			z++;
+	//			break;
+	//		}
 
 
+	//	} // when we go through all list and didn't find reserv slot
+
+	//	if (Breserved == false)
+	//	{
+	//		item->ipx = zx - ((item->invnumber - 1) % 8);
+	//		item->ipy = zy - ((item->invnumber - 1) / 8);
+	//		break;
+	//	}
+
+	//}
+
+	//m_listItems.push_back(item);   //push the pointer 
 
 	return false;
 }
+
+
+
+//bool RPG_Engine::GiveWarehouseItem(cItem* item)
+//{
+//	item->bInWarehouse = true;
+//	m_listWarehouseItems.push_back(item);   //push the pointer 
+//
+//
+//
+//	return false;
+//}
 
 bool RPG_Engine::GiveNewText(cDynamic_TextDamage* Text)
 {
@@ -4408,122 +5332,149 @@ bool RPG_Engine::GiveNewText(cDynamic_TextDamage* Text)
 	}
 	return false;
 }
-bool RPG_Engine::GiveStoreItem(cItem* item)
+int RPG_Engine::GetFreespaceInventory()
 {
-	//item->bInWarehouse = true;
-	m_listStoreItems.push_back(item);   //push the pointer 
+	int freesocket = 0;
 
+	for (auto& it : m_listItems)
+	{
+		if (it->Item == nullptr)
+			freesocket++;
+	}
 
-
-	return false;
+	return freesocket;
 }
-
-bool RPG_Engine::GiveBlackSmithItem(cItem* item)
+bool RPG_Engine::GiveStoreItem(std::string item)
 {
-	
-	//item->bInWarehouse = true;
-	m_listBlackSmithItems.push_back(item);   //push the pointer 
-	
 
-
-	return false;
-}
-
-
-bool RPG_Engine::TakeItem(cItem* item)
-{
-	if (item != nullptr)
+	for (auto slot : m_listStoreItems)
 	{
 
-		int counter = 0;
-
-		for (auto& citem : GetListItem())  // go in inventory list check cross with mouse 
+		if (!slot->checkFlag(slot->Breserved))
 		{
-
-
-
-
-			if (citem->invnumber > item->invnumber)  // invenotry ==werehouse
-			{
-				
-				citem->ipx = ((citem->invnumber-1) % 8 + citem->ipx) - ((citem->invnumber - 2) % 8);
-				citem->ipy = ((citem->invnumber-1) / 8 + citem->ipy) - ((citem->invnumber - 2) / 8);
-
-			}
-		
-
+			//slot->breserved = true;
+			slot->setFlag(slot->Breserved);
+			m_listStoreItems[slot->index]->Item = RPG_Assets::get().GetItem(item);
+			return true;
 		}
 
+	}
+
+	//item->bInWarehouse = true;
+	
 
 
-		m_listItems.erase(find(m_listItems.begin(), m_listItems.end(), item));
-		return true;
+
+	return false;
+}
+
+bool RPG_Engine::GiveBlackSmithItem(std::string item)
+{
+	
+	for (auto slot : m_listBlackSmithItems)
+	{
+		
+		if (!slot->checkFlag(slot->Breserved))
+		{
+			slot->setFlag(slot->Breserved);
+
+			//slot->breserved = true;
+			m_listBlackSmithItems[slot->index]->Item = RPG_Assets::get().GetItem(item);
+			return true;
+		}
+
+	}
+
+	//item->bInWarehouse = true;
+	//m_listBlackSmithItems.push_back(item);   //push the pointer 
+	
+
+
+	return false;
+}
+
+
+bool RPG_Engine::TakeItem(InventaryItem* item, std::vector<InventaryItem*>& m_listItems)
+{
+
+
+
+
+
+	if (item != nullptr)
+	{
+	
+				item->clearFlag(item->Breserved);
+				m_listItems[item->index]->Item = nullptr;
+				item->resetsocket();
+				//slot->breserved = false;
+
+				return true;
+			
+		
+
 	}
 	else
 
 		return false;
 }
-bool RPG_Engine::TakeItem(int price) //for price
+bool RPG_Engine::TakeItem(int price) //for price buy
 {
 	
 	int helpPrice = price;
 	int counter = 0;
+	
 
 	for (auto& item :GetListItem())  // go in list check cross with mouse 
 	{
 
 
-		
+
+		if (dynamic_cast<cGold*>(item->Item))
+		{
+			cGold* itemHelp = (cGold*)item->Item;
+			//AddMoney(itemHelp->GoldCount);
 
 
-		if (item->GoldCount >0 && helpPrice != 0)    //First find object that has money
+			if (item->Gold > 0 && helpPrice != 0)    //First find object that has money
 		{
 			
 
-			if (item->GoldCount >helpPrice) // if in wallet more money than price of object   6 >5
-			{
-				item->GoldCount -= helpPrice;
-				helpPrice = 0;
+				int reminder = item->Gold - helpPrice;
 
-				item->sDescription = "Keep 6 golds:  " + std::to_string(item->GoldCount) + "/6";
-
-			}
-			else if (item->GoldCount<=helpPrice) // if in wallet less money than price
-			{
-				helpPrice -= item->GoldCount;   // we  substract from price amount of gold in wallet
-
-				if (item->sName == "Coin")
+				if (reminder > 0)  // gold in socket was more than price
 				{
-				item->Absorbed = true;
-				counter++;
+					item->Gold = reminder;
+					return false;
 				}
-				else
+				else  if (reminder == 0)   // gold in socket was equel to price 
 				{
-					item->GoldCount =0;
-					item->pSprite = RPG_Assets::get().GetSprite("PocketLowEmpty");
-					item->sDescription = "Keep 6 golds:  " + std::to_string(item->GoldCount) + "/6";
+					m_listItems[item->index]->Item = nullptr;
+					item->Gold = reminder;
+					m_listItems[item->index]->clearFlag(m_listItems[item->index]->Breserved);
+					return false;
+				}
+				else      // gol in socket was less than price
+				{
+					m_listItems[item->index]->Item = nullptr;  // we said socket that item will be empty
+					item->Gold = 0;  // gold counr set to 0
+					item->clearFlag(item->Breserved);   // could be reserved
+					TakeItem(std::abs(reminder));  // and call fucntion back with less price
 					
 				}
-			}
-			
-			
 
-				//this->GolcCount++;
-				//sDescription = "Keep 6 golds:  " + std::to_string(GolcCount);
-			//	pSprite = RPG_Assets::get().GetSprite("PocketLowFull");
 
 			
+
+		}
 
 
 		}
-		else
-		{
-			item->ipx = ((item->invnumber-1) % 8 + item->ipx) - ((item->invnumber - counter-1) % 8);
-			item->ipy = ((item->invnumber-1) / 8 + item->ipy) - ((item->invnumber - counter-1) / 8);
-		}
+		
 
 	}
-
+	
+	
 
 
 	return false;
@@ -4544,10 +5495,12 @@ bool RPG_Engine::TakeItem(std::string names) //for price
 	
 			for (auto& item : m_listItems)   // go through inventory and find equal this name 
 			{
-				if (item->sName == ItemName && Reqcount>0) //we find 
+				if (item->Item->sName == ItemName && Reqcount>0) //we find 
 				{
 					squeX++;
-					item->Absorbed = true;   // Delete it
+					item->setFlag(item->Babsorbed);
+					//item->Absorbed = true;   // Delete it
+					absorbCounter++;
 					Reqcount--;
 					Counter = 0;
 				}
@@ -4573,26 +5526,19 @@ bool RPG_Engine::TakeItem(std::string names) //for price
 		Counter++;
 	}
 
-	for (auto& item : m_listItems)   // go through inventory and find equal this name 
-	{
-		if (!item->Absorbed)
-		{
-			item->ipx = ((item->invnumber - 1) % 8 + item->ipx) - ((item->invnumber - squeX - 1) % 8);
-			item->ipy = ((item->invnumber - 1) / 8 + item->ipy) - ((item->invnumber - squeX - 1) / 8);
-		}
-	}
+	
 
 	return true;
 }
 
 
-bool RPG_Engine::HasItem(cItem* item)
+bool RPG_Engine::HasItem(std::string item)
 {
-	if (item != nullptr)
+	
 
 		for (auto& items : m_listItems)
 		{
-			if (items->sName == item->sName )
+			if (items->Item->sName == item )
 				return true;
 		}
 	
@@ -4618,7 +5564,7 @@ void RPG_Engine::EraseEnemysPool(cDynamic* proj)
 		if (proj == entity){
 
 			std::cout << "Hello" << std::endl;
-		entity->binitialized = true;
+		entity->setFlag(entity->binitialized);
 		entity->px = proj->px;
 		entity->py = proj->py;
 		m_vecDynamics.push_back(proj); // Add the Bandit entity to the game
@@ -4691,6 +5637,9 @@ void RPG_Engine::CalculateExp()
 
 			m_pPlayer->LvL = lvl;
 			m_pPlayer->calculateStats();
+			m_pPlayer->MergeItemLvl();
+			m_pPlayer->nHealth = m_pPlayer->hpUpdate->hpMax;
+			
 			break;
 		}
 
@@ -4721,15 +5670,18 @@ void RPG_Engine::SetCurrentExp(int DeathExp)
 	}
 }
 
-void RPG_Engine::Attack(cDynamic_Creature* aggressor, cWeapon* weapon)
-{
-	weapon->OnUse(aggressor);
-}
+//void RPG_Engine::Attack(cDynamic_Creature* aggressor, cWeapon* weapon)
+//{
+//	weapon->OnUse(aggressor);
+//}
 
 void RPG_Engine::Damage(cDynamic_Projectile* projectile, cDynamic_Creature* victim)
 {
 	
+	PlaySounds("TakeDamage");
 
+	
+	
 
 	if (victim != nullptr)
 	{
@@ -4751,7 +5703,7 @@ void RPG_Engine::Damage(cDynamic_Projectile* projectile, cDynamic_Creature* vict
 
 		cDynamic_TextDamage* Text = new cDynamic_TextDamage(victim->px+victim->CollbordersX+0.25f, victim->py+victim->CollbordersY+0.6f, std::to_string(CalculatedDamage));
 
-		m_vecFightText.push_back(Text);
+		//m_vecFightText.push_back(Text);
 		
 
 		AddParticle(victim->px + victim->CollbordersX + 0.25f, victim->py + victim->CollbordersY + 0.3f);
@@ -4824,9 +5776,13 @@ void RPG_Engine::JumpDamage(cDynamic_Creature* projectile, cDynamic_Creature* vi
 		//Attack victim with damage
 		victim->nHealth -= CalculatedDamage;
 
-		cDynamic_TextDamage* Text = new cDynamic_TextDamage(victim->px + victim->CollbordersX + 0.25f, victim->py + victim->CollbordersY + 0.6f, std::to_string(CalculatedDamage));
+		olc::vf2d textdamagecoord{ (float)victim->px + victim->CollbordersX + 0.25f, (float)victim->py + victim->CollbordersY + 0.6f };
+		cDynamic_TextDamage* T = (cDynamic_TextDamage*)SpawnBattleText(textdamagecoord, std::to_string(CalculatedDamage));
 
-		m_vecFightText.push_back(Text);
+
+		//cDynamic_TextDamage* Text = new cDynamic_TextDamage(victim->px + victim->CollbordersX + 0.25f, victim->py + victim->CollbordersY + 0.6f, std::to_string(CalculatedDamage));
+
+		//m_vecFightText.push_back(Text);
 		
 		victim->SwitchLayer(2);
 		//Knock victim back
@@ -4865,26 +5821,26 @@ void RPG_Engine::ShowDialog(std::vector<std::string> vecLines)
 
 void RPG_Engine::DrawBigText(std::string sText, int x, int y, float scalex, float scaley, olc::Pixel color)
 {
-	int i = 0;
-	int z = 0;
+	int i = 0, z = 0;  // i — позиция символа по X, z — по Y
+
 	for (auto c : sText)
 	{
-		if (c == 10)
+		if (c == '\n')  // Если символ — новая строка, переходим на следующую строку
 		{
-			z++;
-			i = 0;
+			z++;  // Увеличиваем индекс строки
+			i = 0;  // Сброс индекса по X
 			continue;
 		}
 
-		float sx = ((c-32) % 16) * 32;
-		float sy = ((c-32) /16) *32;
+		// Определяем координаты символа в текстурном атласе
+		float sx = ((c - 32) % 16) * 32;
+		float sy = ((c - 32) / 16) * 32;
 
-
-
-		DrawPartialDecal({ (float)x + (i * (18*scalex)), (float)y+(z*(32*scaley)) }, m_sprFont, { sx, sy }, { 32, 32 }, {scalex,scaley}, color);
-		i++;
+		// Отрисовка символа
+		DrawPartialDecal({ (float)x + (i * (18 * scalex)), (float)y + (z * (32 * scaley)) },
+			m_sprFont, { sx, sy }, { 32, 32 }, { scalex, scaley }, color);
+		i++;  // Переходим к следующему символу по X
 	}
-
 
 }
 
@@ -4896,22 +5852,27 @@ void RPG_Engine::DisplayDialog(std::vector<std::string> vecText, int x, int y)
 	for (auto i : vecText)  if (i.size() > nMaxLineLength) nMaxLineLength = i.size();
 
 
-	olc::Decal* Vertical = RPG_Assets::get().GetSprite("Vertical StickFill");
-	olc::Decal* Horizontal = RPG_Assets::get().GetSprite("Horizontal StickFill");
+	
 	olc::Decal* BlackPattern = RPG_Assets::get().GetSprite("DescriptionPattern");
 
-	DrawPartialDecal({ (float)x - 1 , (float)y - 1 }, BlackPattern, { 0,0 }, { (float)nMaxLineLength * 18 + 10,(float)nLines * 32 +10 });
 
-	DrawPartialDecal({ (float)x - 1,  (float)y - 1 }, Vertical, { 0,0 }, { (float)4,(float)nLines * 32 + 15 }, { 1,1 }, { 66,83,100 });
-	DrawPartialDecal({ (float)x + nMaxLineLength * 18 + 10,  (float)y - 1 }, Vertical, { 0,0 }, { (float)4,(float)nLines * 32 + 15 }, { 1,1 }, { 66,83,100 });
+	DrawPartialDecal({ (float)x - (1*fscale) , (float)y - (1 * fscale) }, BlackPattern, { 0,0 }, { (float)nMaxLineLength * 18 + 10,(float)nLines * 32 +10 }, {fscale,fscale});
 
-	DrawPartialDecal({ (float)x - 1, (float)y - 1 }, Horizontal, { 0,0 }, { (float)nMaxLineLength * 18 + 14,(float)4 }, { 1,1 }, { 66,83,100 });
-	DrawPartialDecal({ (float)x - 1, (float)y + nLines * 32 + 10 }, Horizontal, { 0,0 }, { (float)nMaxLineLength * 18 + 14,(float)4 },{1,1},{66,83,100});
+	DrawPartialDecal({ (float)x - (1 * fscale),  (float)y - (1 * fscale) }, D_Ui, { 1227,0 }, { (float)4,(float)nLines * 32 + 15 }, { 1*fscale,1*fscale}, {66,83,100});
+	DrawPartialDecal({ (float)x + ((nMaxLineLength * 18 + 9)*fscale),  (float)y - (1*fscale) }, D_Ui, { 1227,0 }, { (float)4,(float)nLines * 32 + 15 }, { 1*fscale,1*fscale }, { 66,83,100 });
+
+	DrawPartialDecal({ (float)x - (1 * fscale), (float)y - (1 * fscale) }, D_Ui, { 0,910 }, { (float)nMaxLineLength * 18 + 14,(float)4 }, { 1*fscale,1*fscale }, { 66,83,100 });
+	DrawPartialDecal({ (float)x - (1 * fscale), (float)y + ((nLines * 32 + 9)*fscale) }, D_Ui, { 0,910 }, { (float)nMaxLineLength * 18 + 14,(float)4 },{1*fscale,1*fscale},{66,83,100});
 
 
+	
+
+	
+
+	
 
 	for (int l = 0; l < vecText.size(); l++)
-		DrawBigText(vecText[l], x, y + l * 32, 1,1);
+		DrawBigText(vecText[l], x, y + ((l * 32)*fscale), 1*fscale,1*fscale);
 
 }
 
@@ -4935,9 +5896,9 @@ int RPG_Engine::GetRage()
 	return m_pPlayer->rageAmount;
 }
 
-int RPG_Engine::GetEnergy()
+uint8_t RPG_Engine::GetEnergy()
 {
-	return m_pPlayer->energeyAmount;
+	return m_pPlayer->energyAmount;
 }
 bool RPG_Engine::GetBackStab()
 {
@@ -5149,7 +6110,16 @@ bool  RPG_Engine::CheckPosition(int pxX,int pyYf)
 }
 void RPG_Engine::drawPlayer(bool bdraw)
 {
-	m_pPlayer->bDraw = bdraw;
+	if (bdraw)
+	{
+	m_pPlayer->setFlag(m_pPlayer->bDraw);
+
+	}
+	else
+	{
+		m_pPlayer->clearFlag(m_pPlayer->bDraw);
+	}
+
 }
 void CombineAdjacentTiles(std::vector<Tile>& batchLayer, int layer)
 {
@@ -5170,11 +6140,11 @@ void CombineAdjacentTiles(std::vector<Tile>& batchLayer, int layer)
 		int* tileindex = nullptr;
 		int* itindex = nullptr;
 
-		olc::vf2d* tilesize = nullptr;
-		olc::vf2d* tilesource = nullptr;
+		olc::vi2d* tilesize = nullptr;
+		olc::vi2d* tilesource = nullptr;
 
-		olc::vf2d* itsize = nullptr;
-		olc::vf2d* itsource = nullptr;
+		olc::vi2d* itsize = nullptr;
+		olc::vi2d* itsource = nullptr;
 
 
 		// Get the layerinfo corresponding to the specified layer
@@ -5400,22 +6370,37 @@ void RPG_Engine::LoadenemyInstances()
 {
 	// Initialize the Bandit pool
 	for (int i = 0; i < 30; ++i) {
-		enemysPool.push_back(new cDynamic_creature_Bandit());
+		BanditsPool.push_back(new cDynamic_creature_Bandit());
 	}
 
 	// Initialize the Wolf pool
 	for (int i = 0; i <30; ++i) {
-		enemysPool.push_back(new cDynamic_creature_DireWolf());
+		DireWolfsPool.push_back(new cDynamic_creature_DireWolf());
 	}
 
 
 	for (int i = 0; i < 30; ++i) {
-		enemysPool.push_back(new cDynamic_creature_Boar());
+		BoarPool.push_back(new cDynamic_creature_Boar());
 	}
 
 	for (int i = 0; i < 30; ++i) {
-		enemysPool.push_back(new cDynamic_creature_WereWolf());
+		WereWolfsPool.push_back(new cDynamic_creature_WereWolf());
 	}
+
+	for (int i = 0; i < 30; ++i) {
+		BanditsArcherPool.push_back(new cDynamic_creature_BanditArcher());
+	}
+	for (int i = 0; i < 30; ++i) {
+		ItemPool.push_back(new cDynamic_Item());
+	}
+	for (int i = 0; i < 30; ++i) {
+		TextPool.push_back(new cDynamic_TextDamage());
+	}
+	for (int i = 0; i < 40; ++i) {
+		ProjectilePool.push_back(new cDynamic_Projectile());
+	}
+
+
 
 	// Initialize the raindrops
 	for (int i = 0; i < 100; ++i)
@@ -5437,88 +6422,157 @@ void RPG_Engine::LoadenemyInstances()
 
 
 }
+cDynamic* RPG_Engine::SpawnBanditArcher(const olc::vf2d* position)
+{
+	for (auto it = BanditsArcherPool.begin(); it != BanditsArcherPool.end(); ++it) {
+		cDynamic* entity = *it;
+
+		// Предполагаем, что если мы нашли подходящий объект, спауним его
+
+		entity->setFlag(entity->binitialized);    // Устанавливаем флаг инициализации
+		m_vecDynamics.push_back(entity);          // Добавляем в активный вектор динамических объектов
+		entity->px = position->x;                 // Устанавливаем позицию
+		entity->py = position->y;
+
+		BanditsArcherPool.erase(it);                    // Удаляем заспаунинного бандита из пула
+		return entity;                            // Возвращаем указатель на заспаунинного бандита
+
+	}
+
+	return nullptr;  // Если бандитов в пуле не осталось
+}
+
+
+
 cDynamic* RPG_Engine::SpawnBandit(const olc::vf2d* position)
 {
-	for (auto it = enemysPool.begin(); it != enemysPool.end(); ++it) {
+	for (auto it = BanditsPool.begin(); it != BanditsPool.end(); ++it) {
 		cDynamic* entity = *it;
-		if (dynamic_cast<cDynamic_creature_Bandit*>(entity)) {
-			entity->binitialized = true;
-			m_vecDynamics.push_back(entity); // Add the Bandit entity to the game
-			entity->px = position->x;
+
+		// Предполагаем, что если мы нашли подходящий объект, спауним его
+		
+			entity->setFlag(entity->binitialized);    // Устанавливаем флаг инициализации
+			m_vecDynamics.push_back(entity);          // Добавляем в активный вектор динамических объектов
+			entity->px = position->x;                 // Устанавливаем позицию
 			entity->py = position->y;
-			enemysPool.erase(it); // Remove the Bandit entity from the pool
-			return entity; // Exit the function after spawning a Bandit
-		}
+
+			BanditsPool.erase(it);                    // Удаляем заспаунинного бандита из пула
+			return entity;                            // Возвращаем указатель на заспаунинного бандита
+		
 	}
+
+	return nullptr;  // Если бандитов в пуле не осталось
 }
 
 
 cDynamic* RPG_Engine::SpawnWerewolf(const olc::vf2d* position)
 {
-	for (auto it = enemysPool.begin(); it != enemysPool.end(); ++it) {
+	for (auto it = WereWolfsPool.begin(); it != WereWolfsPool.end(); ++it) {
 		cDynamic* entity = *it;
-		if (dynamic_cast<cDynamic_creature_WereWolf*>(entity)) {
-			entity->binitialized = true;
+		
+			entity->setFlag(entity->binitialized);
 			m_vecDynamics.push_back(entity); // Add the Bandit entity to the game
 			entity->px = position->x;
 			entity->py = position->y;
-			enemysPool.erase(it); // Remove the Bandit entity from the pool
+			WereWolfsPool.erase(it); // Remove the Bandit entity from the pool
 			return entity; // Exit the function after spawning a Bandit
-		}
+		
 	}
+	return nullptr;  // Если бандитов в пуле не осталось
 }
 
 cDynamic* RPG_Engine::SpawnBoar(const olc::vf2d* position)
 {
-	for (auto it = enemysPool.begin(); it != enemysPool.end(); ++it) {
+	for (auto it = BoarPool.begin(); it != BoarPool.end(); ++it) {
 		cDynamic* entity = *it;
-		if (dynamic_cast<cDynamic_creature_Boar*>(entity)) {
-			entity->binitialized = true;
+		
+			entity->setFlag(entity->binitialized);
 			m_vecDynamics.push_back(entity); // Add the Bandit entity to the game
 			entity->px = position->x;
 			entity->py = position->y;
-			enemysPool.erase(it); // Remove the Bandit entity from the pool
+			BoarPool.erase(it); // Remove the Bandit entity from the pool
 			return entity; // Exit the function after spawning a Bandit
-		}
+		
 	}
+	return nullptr;  // Если бандитов в пуле не осталось
 }
 
-cDynamic* RPG_Engine::FindpoolEntity( cDynamic* object)
+
+cDynamic* RPG_Engine::SpawnDireWolf(const olc::vf2d* position)
 {
 
-
-	//if (cDynamic_creature_DireWolf* derivedobj = dynamic_cast<cDynamic_creature_DireWolf*>(object)) {
-	//	
-	//}
-	//if (cDynamic_creature_Bandit* derivedobj2 = dynamic_cast<cDynamic_creature_Bandit*>(object))
-	//{
-	//
-	//}
-	//if (cDynamic_creature_Boar* deruvedobj3 = dynamic_cast<cDynamic_creature_Boar*>(object))
-	//{
-	//	
-	//}
+	for (auto it = DireWolfsPool.begin(); it != DireWolfsPool.end(); ++it) {
+		cDynamic* entity = *it;
 
 
-	for (auto it = enemysPool.begin(); it != enemysPool.end(); ++it) {
-		
+		entity->setFlag(entity->binitialized);
+		m_vecDynamics.push_back(entity); // Add the Bandit entity to the game
+		entity->px = position->x;
+		entity->py = position->y;
+		DireWolfsPool.erase(it); // Remove the Bandit entity from the pool
+
+
+		return entity; // Exit the function after spawning a Bandit
+
+	}
+	return nullptr; // Exit the function after spawning a Bandit
+}
+
+
+
+cDynamic* RPG_Engine::SpawnProjectile(const olc::vf2d* position)
+{
+
+	for (auto it = ProjectilePool.begin(); it != ProjectilePool.end(); ++it) {
+		cDynamic* entity = *it;
+
+
+		entity->setFlag(entity->binitialized);
+		m_vecProjectiles.push_back(entity); // Add the Bandit entity to the game
+		entity->px = position->x;
+		entity->py = position->y;
+		ProjectilePool.erase(it); // Remove the Bandit entity from the pool
+
+
+		return entity; // Exit the function after spawning a Bandit
+
+	}
+	return nullptr; // Exit the function after spawning a Bandit
+}
+
+void RPG_Engine::ReturnTextToPool(cDynamic* Text)
+{
+	auto* proj = (cDynamic_TextDamage*)Text;
+	proj->SetDeafult();
+
+
+	ProjectilePool.push_back(proj);
+}
+
+
+cDynamic* RPG_Engine::SpawnBattleText(const olc::vf2d position, std::string Text, olc::Pixel Color )
+{
+
+	for (auto it = TextPool.begin(); it != TextPool.end(); ++it) {
 		cDynamic* entity = *it;
 		
-		
-		if (typeid(*object) == typeid(*entity)) { // Compare the types of the object and the entity
+		cDynamic_TextDamage* Textentity = (cDynamic_TextDamage*)entity;
 
-			m_vecDynamics.push_back(entity); // Add the Bandit entity to the game
-			enemysPool.erase(it); // Remove the Bandit entity from the pool
 
-			return  entity; // Exit the function after spawning a Bandit
-		}
-		
+		Textentity->setFlag(Textentity->bRedundant);
+		m_vecFightText.push_back(Textentity); // Add the Bandit entity to the game
+		Textentity->px = position.x;
+		Textentity->py = position.y;
+		Textentity->SetText(Text);
+		TextPool.erase(it); // Remove the Bandit entity from the pool
+
+
+		return entity; // Exit the function after spawning a Bandit
+
 	}
-
-
-
-	return nullptr;
+	return nullptr; // Exit the function after spawning a Bandit
 }
+
 
 void RPG_Engine::SpawnRainDrops()
 {
@@ -5545,55 +6599,193 @@ void RPG_Engine::SpawnClouds()
 }
 
 
-
-cDynamic* RPG_Engine::SpawnDireWolf(const olc::vf2d* position)
+void RPG_Engine::removeStoppedSounds()
 {
-	
-	for (auto it = enemysPool.begin(); it != enemysPool.end(); ++it) {
-		cDynamic* entity = *it;
+	auto it = sounds.begin();
+	while (it != sounds.end()) {
+
+		sf::Sound* ex = *it;
 		
-		if (dynamic_cast<cDynamic_creature_DireWolf*>(entity)) {
-			entity->binitialized = true;
-			m_vecDynamics.push_back(entity); // Add the Bandit entity to the game
-			entity->px = position->x;
-			entity->py = position->y;
-			enemysPool.erase(it); // Remove the Bandit entity from the pool
-
-
-			return entity; // Exit the function after spawning a Bandit
+		if (ex->getStatus() == sf::Sound::Stopped) {
+			// Возвращаем звук обратно в пул
+			m_vecSoundsPool.push_back(std::move(*it));
+			it = sounds.erase(it);  // Удаляем его из списка проигрываемых звуков
+		}
+		else {
+			++it;
 		}
 	}
-	return nullptr; // Exit the function after spawning a Bandit
 }
+void RPG_Engine::bufferClockMask()
+{
+
+
+	spMask = new olc::Sprite(64, 64);
+
+	for (int y = 0; y < 64; y++)
+		for (int x = 0; x < 64; x++)
+			spMask->SetPixel(x, y, olc::Pixel(0, 0, 0, 0));  // Чёрные пиксели — спрайт скрыт
+
+	angles.resize(64 * 64);
+
+	maskcenter = { 64.0f / 2.0f,64.0f / 2.0f };
+
+	for (int y = 0; y < 64; y++) {
+		for (int x = 0; x < 64; x++) {
+			float dx = x - maskcenter.x;
+			float dy = y - maskcenter.y;
+
+			float angle = atan2f(dy, dx);
+			angle += (3.14159f / 2);
+			if (angle < 0) angle += 2.0f * 3.14159f;    // атан2f возвращает значения от -пи до +пи, а нам надо от 0 до 2пи, для корректности
+			angles[y * spMask->width + x] = angle;
+		}
+	}
+}
+void RPG_Engine::bufferSinusMask(float amplitude, float waves, float position, float phaseoffset)
+{
+	float x = 0.0f;
+
+	for (int y = 0; y < 64; y++) {
+
+
+
+		float sinx = amplitude * std::sin(waves * x + phaseoffset) + position;
+
+
+
+
+		x += 0.1f;
+		Sinnum[y] = sinx;
+
+	}
+
+}
+void RPG_Engine::clockwiseMask(float felapsedtime, olc::Sprite* test)
+{
+	maskanim += felapsedtime;
+
+	float angle = maskanim * 10; // Увеличиваем угол со временем  начиная с 0, дойдя до 1, мы совершим полный оборот по окружности
+
+	for (int y = 0; y < 64; y++)
+	{
+
+		for (int x = 0; x < 64; x++)
+		{
+			if (test->GetPixel(x, y).a == 0) // Проверяем только прозрачные пиксели
+			{
+
+				float pixelAngle = angles[y * 64 + x];
+
+				if (pixelAngle <= angle)
+				{
+					test->SetPixel(x, y, olc::Pixel(0, 0, 0, 255));
+				}
+			}
+
+		}
+	}
+}
+void RPG_Engine::sinusoidMask(float felapsedtime, olc::Sprite* test, float amplitude)
+{
+	maskanim += felapsedtime * 10;
+
+	for (int y =amplitude; y < 64; y++)
+	{
+
+		for (int x = 0; x < 64; x++)
+		{
+
+			float flowx = x + maskanim;
+
+			flowx = (int)flowx % 64;
+
+
+
+			float xin = Sinnum[flowx];
+
+
+			if (xin < y)
+			{
+
+				test->SetPixel(x, y, olc::Pixel(0, 0, 0, 255));
+			}
+			else
+			{
+				test->SetPixel(x, y, olc::Pixel(0, 0, 0, 0));
+			}
+
+		}
+	}
+}
+//void::RPG_Engine::LoadSound()
+//{
+//
+//}
+//void RPG_Engine::LoadMusc()
+//{
+//	// Загрузка звуковых эффектов
+//	loadSound("TakeDamage", "D:/C++/Pantir_Platformer/Sounds/TakeDamageSound.wav");
+//
+//	loadSound("SwordSwing", "D:/C++/Pantir_Platformer/Sounds/HitSound.wav");
+//
+//	loadSound("SwordSwingTwo", "D:/C++/Pantir_Platformer/Sounds/HitSound2.wav");
+//
+//	loadSound("Jump", "D:/C++/Pantir_Platformer/Sounds/JumpSound.wav");
+//
+//	loadSound("Landed", "D:/C++/Pantir_Platformer/Sounds/LandedSound.wav");
+//
+//	loadSound("Run", "D:/C++/Pantir_Platformer/Sounds/RunSound.wav");
+//
+//	loadSound("BackStab", "D:/C++/Pantir_Platformer/Sounds/HitLandedSound.wav");
+//
+//
+//
+//}
 void RPG_Engine:: ReturnToPool(cDynamic* entity) {
+	// Обнуляем общий флаг и состояние для любого существа
+	entity->clearFlag(entity->binitialized);
+	entity->setFlag(entity->bDraw);
+	entity->clearFlag(entity->bDead);
+	//entity->nHealth = entity->nHealthMax;
 
-	// Check the dynamic type of the entity
-	if (cDynamic_creature_Bandit* bandit = dynamic_cast<cDynamic_creature_Bandit*>(entity))
-	{
-		bandit->binitialized = false;
-
-		// If the entity is a Bandit, return it to the Bandit pool
-		enemysPool.push_back(bandit);
+	// Приведение к конкретному типу и возврат в соответствующий пул
+	if (auto* bandit = dynamic_cast<cDynamic_creature_Bandit*>(entity)) {
+		bandit->nHealth = bandit->nHealthMax;
+		BanditsPool.push_back(bandit);
 	}
-	else if (cDynamic_creature_DireWolf* wolf = dynamic_cast<cDynamic_creature_DireWolf*>(entity))
-	{
-		wolf->binitialized = false;
-		// If the entity is a DireWolf, return it to the DireWolf pool
-		enemysPool.push_back(wolf);
-	} // Add more conditions for other types if needed
-	else if (cDynamic_creature_Boar* Boar = dynamic_cast<cDynamic_creature_Boar*>(entity))
-	{
-		Boar->binitialized = false;
-		enemysPool.push_back(Boar);
-		// Handle unknown entity types or errors
-		// You might want to log an error or throw an exception
+	else if (auto* wolf = dynamic_cast<cDynamic_creature_DireWolf*>(entity)) {
+		wolf->nHealth = wolf->nHealthMax;
+		DireWolfsPool.push_back(wolf);
 	}
-	else if (cDynamic_creature_WereWolf* Werewolf = dynamic_cast<cDynamic_creature_WereWolf*>(entity))
-	{
-		Werewolf->binitialized = false;
-		enemysPool.push_back(Werewolf);
+	else if (auto* boar = dynamic_cast<cDynamic_creature_Boar*>(entity)) {
+		boar->nHealth = boar->nHealthMax;
+		BoarPool.push_back(boar); // Создать отдельный пул для Boar, если его нет
+	}
+	else if (auto* werewolf = dynamic_cast<cDynamic_creature_WereWolf*>(entity)) {
+		werewolf->nHealth = werewolf->nHealthMax;
+		WereWolfsPool.push_back(werewolf);
+	}
+	else if (auto* archer = dynamic_cast<cDynamic_creature_BanditArcher*>(entity)) {
+		archer->nHealth = archer->nHealthMax;
+		BanditsArcherPool.push_back(archer);
+	}
+	else {
+		// Логирование или выброс исключения при неизвестном типе
+		std::cerr << "Unknown entity type. Could not return to pool.\n";
+		// Или бросить исключение:
+		// throw std::runtime_error("Unknown entity type");
 	}
 }
+void RPG_Engine::ReturnProjectileToPool(cDynamic* Prjectile) {
+	auto* proj = (cDynamic_Projectile*)Prjectile;
+	proj->SetDeafult();
+	
+
+	ProjectilePool.push_back(proj);
+
+}
+
 void RPG_Engine::ReturnEnvironmentToPool(Environment* entity) {
 
 	// Check the dynamic type of the entity
