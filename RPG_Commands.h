@@ -69,6 +69,26 @@ private:
 	float m_fTimeSoFar;
 };
 
+class cComand_moveCrowdTo : public cComand
+{
+public:
+	cComand_moveCrowdTo(std::vector<cDynamic*>& vecDynobs,cDynamic_Creature* object,float Startx,float Starty, float x, float y, float duration = 0.0f, int Count = 0, uint32_t FrameData = 0);
+	void Start() override;
+	void Update(float fElapsedTime) override;
+
+private:
+	std::vector<cDynamic*>* m_vecDyn;
+	cDynamic* m_pObject;
+	olc::Decal* currDecal;
+	float m_fStartPosX;
+	float m_fStartPosY;
+	float m_fTargetPosX;
+	float m_fTargetPosY;
+	int Count;
+	float m_fDuration;
+	float m_fTimeSoFar;
+};
+
 
 class cComand_JumpTo : public cComand
 {

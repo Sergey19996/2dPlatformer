@@ -101,7 +101,7 @@ bool cWeapon::OnUse(cDynamic* object)
 		olc::vf2d pos{ x, y };
 
 	
-		cDynamic_Projectile* p = (cDynamic_Projectile*)g_engine->SpawnProjectile(&pos);
+		cDynamic_Projectile* p = (cDynamic_Projectile*)g_engine->SpawnProjectile(pos);
 		p->SetSprites(ProjectileRight, ProjectileLeft);
 		p->SetAgressorData(aggressor);
 		p->px = x;
@@ -118,7 +118,7 @@ bool cWeapon::OnUse(cDynamic* object)
 
 		olc::vf2d pos{ x, y };
 	
-		cDynamic_Projectile* p = (cDynamic_Projectile*)g_engine->SpawnProjectile(&pos);
+		cDynamic_Projectile* p = (cDynamic_Projectile*)g_engine->SpawnProjectile(pos);
 		p->px = x;
 		p->py = y;
 		p->attackDirectionX = attackdir;

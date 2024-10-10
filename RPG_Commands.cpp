@@ -89,6 +89,7 @@ cComand_moveTo::cComand_moveTo(std::vector<cDynamic*>& vecDynobs,std::string nam
 }
 
 
+
 void cComand_moveTo::Start()
 {
 	if (m_vecDyn != nullptr)
@@ -99,7 +100,6 @@ void cComand_moveTo::Start()
 				m_pObject = quest;
 				break;
 			}
-	m_fTargetPosX += m_pObject->px;
 	}
 	
 	m_fStartPosX = m_pObject->px;
@@ -172,7 +172,7 @@ cComand_waiting::cComand_waiting(cDynamic* object)
 
 void cComand_waiting::Start()
 {
-	m_pObject->setFlag(m_pObject->bControllable);
+	m_pObject->clearFlag(m_pObject->bControllable);
 	m_pObject->vx = 0;
 	bCompleted = true;
 
@@ -185,7 +185,7 @@ cComand_Unlock::cComand_Unlock(cDynamic* object)
 
 void cComand_Unlock::Start()
 {
-	m_pObject->clearFlag(m_pObject->bControllable);
+	m_pObject->setFlag(m_pObject->bControllable);
 	bCompleted = true;
 }
 
@@ -265,8 +265,6 @@ void cComand_CheatDeath::Start()
 
 	}
 	
-
-	
 	bCompleted = true;
 }
 
@@ -279,13 +277,17 @@ cComand_CleanDeath::cComand_CleanDeath(std::vector<cDynamic*>& vecDynobs ,std::s
 
 void cComand_CleanDeath::Start()
 {
-	for (auto& quest : *vecDyn)
-		if (quest->sName == Name)
+	for (auto it = vecDyn->begin(); it != vecDyn->end(); ++it)
+	{
+		if ((*it)->sName == Name)
 		{
-			quest->setFlag(quest->bDead);
 
-			break;
+			delete* it;  // Освобождение памяти, занимаемой объектом
+			it = vecDyn->erase(it);  // Удаление указателя из вектора и корректное обновление итератора
+
+			break;  // Прерываем цикл, так как элемент уже найден и удалён
 		}
+	}
 	bCompleted = true;
 	
 }
@@ -624,4 +626,80 @@ void cComand_PlayFunction::Start()
 	cDynamic_Creature* actchar= (cDynamic_Creature*)chars;
 	actchar->Action();
 	bCompleted = true;
+}
+
+cComand_moveCrowdTo::cComand_moveCrowdTo(std::vector<cDynamic*>& vecDynobs,cDynamic_Creature* object,float StartX,float StartY, float x, float y, float duration, int Count, uint32_t FrameData)
+{
+
+	this->m_vecDyn = &vecDynobs;
+	this->Count = Count;
+
+	this->m_pObject = new cDynamic_creature_Crowd(object->sName, object->GetRightSprite(), object->GetLeftSprite(), Count, FrameData);
+	m_pObject->setFlag(m_pObject->quested);
+	
+	m_pObject->px = m_fStartPosX;
+	m_pObject->py = m_fStartPosY;
+
+	m_fStartPosX = StartX;
+	m_fStartPosY = StartY;
+	m_fTargetPosX = x;
+	m_fTargetPosY = y;
+	m_fTimeSoFar = 0.0f;
+	m_fDuration = std::max(duration, 0.01f); //it's an important to avoid divide by zero
+}
+
+void cComand_moveCrowdTo::Start()
+{
+	m_vecDyn->push_back(m_pObject);
+}
+
+void cComand_moveCrowdTo::Update(float fElapsedTime)
+{
+
+	m_fTimeSoFar += fElapsedTime;
+	float t = m_fTimeSoFar / m_fDuration;   //получаем пропорции секундомера от секунд к конечному времени
+	if (t > 1.0f) t = 1.0f;
+
+
+
+
+	//	object->vy += object->mass * fElapsedTime;                     //Gravitation for everyone
+
+
+
+	m_pObject->vx = (m_fTargetPosX - m_fStartPosX) / m_fDuration;
+	m_pObject->vy = (m_fTargetPosY - m_fStartPosY) / m_fDuration;
+
+	m_pObject->px = (m_fTargetPosX - m_fStartPosX) * t + m_fStartPosX;
+	m_pObject->py = (m_fTargetPosY - m_fStartPosY) * t + m_fStartPosY;
+
+
+
+	if (m_fTimeSoFar >= m_fDuration)
+	{
+		//Object Has reached Destination , so stop
+		m_pObject->px = m_fTargetPosX;
+		m_pObject->py = m_fTargetPosY;
+		m_pObject->vx = 0.0f;
+		m_pObject->vy = 0.0f;
+
+
+		for (auto it = m_vecDyn->begin(); it != m_vecDyn->end(); ++it)
+		{
+			if (m_pObject == *it)
+			{
+				m_pObject = nullptr;
+				delete* it;  // Освобождение памяти, занимаемой объектом
+				it =m_vecDyn->erase(it);  // Удаление указателя из вектора и корректное обновление итератора
+
+				break;  // Прерываем цикл, так как элемент уже найден и удалён
+			}
+		}
+
+
+		bCompleted = true;
+	}
+
+	
+	
 }

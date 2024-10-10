@@ -268,10 +268,10 @@ cMap_Forest::cMap_Forest()
 	bFinishloading = Create("save/LevelMap.txt",RPG_Assets::get().GetSprite("BlockFirstLvl"), RPG_Assets::get().GetSprite("ForestDynamicLayer"), RPG_Assets::get().GetSprite("ParralaxForestClose"), RPG_Assets::get().GetSprite("ParralaxForestMid"), RPG_Assets::get().GetSprite("ParralaxForestFar"), "Forest");
 
 
-//	setWolfsPos();
-//	setBanditsPos();
-//	setBoarPos();
-//	setWereWolfsPos();
+	setWolfsPos();
+	setBanditsPos();
+	setBoarPos();
+	setWereWolfsPos();
 
 	//RPG_Assets::get().playMusic("D:/C++/Pantir_Platformer/Sounds/FriendSong.wav");
 }
@@ -296,9 +296,9 @@ bool cMap_Forest::PopulateDynamics(std::vector<cDynamic*>& vecDyns)
 	//	g_engine->SpawnBandit(*&(BanditsPositions[i]));
 		
 	//	i++;
-		g_engine->SpawnBanditArcher(*&(BanditsPositions[i]));
+		g_engine->SpawnBanditArcher(BanditsPositions[i]);
 		i++;
-		g_engine->SpawnBandit(*&(BanditsPositions[i]));
+		g_engine->SpawnBandit(BanditsPositions[i]);
 		i++;
 	}
 
@@ -307,7 +307,7 @@ bool cMap_Forest::PopulateDynamics(std::vector<cDynamic*>& vecDyns)
 	{
 		
 	
-		g_engine->SpawnDireWolf(*&(WolfsPositions[i]));
+		g_engine->SpawnDireWolf(WolfsPositions[i]);
 		i++;
 		
 
@@ -416,7 +416,7 @@ bool cMap_Forest::OnInteraction(std::vector<cDynamic*>& vecDynobs, cDynamic* tar
 void cMap_Forest::setWolfsPos()
 {
 
-	olc::vf2d* v1 = new olc::vf2d{ 25,23.5 };
+	olc::vf2d v1 =  olc::vf2d{ 25,23.5 };
 	
 
 
@@ -426,19 +426,19 @@ void cMap_Forest::setWolfsPos()
 
 
 
-	v1 = new olc::vf2d{ 33,26.5 };
+	v1 =  olc::vf2d{ 33,26.5 };
 	WolfsPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 55,25.5 };
+	v1 =  olc::vf2d{ 55,25.5 };
 	WolfsPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 54,25.5 };
+	v1 =  olc::vf2d{ 54,25.5 };
 	WolfsPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 152,23.5 };
+	v1 =  olc::vf2d{ 152,23.5 };
 	WolfsPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 196,32.5 };
+	v1 =  olc::vf2d{ 196,32.5 };
 	WolfsPositions.push_back(v1);
 
 }
@@ -446,36 +446,36 @@ void cMap_Forest::setWolfsPos()
 void cMap_Forest::setBanditsPos()
 {
 
-	olc::vf2d* v1 = new olc::vf2d{ 101,23.5 };
+	olc::vf2d v1 =  olc::vf2d{ 101,23.5 };
 	BanditsPositions.push_back(v1);
 
 
-	 v1 = new olc::vf2d{ 103,23.5 };
+	 v1 =  olc::vf2d{ 103,23.5 };
 	BanditsPositions.push_back(v1);
 
 
-	v1 = new olc::vf2d{ 115.5,23.5 };
+	v1 =  olc::vf2d{ 115.5,23.5 };
 	BanditsPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 116.5,23.5 };
+	v1 =  olc::vf2d{ 116.5,23.5 };
 	BanditsPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 130,23.5 };
+	v1 =  olc::vf2d{ 130,23.5 };
 	BanditsPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 132,23.5 };
+	v1 =  olc::vf2d{ 132,23.5 };
 	BanditsPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 144,23.5 };
+	v1 =  olc::vf2d{ 144,23.5 };
 	BanditsPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 146,23.5 };
+	v1 =  olc::vf2d{ 146,23.5 };
 	BanditsPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 209,30.5 };
+	v1 =  olc::vf2d{ 209,30.5 };
 	BanditsPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 215,30.5 };
+	v1 =  olc::vf2d{ 215,30.5 };
 	BanditsPositions.push_back(v1);
 
 }
@@ -483,7 +483,7 @@ void cMap_Forest::setBanditsPos()
 void cMap_Forest::setWereWolfsPos()
 {
 
-	olc::vf2d* v1 = new olc::vf2d{ 248,60 };
+	olc::vf2d v1 =  olc::vf2d{ 248,60 };
 		WerewolfPositions.push_back(v1);
 
 
@@ -491,30 +491,30 @@ void cMap_Forest::setWereWolfsPos()
 
 
 
-	v1 = new olc::vf2d{ 202,59 };
+	v1 =  olc::vf2d{ 202,59 };
 	WerewolfPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 175,57 };
+	v1 =  olc::vf2d{ 175,57 };
 	WerewolfPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 152,59 };
+	v1 =  olc::vf2d{ 152,59 };
 	WerewolfPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 135,59 };
+	v1 =  olc::vf2d{ 135,59 };
 	WerewolfPositions.push_back(v1);
 
 
-	v1 = new olc::vf2d{ 114,59 };
+	v1 =  olc::vf2d{ 114,59 };
 	WerewolfPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 100,54 };
+	v1 =  olc::vf2d{ 100,54 };
 	WerewolfPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 110,39 };
+	v1 =  olc::vf2d{ 110,39 };
 	WerewolfPositions.push_back(v1);
-	v1 = new olc::vf2d{ 122,44 };
+	v1 =  olc::vf2d{ 122,44 };
 	WerewolfPositions.push_back(v1);
-	v1 = new olc::vf2d{ 131,47 };
+	v1 =  olc::vf2d{ 131,47 };
 	WerewolfPositions.push_back(v1);
 
 }
@@ -522,29 +522,29 @@ void cMap_Forest::setWereWolfsPos()
 void cMap_Forest::setBoarPos()
 {
 
-	olc::vf2d* v1 = new olc::vf2d{ 222,57 };
+	olc::vf2d v1 =  olc::vf2d{ 222,57 };
 	BoarPositions.push_back(v1);
 
 
-	v1 = new olc::vf2d{ 195,56 };
+	v1 =  olc::vf2d{ 195,56 };
 	BoarPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 182,60 };
+	v1 =  olc::vf2d{ 182,60 };
 	BoarPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 165,60 };
+	v1 =  olc::vf2d{ 165,60 };
 	BoarPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 158,60 };
+	v1 =  olc::vf2d{ 158,60 };
 	BoarPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 150,60 };
+	v1 =  olc::vf2d{ 150,60 };
 	BoarPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 115,66 };  // seem to change
+	v1 =  olc::vf2d{ 115,66 };  // seem to change
 	BoarPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 103,42 };
+	v1 =  olc::vf2d{ 103,42 };
 	BoarPositions.push_back(v1);
 
 }
@@ -569,7 +569,7 @@ bool cMap_VillageInFire::PopulateDynamics(std::vector<cDynamic*>& vecDyns)
 
 		//g1->px = 128;
 		//g1->py = 1;
-		g_engine->SpawnBandit(*&(BanditsPositions[i]));
+		g_engine->SpawnBandit(BanditsPositions[i]);
 
 		i++;
 
@@ -608,22 +608,22 @@ bool cMap_VillageInFire::OnInteraction(std::vector<cDynamic*>& vecDynobs, cDynam
 void cMap_VillageInFire::setBanditsPos()
 {
 
-	olc::vf2d* v1 = new olc::vf2d{ 16,13.5 };
+	olc::vf2d v1 = olc::vf2d{ 16,13.5 };
 	BanditsPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 21.5,13.5 };
+	v1 =  olc::vf2d{ 21.5,13.5 };
 	BanditsPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 29.5,13.5 };
+	v1 =  olc::vf2d{ 29.5,13.5 };
 	BanditsPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 50,13.5 };
+	v1 =  olc::vf2d{ 50,13.5 };
 	BanditsPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 60,13.5 };
+	v1 =  olc::vf2d{ 60,13.5 };
 	BanditsPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 55,13.5 };
+	v1 =  olc::vf2d{ 55,13.5 };
 	BanditsPositions.push_back(v1);
 }
 
@@ -849,7 +849,7 @@ bool cMap_ForestPartTwo::PopulateDynamics(std::vector<cDynamic*>& vecDyns)
 	{
 
 
-		g_engine->SpawnDireWolf(*&(WolfsPositions[i]));
+		g_engine->SpawnDireWolf(WolfsPositions[i]);
 		i++;
 
 
@@ -862,8 +862,8 @@ bool cMap_ForestPartTwo::PopulateDynamics(std::vector<cDynamic*>& vecDyns)
 
 
 		cDynamic* g1 = new cDynamic_creature_Boar();
-		g1->px = BoarsPositions[i]->x;
-		g1->py = BoarsPositions[i]->y;
+		g1->px = BoarsPositions[i].x;
+		g1->py = BoarsPositions[i].y;
 		vecDyns.push_back(g1);
 		i++;
 
@@ -924,40 +924,40 @@ bool cMap_ForestPartTwo::OnInteraction(std::vector<cDynamic*>& vecDynobs, cDynam
 void cMap_ForestPartTwo::setWolfsPos()
 {
 
-	olc::vf2d* v1 = new olc::vf2d{ 17,23.5 };
+	olc::vf2d v1 =  olc::vf2d{ 17,23.5 };
 	WolfsPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 162,24.5 };
+	v1 =  olc::vf2d{ 162,24.5 };
 	WolfsPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 202,25.5 };
+	v1 =  olc::vf2d{ 202,25.5 };
 	WolfsPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 215,26.5 };
+	v1 =  olc::vf2d{ 215,26.5 };
 	WolfsPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 245,27.5 };
+	v1 =  olc::vf2d{ 245,27.5 };
 	WolfsPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 247,37.5 };
+	v1 =  olc::vf2d{ 247,37.5 };
 	WolfsPositions.push_back(v1);
 }
 
 void cMap_ForestPartTwo::setBoarsPos()
 {
-	olc::vf2d* v1 = new olc::vf2d{ 28,28.5 };
+	olc::vf2d v1 =  olc::vf2d{ 28,28.5 };
 	BoarsPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 65,27.5 };
+	v1 =  olc::vf2d{ 65,27.5 };
 	BoarsPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 134,245 };
+	v1 =  olc::vf2d{ 134,245 };
 	BoarsPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 182,31.5 };
+	v1 =  olc::vf2d{ 182,31.5 };
 	BoarsPositions.push_back(v1);
 
-	v1 = new olc::vf2d{ 182,31.5 };
+	v1 =  olc::vf2d{ 182,31.5 };
 	BoarsPositions.push_back(v1);
 
 }

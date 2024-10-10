@@ -11,9 +11,9 @@ public:
 
 	virtual bool OnUse(cDynamic* object) { return  false; }
 
-	virtual void DrawSelf(olc::PixelGameEngine* gfx, int px, int py) {}
+	virtual void DrawSelf(olc::PixelGameEngine* gfx, float px, float py) {}
 
-	virtual void DrawSelfTalent(olc::PixelGameEngine* gfx, int px, int py) {}
+	virtual void DrawSelfTalent(olc::PixelGameEngine* gfx, float px, float py) {}
 
 
 	virtual int SaveSlotTalent() { return 0; };
@@ -42,9 +42,9 @@ public:
 	bool OnInteract(cDynamic* object) override;
 	bool OnUse(cDynamic* object) override;
 
-	void DrawSelf(olc::PixelGameEngine* gfx, int px, int py) override;
+	void DrawSelf(olc::PixelGameEngine* gfx, float px, float py) override;
 
-	void DrawSelfTalent(olc::PixelGameEngine* gfx, int px, int py) override;
+	void DrawSelfTalent(olc::PixelGameEngine* gfx, float px, float py) override;
 
 	int SaveSlotTalent() override;
 
@@ -69,7 +69,7 @@ public:
 	cExperience();
 
 public:
-	void DrawSelf(olc::PixelGameEngine* gfx, int px, int py) override;
+	void DrawSelf(olc::PixelGameEngine* gfx, float px, float py) override;
 
 
 };
@@ -84,8 +84,8 @@ public:
 
 
 public:
-	void DrawSelf(olc::PixelGameEngine* gfx, int px, int py) override;
-	void DrawSelfTalent(olc::PixelGameEngine* gfx, int px, int py) override;
+	void DrawSelf(olc::PixelGameEngine* gfx, float px, float py) override;
+	void DrawSelfTalent(olc::PixelGameEngine* gfx, float px, float py) override;
 	
 	enum
 	{
@@ -118,8 +118,8 @@ public:
 	cRageIndicators(std::string name);
 
 public:
-	void DrawSelf(olc::PixelGameEngine* gfx, int px, int py) override;
-	void DrawSelfTalent(olc::PixelGameEngine* gfx, int px, int py) override;
+	void DrawSelf(olc::PixelGameEngine* gfx, float px, float py) override;
+	void DrawSelfTalent(olc::PixelGameEngine* gfx, float px, float py) override;
 	enum
 	{
 		RageIndicatorFirst = 0,
@@ -298,7 +298,7 @@ public:
 
 public:
 	
-	void DrawSelf(olc::PixelGameEngine* gfx, int px, int py) override;
+	void DrawSelf(olc::PixelGameEngine* gfx, float px, float py) override;
 };
 
 
@@ -327,7 +327,7 @@ class cNumber : public cStaticUi
 public:
 	cNumber();
 
-	void DrawSelf(olc::PixelGameEngine* gfx, int px, int py) override;
+	void DrawSelf(olc::PixelGameEngine* gfx, float px, float py) override;
 
 };
 

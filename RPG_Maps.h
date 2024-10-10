@@ -98,10 +98,10 @@ private:
 	void setBanditsPos();
 	void setWereWolfsPos();
 	void setBoarPos();
-	std::vector< olc::vf2d*>WolfsPositions;
-	std::vector< olc::vf2d*>BanditsPositions;
-	std::vector< olc::vf2d*>BoarPositions;
-	std::vector< olc::vf2d*>WerewolfPositions;
+	std::vector< olc::vf2d>WolfsPositions;
+	std::vector< olc::vf2d>BanditsPositions;
+	std::vector< olc::vf2d>BoarPositions;
+	std::vector< olc::vf2d>WerewolfPositions;
 	//std::vector< olc::vf2d*>WerewolfPositions;
 
 };
@@ -120,8 +120,8 @@ public:
 private:
 	void setWolfsPos();
 	void setBoarsPos();
-	std::vector< olc::vf2d*>WolfsPositions;
-	std::vector< olc::vf2d*>BoarsPositions;
+	std::vector< olc::vf2d>WolfsPositions;
+	std::vector< olc::vf2d>BoarsPositions;
 
 };
 
@@ -150,7 +150,7 @@ public:
 
 private:
 	void setBanditsPos();
-	std::vector< olc::vf2d*>BanditsPositions;
+	std::vector< olc::vf2d>BanditsPositions;
 };
 
 

@@ -3,7 +3,7 @@
 #include "olcPixelGameEngine.h"
 
 class RPG_Engine;
-
+class Environment;
 class cWeapon;
 class cItem;
 class cEquip;
@@ -13,11 +13,10 @@ class cDynamic_HpBar;
 class cDynamic_EnergyBar;
 class cDynamic_RageBar;
 class cComand;
-
 class cDynamic
 {
 public:
-	cDynamic(std::string n);
+	cDynamic(const std::string n);
 	~cDynamic();
 
 public:
@@ -40,7 +39,7 @@ public:
 		bOnTarget = 1 << 6,  // 7-й бит
 		binitialized = 1 << 7,  // 8-й бит
 		bControllable = 1 << 8,  // 9-й бит
-		quested = 1 << 9,  // 10-й бит
+		quested = 1 << 9,  // 10-й бит  для обьектов, которые рендерятся без ограничений 
 		isAttack = 1 << 10, // 11-й бит
 		IsThrow = 1 << 11, // 12-й бит
 		IsOnePlay = 1 << 12, // 13-й бит
@@ -50,6 +49,7 @@ public:
 		Btarget = 1 << 16, // 17-й бит
 		gravity = 1 << 17,  // 18-й бит
 		isDirectionLock = 1 << 18 // 19-й бит
+		
 	};
 
 	
@@ -106,7 +106,7 @@ protected :
 class cDynamic_Creature : public cDynamic
 {
 public:
-	cDynamic_Creature(std::string n, olc::Decal* spriteRight, olc::Decal* spriteLeft);       // <--Sprite
+	cDynamic_Creature(const std::string n, olc::Decal* spriteRight, olc::Decal* spriteLeft);       // <--Sprite
 
 protected:
 	olc::Decal* m_pSpriteRight;
@@ -138,10 +138,10 @@ protected:
 	void SetLvlStrength(uint8_t str);
 	void SetLvlInt(uint8_t Inteleg);
 	void SetLvlMovement(uint8_t movement);
-	uint8_t getLvlAgil();
-	uint8_t gettLvlStrength();
-	uint8_t getLvlInt();
-	uint8_t getLvlMovement();
+	const uint8_t getLvlAgil();
+	const uint8_t gettLvlStrength();
+	const uint8_t getLvlInt();
+	const uint8_t getLvlMovement();
 
 
 
@@ -155,10 +155,10 @@ protected:
 	void SetEndStrength(uint8_t str);
 	void SetEndInt(uint8_t Inteleg);
 	void SetEndMovement(uint8_t movement);
-	uint8_t getEndAgil();
-	uint8_t getEndStrength();
-	uint8_t getEndInt();
-	uint8_t getEndMovement();
+	const uint8_t getEndAgil();
+	const uint8_t getEndStrength();
+	const uint8_t getEndInt();
+	const uint8_t getEndMovement();
 
 
 
@@ -174,13 +174,13 @@ protected:
 	void setBasicStrength(uint8_t str);
 	void setBasicInt(uint8_t Inteleg);
 	void setBasicMovement(uint8_t movement);
-	uint8_t getBasicAgil();
-	uint8_t getBasicStrength();
-	uint8_t getBasicInt();
-	uint8_t getBasicMovement();
+	const uint8_t getBasicAgil();
+	const uint8_t getBasicStrength();
+	const uint8_t getBasicInt();
+	const uint8_t getBasicMovement();
 
 
-	uint8_t GetWeaponAttributes(unsigned int attributes)
+	const uint8_t GetWeaponAttributes(const unsigned int attributes)
 	{
 		uint8_t dmg = (attributes >> 16) & 0xf;
 		return dmg;
@@ -239,7 +239,13 @@ protected:
 	// int8_t blueColor = 255;
 
 	
+	
+
 public:
+
+	virtual uint32_t getIdleData() { return 0; };
+	virtual uint32_t getWalkData() { return 0; };
+
 	float ProjCollbordersX, ProjCollbordersY, ProjCollbordersXF, ProjCollbordersYF;
 
 	//when need stop gravity for seconds use it
@@ -253,6 +259,8 @@ public:
 	int nHealth;
 	
 	int nHealthMax;
+
+
 	
 	unsigned int enumCounter :8;
 	
@@ -278,7 +286,7 @@ public:
 	float framespeed;
 	float animspr ;
 	int m_nGraphicAmountFrames;
-	int m_nGraphicEndFrame;
+//	int m_nGraphicEndFrame;
 
 	//bool FxGo;
 	int FXFrame;
@@ -298,11 +306,11 @@ public:
 	 
 public:
 	
-		void setColor(uint8_t Red, uint8_t Green, uint8_t Blue, uint8_t Alpha);
-		uint8_t getRed();
-		uint8_t getGreen();
-		uint8_t getBlue();
-		uint8_t getAlpha();
+		void setColor(const uint8_t Red, const uint8_t Green, const uint8_t Blue, const uint8_t Alpha);
+		const uint8_t getRed();
+		const uint8_t getGreen();
+		const uint8_t getBlue();
+		const uint8_t getAlpha();
 		void setRedColor(uint8_t Red);
 		void setGreenColor(uint8_t Green);
 		void setBlueColor(uint8_t Blue);
@@ -333,7 +341,8 @@ public:
 	bool setEnum();     // <-keep the parametrs which need for use animtions
 
 
-
+	olc::Decal* GetLeftSprite() { return m_pSpriteLeft; };
+	olc::Decal* GetRightSprite() { return m_pSpriteRight; };
 	int GetFacingDirection() { return M_nFacingDirection; };
 	int GetFacingDirectionVertical() { return M_nFacingDirectionVertical; };
 	int calculateDeathExp();
@@ -357,11 +366,7 @@ public:
 protected:
 	bool bKnockBack = true;
 
-	
-	// unsigned int BasicAgility : 8;
-	// unsigned int BasicStrength : 8;
-	// unsigned int BasicIntelect : 8;
-	// unsigned int BasicMovementSpeed : 8;
+
 
 
 	 unsigned int BasicAveAtck : 8;
@@ -401,6 +406,10 @@ protected:
 	float fSpecAtckdist = 2.9f;
 	float fAttackDist = 1.6f;
 	float vxBorder = 2.0f;
+public:
+	uint32_t getIdleData() override { return 0; };
+	
+	uint32_t getWalkData() override { return 0; };
 };
 
 
@@ -437,7 +446,29 @@ private:
 
 	int attackdif = 0;
 
+public:
+	uint32_t getIdleData() override 
+	{                               
+		uint32_t frameData = 0;    // 0000 0000 0000 0000
+		                           //      Amnt   Y    X 
+		frameData = (frameData & 0xFFFFFF00) | 0;   //Data take from idle indicate state
+		frameData = (frameData & 0xFFFF00FF) | (0 << 8);
+		frameData = (frameData & 0xFF00FFFF) | (8 <<16);
+		
+		return frameData;
+	
+	};
+	uint32_t getWalkData() override
+	{
+		uint32_t frameData = 0;    // 0000 0000 0000 0000
+								   //      Amnt   Y    X 
+		frameData = (frameData & 0xFFFFFF00) | 2;   //Data take from idle indicate state
+		frameData = (frameData & 0xFFFF00FF) | (1 << 8);
+		frameData = (frameData & 0xFF00FFFF) | (7 << 16);
 
+		return frameData;
+
+	};
 };
 
 
@@ -446,7 +477,7 @@ class  cDynamic_creature_Bandit : public cDynamic_creature_Enemy
 {
 
 public:
-	cDynamic_creature_Bandit(std::string n, olc::Decal* spriteRight, olc::Decal* spriteLeft);
+//	cDynamic_creature_Bandit(std::string n, olc::Decal* spriteRight, olc::Decal* spriteLeft);
 	cDynamic_creature_Bandit();
 	void IndicateAnim() override;
 	
@@ -460,7 +491,30 @@ public:
 	
 	void DeathFun() override;
 
-	
+
+public:
+	uint32_t getIdleData() override
+	{
+		uint32_t frameData = 0;    // 0000 0000 0000 0000
+		//      Amnt   Y    X 
+		frameData = (frameData & 0xFFFFFF00) | 0; // X  //Data take from idle indicate state
+		frameData = (frameData & 0xFFFF00FF) | (0 << 8); // Y
+		frameData = (frameData & 0xFF00FFFF) | (8 <<16); // Amount frames
+
+		return frameData;
+
+	};
+	uint32_t getWalkData() override
+	{
+		uint32_t frameData = 0;    // 0000 0000 0000 0000
+		//      Amnt   Y    X 
+		frameData = (frameData & 0xFFFFFF00) | 0;   //Data take from idle indicate state
+		frameData = (frameData & 0xFFFF00FF) | (1 << 8);
+		frameData = (frameData & 0xFF00FFFF) | (9 << 16);
+
+		return frameData;
+
+	};
 };
 
 
@@ -485,6 +539,29 @@ public:
 	//void DeathFun() override;
 //	void Behaviour(float fElapsedTime, cDynamic* player = nullptr) override;
 
+public:
+	uint32_t getIdleData() override
+	{
+		uint32_t frameData = 0;    // 0000 0000 0000 0000
+		//      Amnt   Y    X 
+		frameData = (frameData & 0xFFFFFF00) | 0; // X  //Data take from idle indicate state
+		frameData = (frameData & 0xFFFF00FF) | (0 << 8); // Y
+		frameData = (frameData & 0xFF00FFFF) | (8 << 16); // Amount frames
+
+		return frameData;
+
+	};
+	uint32_t getWalkData() override
+	{
+		uint32_t frameData = 0;    // 0000 0000 0000 0000
+		//      Amnt   Y    X 
+		frameData = (frameData & 0xFFFFFF00) | 0;   //Data take from idle indicate state
+		frameData = (frameData & 0xFFFF00FF) | (1 << 8);
+		frameData = (frameData & 0xFF00FFFF) | (9 <<16);
+
+		return frameData;
+
+	};
 };
 
 
@@ -506,6 +583,29 @@ public:
 	void DeathFun() override;
 
 
+public:
+	uint32_t getIdleData() override
+	{
+		uint32_t frameData = 0;    // 0000 0000 0000 0000
+		//      Amnt   Y    X 
+		frameData = (frameData & 0xFFFFFF00) | 0; // X  //Data take from idle indicate state
+		frameData = (frameData & 0xFFFF00FF) | (0 << 8); // Y
+		frameData = (frameData & 0xFF00FFFF) | (7 << 16); // Amount frames
+
+		return frameData;
+
+	};
+	uint32_t getWalkData() override
+	{
+		uint32_t frameData = 0;    // 0000 0000 0000 0000
+		//      Amnt   Y    X 
+		frameData = (frameData & 0xFFFFFF00) | 0;   //Data take from idle indicate state
+		frameData = (frameData & 0xFFFF00FF) | (4 << 8);
+		frameData = (frameData & 0xFF00FFFF) | (4 << 16);
+
+		return frameData;
+
+	};
 
 };
 
@@ -531,6 +631,32 @@ public:
 private:
 	std::vector<cDynamic*> wolfPack;
 
+
+
+
+public:
+	uint32_t getIdleData() override
+	{
+		uint32_t frameData = 0;    // 0000 0000 0000 0000
+		//      Amnt   Y    X 
+		frameData = (frameData & 0xFFFFFF00) | 8; // X  //Data take from idle indicate state
+		frameData = (frameData & 0xFFFF00FF) | (0 << 8); // Y
+		frameData = (frameData & 0xFF00FFFF) | (7 << 16); // Amount frames
+
+		return frameData;
+
+	};
+	uint32_t getWalkData() override
+	{
+		uint32_t frameData = 0;    // 0000 0000 0000 0000
+		//      Amnt   Y    X 
+		frameData = (frameData & 0xFFFFFF00) | 3;   //Data take from idle indicate state
+		frameData = (frameData & 0xFFFF00FF) | (2 << 8);
+		frameData = (frameData & 0xFF00FFFF) | (7 << 16);
+
+		return frameData;
+
+	};
 };
 
 class  cDynamic_creature_Rider : public  cDynamic_creature_Enemy
@@ -590,6 +716,29 @@ private:
 	bool BRunready = false;
 	
 
+public:
+	uint32_t getIdleData() override
+	{
+		uint32_t frameData = 0;    // 0000 0000 0000 0000
+		//      Amnt   Y    X 
+		frameData = (frameData & 0xFFFFFF00) | 8; // X  //Data take from idle indicate state
+		frameData = (frameData & 0xFFFF00FF) | (0 << 8); // Y
+		frameData = (frameData & 0xFF00FFFF) | (9 <<16); // Amount frames
+
+		return frameData;
+
+	};
+	uint32_t getWalkData() override
+	{
+		uint32_t frameData = 0;    // 0000 0000 0000 0000
+		//      Amnt   Y    X 
+		frameData = (frameData & 0xFFFFFF00) | 10;   //Data take from idle indicate state
+		frameData = (frameData & 0xFFFF00FF) | (1 << 8);
+		frameData = (frameData & 0xFF00FFFF) | (16 << 16);
+
+		return frameData;
+
+	};
 };
 
 
@@ -603,6 +752,32 @@ public:
 	void IndicateAnim() override;
 
 };
+
+
+class  cDynamic_creature_Crowd : public  cDynamic_Creature
+{
+
+public:
+
+	cDynamic_creature_Crowd(std::string sname,olc::Decal* Right, olc::Decal* Left, const int Count, uint32_t frameData);
+	void Update(float fElapsedTime, cDynamic* player = nullptr) override 
+	{
+		for (size_t i = 0; i < count; i++)
+		{
+			vec_animspr[i] += fElapsedTime;
+		}
+	};
+	void IndicateAnim()  override {};
+	void DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)override;
+
+private:
+	int count;
+	std::vector<uint8_t> vec_Framecounters;   // for chaotic crowd animation
+	std::vector<float> vec_Xoffset;
+	std::vector<float> vec_animspr;
+	int spriteWidth;
+};
+
 
 
 class  cDynamic_ClipTrigger : public  cDynamic
@@ -923,7 +1098,6 @@ public:
 	Environment(std::string sname);
 	~Environment();
 
-
 public:
 	float px, py;
 	float speed;
@@ -931,6 +1105,7 @@ public:
 	virtual void DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy) {}
 	virtual void Update(float fElapsedTime, float screenwidth, float screenheight) {}
 
+	static RPG_Engine* g_engine;
 private:
 
 };

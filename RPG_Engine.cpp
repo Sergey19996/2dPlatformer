@@ -169,7 +169,7 @@ bool RPG_Engine::OnUserCreate()
 	cDynamic::g_engine = this;
 	cItem::g_engine = this;
 	cUI::g_engine = this;
-	
+	Environment::g_engine = this;
 	
 	cQuest::g_script = &m_script;
 	cQuest::g_engine = this;
@@ -429,7 +429,7 @@ bool RPG_Engine::UpdateTitleScreen(float fElapsedTime)   // <---MAIN MENU Start
 
 			data.close();
 			m_script.AddCommand((new cComand_HideScreen(2)));
-			m_script.AddCommand((new cComand_Changemap("Forest",-1,6)));
+			m_script.AddCommand((new cComand_Changemap("Forest",-1,25.5)));
 
 			//m_script.AddCommand((new cComand_Changemap("ForestPartTwo", 5, 21.5)));
 			//m_script.AddCommand(new cComand_Changemap("VillageTavern", 12, 9));
@@ -647,6 +647,14 @@ bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 					if (dynamic_cast<cDynamic*>(entity))
 						m_vecVisibleDynamics.push_back(entity); // Add the Bandit 
 				}
+				else
+				{
+					if (dyns->checkFlag(dyns->quested))
+					{
+						m_vecVisibleDynamics.push_back(dyns); // Add the Bandit 
+					}
+
+				}
 			}
 
 	
@@ -680,7 +688,7 @@ bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 		{
 			
 
-
+			
 
 			if (m_script.bUserControlEnabled )
 			{
@@ -1240,6 +1248,7 @@ if (IsFocused())
 
 		
 
+
 			bool bWorkingWithProjectiles = false;
 			bUibackstub = false;
 			for (auto& source : { &m_vecVisibleDynamics, &m_vecProjectiles })
@@ -1486,18 +1495,15 @@ if (IsFocused())
 
 								float deltaX = object->obsticlepoints->second->x - object->obsticlepoints->first->x;
 								float deltaY = object->obsticlepoints->second->y - object->obsticlepoints->first->y;
-								float slopeRatio = deltaY / deltaX;
 
-								float deltaYx = slopeRatio * object->vx;
-								float reservgravity = object->mass * fElapsedTime;
+								float slopeRatio = deltaY / deltaX;  // proportion  (atan)
 
+								
 
-								// deltaYx -= reservgravity;
-
-								float charX = object->obsticlepoints->second->x - object->px - object->CollbordersX;
+								float charX = object->obsticlepoints->second->x - object->px - object->CollbordersX;  // define pos on slope 
 
 
-								float sloperatio = charX * slopeRatio;
+								float sloperatio = charX * slopeRatio;    // find heigh equal the pos in slope 
 
 
 								if (sloperatio < 0.05f)
@@ -1911,8 +1917,15 @@ if (IsFocused())
 				//	if (dynamic_cast<cDynamic_Creature*>(entity)) 
 				//		m_vecVisibleDynamics.push_back(entity); // Add the Bandit 
 					}
-
-					if (dyns->sName != "projectile" && dyns->sName != "Pantir")
+					else
+					{
+						if (dyns->checkFlag(dyns->quested))
+						{
+							dyns->Update(fElapsedTime, m_pPlayer);
+						}
+					}
+				
+					if (dyns->sName != "projectile" && dyns != m_pPlayer)
 					{
 
 					switch (dyns->m_layer)
@@ -2211,51 +2224,7 @@ if (IsFocused())
 
 						}
 					}
-					//std::cout << batchDynamicLayer.size() + batchSecondLayer.size() + batchThirdLayer.size() + batchFirstLayer.size()+batchZeroCharsLayer.size() << std::endl;
-			
 				
-
-					//   spherese check 
-				
-					
-
-				//	float targetX = point2X - targetpointX;
-				//	float targetY = point2Y - targetpointY;
-
-				//	float dist = std::sqrtf(targetX * targetX + targetY * targetY);
-
-				////	if(CheckZeroDivide(targetX, targetpointVx))
-				//	targetpointVx = (targetX / dist) * (speed * fElapsedTime);
-				//	float checkcos = std::cos(dist);
-				//	float checktarget = targetX / dist;
-
-				////	if (CheckZeroDivide(targetY, targetpointVy))
-				//	targetpointVy = (targetY / dist)*speed*fElapsedTime ;
-				//	
-				//	targetpointX = targetpointX + targetpointVx * fElapsedTime;
-				//	targetpointY = targetpointY + targetpointVy * fElapsedTime;
-
-				////	std::cout << targetpointX << '\t' << targetpointY << std::endl;
-				//	
-				//	
-				//	DrawCircle(point1X, point1Y, 5);
-				//	DrawCircle(point2X, point2Y, 5);
-				//	DrawCircle(targetpointX, targetpointY, 5);
-
-
-				//	DrawLine((m_pPlayer->px + m_pPlayer->CollbordersX - fOffsetX) * 64, (m_pPlayer->py + m_pPlayer->CollbordersYF - fOffsetY) * 64, (m_pPlayer->px + m_pPlayer->CollbordersX - fOffsetX + m_pPlayer->vx) * 64, (m_pPlayer->py + m_pPlayer->CollbordersYF - fOffsetY + m_pPlayer->vy) * 64);
-
-
-				//	DrawRect((m_pPlayer->px - fOffsetX)*64, (m_pPlayer->py-fOffsetY)*64, 128, 128);
-
-
-
-				
-					
-
-
-				
-
 				
 
 				if (m_pPlayer->bHideMode)
@@ -2274,7 +2243,18 @@ if (IsFocused())
 							dyns->DrawSelf(this, fOffsetX, fOffsetY);
 							
 						}
+						else
+						{
+							if (dyns->checkFlag(dyns->quested))
+							{
+								dyns->DrawSelf(this, fOffsetX, fOffsetY);
+							}
+						}
 				
+
+
+			
+
 
 				if (!batchZeroCharsLayer.empty())
 				{
@@ -2489,9 +2469,9 @@ if (IsFocused())
 				for (auto& quest : m_listQusets)  // ui drawing quest right up corner on the screen
 				{
 				
-					DrawBigText(quest->sName, ScreenWidth() - 250, y * 32, 0.35, 0.35, olc::YELLOW);
+					DrawBigText(quest->sName, ScreenWidth() - (250*fscale), y * (32*fscale), 0.35*fscale, 0.35*fscale, olc::YELLOW);
 					y++;
-					DrawBigText(quest->sDescription, ScreenWidth() - 250, y * 32, 0.25, 0.25);
+					DrawBigText(quest->sDescription, ScreenWidth() - (250*fscale), y * (32*fscale), 0.25*fscale, 0.25*fscale);
 					y++;
 				}
 
@@ -2503,7 +2483,7 @@ if (IsFocused())
 				}
 							//Draw any dialog being displayed
 				if (m_bShowDialog)
-					DisplayDialog(m_vecDialogToShow, 100, ScreenHeight() - 150);
+					DisplayDialog(m_vecDialogToShow, 100*fscale, ScreenHeight() - (150*fscale));
 
 		
 
@@ -5701,10 +5681,13 @@ void RPG_Engine::Damage(cDynamic_Projectile* projectile, cDynamic_Creature* vict
 		//Attack victim with damage
 		victim->nHealth -= CalculatedDamage;
 
-		cDynamic_TextDamage* Text = new cDynamic_TextDamage(victim->px+victim->CollbordersX+0.25f, victim->py+victim->CollbordersY+0.6f, std::to_string(CalculatedDamage));
+		//cDynamic_TextDamage* Text = new cDynamic_TextDamage(victim->px+victim->CollbordersX+0.25f, victim->py+victim->CollbordersY+0.6f, std::to_string(CalculatedDamage));
 
 		//m_vecFightText.push_back(Text);
-		
+
+		olc::vf2d textdamagecoord{ (float)victim->px + victim->CollbordersX + 0.25f, (float)victim->py + victim->CollbordersY + 0.6f };
+		cDynamic_TextDamage* T = (cDynamic_TextDamage*)SpawnBattleText(textdamagecoord, std::to_string(CalculatedDamage));
+
 
 		AddParticle(victim->px + victim->CollbordersX + 0.25f, victim->py + victim->CollbordersY + 0.3f);
 
@@ -5819,7 +5802,7 @@ void RPG_Engine::ShowDialog(std::vector<std::string> vecLines)
 
 }
 
-void RPG_Engine::DrawBigText(std::string sText, int x, int y, float scalex, float scaley, olc::Pixel color)
+void RPG_Engine::DrawBigText(std::string sText, float x, float y, float scalex, float scaley, olc::Pixel color)
 {
 	int i = 0, z = 0;  // i — позиция символа по X, z — по Y
 
@@ -5837,7 +5820,7 @@ void RPG_Engine::DrawBigText(std::string sText, int x, int y, float scalex, floa
 		float sy = ((c - 32) / 16) * 32;
 
 		// Отрисовка символа
-		DrawPartialDecal({ (float)x + (i * (18 * scalex)), (float)y + (z * (32 * scaley)) },
+		DrawPartialDecal({ x + (i * (18 * scalex)), y + (z * (32 * scaley)) },
 			m_sprFont, { sx, sy }, { 32, 32 }, { scalex, scaley }, color);
 		i++;  // Переходим к следующему символу по X
 	}
@@ -5983,32 +5966,21 @@ bool  RPG_Engine::CheckParticlePosition(float pxX, float pyYf)
 
 
 			//std::cout <<std::sin(normal) <<'\t' << std::cos(normal) << '\t' << cos(normal) * cos(charangle) + sin(normal) * sin(charangle) << std::endl;
-		
 
-		if (cos(normal) * cos(charangle) + sin(normal) * sin(charangle) <= 0) //dot product
+		float deltaX = object->second->x - object->first->x;
+		float deltaY = object->first->y - object->second->y;
+		float slopeRatio = deltaY / deltaX; // proportion (atan)
+		float charX = pxX - object->first->x;    // define X position in slope
+
+		float sloperatio = charX * slopeRatio;   // get high need for up object
+
+
+	
+		if (pyYf >= object->first->y - sloperatio)
 		{
-
-
-
-			for (float i = 0; i <= 2; )
-			{
-				float innernormal = atan2(  object->second->y- (pyYf - i), object->second->x - pxX);
-
-				if (cos(normal) * cos(innernormal) + sin(normal) * sin(innernormal) <= 0)
-				{
-
-					return false;
-					break;
-
-				}
-
-				i += 0.1f;
-
-
-			}
+			return false;
 
 		}
-
 
 
 
@@ -6018,41 +5990,43 @@ bool  RPG_Engine::CheckParticlePosition(float pxX, float pyYf)
 
 		std::pair<olc::vf2d*, olc::vf2d*>* object = m_pCurrentMap->getObsticlesPoints(pxX, pxX, pyYf, pyYf);
 
-		float slopeangle = atan2(object->second->y - object->first->y, object->second->x - object->first->x);
-		float normal = slopeangle + 3.14 / 2;
-
-		float charangle = atan2(pyYf - object->first->y, pxX- object->first->x  );
 
 
-	
-		if (cos(normal) * cos(charangle) + sin(normal) * sin(charangle) >= 0) //dot product
+
+		float deltaX = object->second->x - object->first->x;
+		float deltaY = object->first->y - object->second->y;
+		float slopeRatio = deltaY / deltaX; // proportion (atan)
+		float charX = pxX - object->first->x;    // define X position in slope
+
+		float sloperatio = charX * slopeRatio;   // get high need for up object
+
+
+
+
+
+
+
+
+		//	fNewObjectPosX += DeltaX;
+		if (pyYf >= object->second->y - sloperatio)
 		{
 
-
-			for (float i = 0; i <= 2; )
-			{
-				float innernormal = atan2((pyYf + i) - object->first->y, pxX - object->first->x);
-
-				if (cos(normal) * cos(innernormal) + sin(normal) * sin(innernormal) >= 0)
-				{
-
-					return false;
-					break;
-
-				}
-
-				i += 0.1f;
-
-
-			}
-
+			return false;
 		}
+
+
+
+
+
+
+
 	}
 
 
 
 
-	return true;
+		return true;
+
 }
 
 bool  RPG_Engine::CheckPosition(int pxX,int pyYf)
@@ -6422,7 +6396,7 @@ void RPG_Engine::LoadenemyInstances()
 
 
 }
-cDynamic* RPG_Engine::SpawnBanditArcher(const olc::vf2d* position)
+cDynamic* RPG_Engine::SpawnBanditArcher(const olc::vf2d position)
 {
 	for (auto it = BanditsArcherPool.begin(); it != BanditsArcherPool.end(); ++it) {
 		cDynamic* entity = *it;
@@ -6431,8 +6405,8 @@ cDynamic* RPG_Engine::SpawnBanditArcher(const olc::vf2d* position)
 
 		entity->setFlag(entity->binitialized);    // Устанавливаем флаг инициализации
 		m_vecDynamics.push_back(entity);          // Добавляем в активный вектор динамических объектов
-		entity->px = position->x;                 // Устанавливаем позицию
-		entity->py = position->y;
+		entity->px = position.x;                 // Устанавливаем позицию
+		entity->py = position.y;
 
 		BanditsArcherPool.erase(it);                    // Удаляем заспаунинного бандита из пула
 		return entity;                            // Возвращаем указатель на заспаунинного бандита
@@ -6444,7 +6418,7 @@ cDynamic* RPG_Engine::SpawnBanditArcher(const olc::vf2d* position)
 
 
 
-cDynamic* RPG_Engine::SpawnBandit(const olc::vf2d* position)
+cDynamic* RPG_Engine::SpawnBandit(const olc::vf2d position)
 {
 	for (auto it = BanditsPool.begin(); it != BanditsPool.end(); ++it) {
 		cDynamic* entity = *it;
@@ -6453,8 +6427,8 @@ cDynamic* RPG_Engine::SpawnBandit(const olc::vf2d* position)
 		
 			entity->setFlag(entity->binitialized);    // Устанавливаем флаг инициализации
 			m_vecDynamics.push_back(entity);          // Добавляем в активный вектор динамических объектов
-			entity->px = position->x;                 // Устанавливаем позицию
-			entity->py = position->y;
+			entity->px = position.x;                 // Устанавливаем позицию
+			entity->py = position.y;
 
 			BanditsPool.erase(it);                    // Удаляем заспаунинного бандита из пула
 			return entity;                            // Возвращаем указатель на заспаунинного бандита
@@ -6465,15 +6439,15 @@ cDynamic* RPG_Engine::SpawnBandit(const olc::vf2d* position)
 }
 
 
-cDynamic* RPG_Engine::SpawnWerewolf(const olc::vf2d* position)
+cDynamic* RPG_Engine::SpawnWerewolf(const olc::vf2d position)
 {
 	for (auto it = WereWolfsPool.begin(); it != WereWolfsPool.end(); ++it) {
 		cDynamic* entity = *it;
 		
 			entity->setFlag(entity->binitialized);
 			m_vecDynamics.push_back(entity); // Add the Bandit entity to the game
-			entity->px = position->x;
-			entity->py = position->y;
+			entity->px = position.x;
+			entity->py = position.y;
 			WereWolfsPool.erase(it); // Remove the Bandit entity from the pool
 			return entity; // Exit the function after spawning a Bandit
 		
@@ -6481,15 +6455,15 @@ cDynamic* RPG_Engine::SpawnWerewolf(const olc::vf2d* position)
 	return nullptr;  // Если бандитов в пуле не осталось
 }
 
-cDynamic* RPG_Engine::SpawnBoar(const olc::vf2d* position)
+cDynamic* RPG_Engine::SpawnBoar(const olc::vf2d position)
 {
 	for (auto it = BoarPool.begin(); it != BoarPool.end(); ++it) {
 		cDynamic* entity = *it;
 		
 			entity->setFlag(entity->binitialized);
 			m_vecDynamics.push_back(entity); // Add the Bandit entity to the game
-			entity->px = position->x;
-			entity->py = position->y;
+			entity->px = position.x;
+			entity->py = position.y;
 			BoarPool.erase(it); // Remove the Bandit entity from the pool
 			return entity; // Exit the function after spawning a Bandit
 		
@@ -6498,7 +6472,7 @@ cDynamic* RPG_Engine::SpawnBoar(const olc::vf2d* position)
 }
 
 
-cDynamic* RPG_Engine::SpawnDireWolf(const olc::vf2d* position)
+cDynamic* RPG_Engine::SpawnDireWolf(const olc::vf2d position)
 {
 
 	for (auto it = DireWolfsPool.begin(); it != DireWolfsPool.end(); ++it) {
@@ -6507,8 +6481,8 @@ cDynamic* RPG_Engine::SpawnDireWolf(const olc::vf2d* position)
 
 		entity->setFlag(entity->binitialized);
 		m_vecDynamics.push_back(entity); // Add the Bandit entity to the game
-		entity->px = position->x;
-		entity->py = position->y;
+		entity->px = position.x;
+		entity->py = position.y;
 		DireWolfsPool.erase(it); // Remove the Bandit entity from the pool
 
 
@@ -6520,7 +6494,7 @@ cDynamic* RPG_Engine::SpawnDireWolf(const olc::vf2d* position)
 
 
 
-cDynamic* RPG_Engine::SpawnProjectile(const olc::vf2d* position)
+cDynamic* RPG_Engine::SpawnProjectile(const olc::vf2d position)
 {
 
 	for (auto it = ProjectilePool.begin(); it != ProjectilePool.end(); ++it) {
@@ -6529,8 +6503,8 @@ cDynamic* RPG_Engine::SpawnProjectile(const olc::vf2d* position)
 
 		entity->setFlag(entity->binitialized);
 		m_vecProjectiles.push_back(entity); // Add the Bandit entity to the game
-		entity->px = position->x;
-		entity->py = position->y;
+		entity->px = position.x;
+		entity->py = position.y;
 		ProjectilePool.erase(it); // Remove the Bandit entity from the pool
 
 
@@ -6546,7 +6520,7 @@ void RPG_Engine::ReturnTextToPool(cDynamic* Text)
 	proj->SetDeafult();
 
 
-	ProjectilePool.push_back(proj);
+	TextPool.push_back(proj);
 }
 
 
@@ -6747,26 +6721,32 @@ void RPG_Engine:: ReturnToPool(cDynamic* entity) {
 	entity->clearFlag(entity->binitialized);
 	entity->setFlag(entity->bDraw);
 	entity->clearFlag(entity->bDead);
+	entity->clearFlag(entity->quested);
 	//entity->nHealth = entity->nHealthMax;
 
 	// Приведение к конкретному типу и возврат в соответствующий пул
 	if (auto* bandit = dynamic_cast<cDynamic_creature_Bandit*>(entity)) {
+		bandit->sName = "Bandit";
 		bandit->nHealth = bandit->nHealthMax;
 		BanditsPool.push_back(bandit);
 	}
 	else if (auto* wolf = dynamic_cast<cDynamic_creature_DireWolf*>(entity)) {
+		wolf->sName = "DireWolf";
 		wolf->nHealth = wolf->nHealthMax;
 		DireWolfsPool.push_back(wolf);
 	}
 	else if (auto* boar = dynamic_cast<cDynamic_creature_Boar*>(entity)) {
+		boar->sName = "ForestBoar";
 		boar->nHealth = boar->nHealthMax;
 		BoarPool.push_back(boar); // Создать отдельный пул для Boar, если его нет
 	}
 	else if (auto* werewolf = dynamic_cast<cDynamic_creature_WereWolf*>(entity)) {
+		werewolf->sName = "WereWolf";
 		werewolf->nHealth = werewolf->nHealthMax;
 		WereWolfsPool.push_back(werewolf);
 	}
 	else if (auto* archer = dynamic_cast<cDynamic_creature_BanditArcher*>(entity)) {
+		archer->sName = "BanditArcher";
 		archer->nHealth = archer->nHealthMax;
 		BanditsArcherPool.push_back(archer);
 	}

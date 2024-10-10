@@ -31,11 +31,11 @@ bool cIndicator::OnUse(cDynamic* object)
 	return false;
 }
 
-void cIndicator::DrawSelf(olc::PixelGameEngine* gfx, int px, int py)    // Draw indicators
+void cIndicator::DrawSelf(olc::PixelGameEngine* gfx, float px, float py)    // Draw indicators
 {
 }
 
-void cIndicator::DrawSelfTalent(olc::PixelGameEngine* gfx, int px, int py)    // Draw indicators
+void cIndicator::DrawSelfTalent(olc::PixelGameEngine* gfx, float px, float py)    // Draw indicators
 {
 }
 
@@ -48,7 +48,7 @@ cExperience::cExperience() : cIndicator("Experience Indicator")
 }
 
 
-void cExperience::DrawSelf(olc::PixelGameEngine* gfx, int px, int py)
+void cExperience::DrawSelf(olc::PixelGameEngine* gfx, float px, float py)
 {
 	float procent = g_engine->GetRequredExp() / (float)sourceSizeX;
 
@@ -59,11 +59,11 @@ void cExperience::DrawSelf(olc::PixelGameEngine* gfx, int px, int py)
 
 	//g_engine->D_Ui
 
-	gfx->DrawPartialDecal({ pix,piy }, g_engine->D_Ui, { (float)sourcePosX,(float)sourcePosY }, { (float)sourceSizeX,(float)sourceSizeY });   //offset pulling player back into the screen
-	gfx->DrawPartialDecal({ pix,piy }, g_engine->D_Ui, { (float)sourcePosX,(float)sourcePosY+ (float)sourceSizeY }, { EXperienceiff,(float)sourceSizeY });   //offset pulling player back into the screen
+	gfx->DrawPartialDecal({ pix,piy }, g_engine->D_Ui, { (float)sourcePosX,(float)sourcePosY }, { (float)sourceSizeX,(float)sourceSizeY },{g_engine->fscale,g_engine->fscale });   //offset pulling player back into the screen
+	gfx->DrawPartialDecal({ pix,piy }, g_engine->D_Ui, { (float)sourcePosX,(float)sourcePosY+ (float)sourceSizeY }, { EXperienceiff,(float)sourceSizeY }, { g_engine->fscale,g_engine->fscale });   //offset pulling player back into the screen
 
 
-	g_engine->DrawBigText("EXP:" + std::to_string(g_engine->GetCurrExp()) + "/" + std::to_string(g_engine->GetRequredExp()), pix+(sourceSizeX / 4), piy, 0.35, 0.35);
+	g_engine->DrawBigText("EXP:" + std::to_string(g_engine->GetCurrExp()) + "/" + std::to_string(g_engine->GetRequredExp()), pix+(sourceSizeX / 3)*g_engine->fscale, piy+1, 0.35*g_engine->fscale, 0.35*g_engine->fscale);
 
 	
 }
@@ -316,7 +316,7 @@ this->	offsetY = 0;
 
 
 
-void cEnergyIndicators::DrawSelf(olc::PixelGameEngine* gfx, int px, int py)
+void cEnergyIndicators::DrawSelf(olc::PixelGameEngine* gfx, float px, float py)
 {
 	
 
@@ -467,8 +467,6 @@ void cEnergyIndicators::DrawSelf(olc::PixelGameEngine* gfx, int px, int py)
 		if (bhide != 0)
 		{
 
-		float pix = px;
-		float piy = py ;
 
 
 		if (EnergyDiff <= 0)
@@ -484,16 +482,16 @@ void cEnergyIndicators::DrawSelf(olc::PixelGameEngine* gfx, int px, int py)
 
 			if (bhide == 1)
 			{
-				gfx->DrawPartialDecal({ pix + offsetX,piy + offsetY }, g_engine->D_Ui, { (float)sourcePosX- (float)sourceSizeX,(float)sourcePosY+34 }, { (float)sourceSizeX,(float)sourceSizeY }, { 0.4,0.4 });   //Empty
+				gfx->DrawPartialDecal({ px + (offsetX * g_engine->fscale),py + (offsetY * g_engine->fscale) }, g_engine->D_Ui, { (float)sourcePosX- (float)sourceSizeX,(float)sourcePosY+34 }, { (float)sourceSizeX,(float)sourceSizeY }, { (float)0.4*g_engine->fscale,(float)0.4 * g_engine->fscale });   //Empty
 
-				gfx->DrawPartialDecal({ pix + offsetX,piy + offsetY }, g_engine->D_Ui, { (float)sourcePosX,(float)sourcePosY }, { EnergyDiff,(float)sourceSizeY }, { 0.4,0.4 });   //Fill layer
+				gfx->DrawPartialDecal({ px + (offsetX * g_engine->fscale),py + (offsetY * g_engine->fscale) }, g_engine->D_Ui, { (float)sourcePosX,(float)sourcePosY }, { EnergyDiff,(float)sourceSizeY }, { (float)0.4 * g_engine->fscale,(float)0.4 * g_engine->fscale });   //Fill layer
 			}
 
 
 
 			if (  bhide == 3)   //with energy bar and rage bar case. when they full need draww borders 
 			{
-				gfx->DrawPartialDecal({ pix + offsetX,piy + offsetY }, g_engine->D_Ui, { (float)sourcePosX,(float)sourcePosY+(float)sourceSizeY }, { (float)sourceSizeX,(float)sourceSizeY }, { 0.4,0.4 });   //FillED layer
+				gfx->DrawPartialDecal({ px + (offsetX * g_engine->fscale),py + (offsetY * g_engine->fscale) }, g_engine->D_Ui, { (float)sourcePosX,(float)sourcePosY+(float)sourceSizeY }, { (float)sourceSizeX,(float)sourceSizeY }, { (float)0.4 * g_engine->fscale,(float)0.4 * g_engine->fscale });   //FillED layer
 			}
 		}
 
@@ -502,7 +500,7 @@ void cEnergyIndicators::DrawSelf(olc::PixelGameEngine* gfx, int px, int py)
 }
 
 
-void cEnergyIndicators::DrawSelfTalent(olc::PixelGameEngine* gfx, int px, int py)
+void cEnergyIndicators::DrawSelfTalent(olc::PixelGameEngine* gfx, float px, float py)
 {
 
 
@@ -648,7 +646,7 @@ cNewRageIndicator::cNewRageIndicator(int attackvariation, int foffsetX, int foff
 
 }
 
-void cRageIndicators::DrawSelfTalent(olc::PixelGameEngine* gfx, int px, int py)
+void cRageIndicators::DrawSelfTalent(olc::PixelGameEngine* gfx, float px, float py)
 {
 
 
@@ -703,7 +701,7 @@ void cRageIndicators::DrawSelfTalent(olc::PixelGameEngine* gfx, int px, int py)
 
 }
 
-void cRageIndicators::DrawSelf(olc::PixelGameEngine* gfx, int px, int py)
+void cRageIndicators::DrawSelf(olc::PixelGameEngine* gfx, float px, float py)
 {
 
 
@@ -775,16 +773,16 @@ void cRageIndicators::DrawSelf(olc::PixelGameEngine* gfx, int px, int py)
 
 			if (bhide == 1)
 			{
-				gfx->DrawPartialDecal({ pix + offsetX,piy + offsetY }, g_engine->D_Ui, { (float)sourcePosX,(float)sourcePosY+34 }, { (float)sourceSizeX,(float)sourceSizeY }, { 0.4,0.4 });   //Empty
+				gfx->DrawPartialDecal({ pix + (offsetX*g_engine->fscale),piy + (offsetY * g_engine->fscale) }, g_engine->D_Ui, { (float)sourcePosX,(float)sourcePosY+34 }, { (float)sourceSizeX,(float)sourceSizeY }, { (float)0.4 * g_engine->fscale,(float)0.4 * g_engine->fscale });   //Empty
 
-				gfx->DrawPartialDecal({ pix + offsetX,piy + offsetY }, g_engine->D_Ui, { (float)sourcePosX,(float)sourcePosY+18 }, { EnergyDiff,(float)sourceSizeY }, { 0.4,0.4 });   //Fill layer
+				gfx->DrawPartialDecal({ pix + (offsetX*g_engine->fscale),piy + (offsetY*g_engine->fscale) }, g_engine->D_Ui, { (float)sourcePosX,(float)sourcePosY+18 }, { EnergyDiff,(float)sourceSizeY }, { (float)0.4 * g_engine->fscale,(float)0.4 * g_engine->fscale });   //Fill layer
 			}
 
 
 
 			if (bhide == 3)
 			{
-				gfx->DrawPartialDecal({ pix + offsetX,piy + offsetY }, g_engine->D_Ui, { (float)sourcePosX,(float)sourcePosY }, { (float)sourceSizeX,(float)sourceSizeY }, { 0.4,0.4 });   //FillED layer
+				gfx->DrawPartialDecal({ pix + (offsetX*g_engine->fscale),piy + (offsetY*g_engine->fscale) }, g_engine->D_Ui, { (float)sourcePosX,(float)sourcePosY }, { (float)sourceSizeX,(float)sourceSizeY }, { (float)0.4*g_engine->fscale,(float)0.4 * g_engine->fscale });   //FillED layer
 			}
 		}
 	
@@ -816,16 +814,16 @@ cStaticUi::cStaticUi(std::string name) : cUI(name)
 }
 
 
-void  cStaticUi::DrawSelf(olc::PixelGameEngine* gfx, int px, int py)
+void  cStaticUi::DrawSelf(olc::PixelGameEngine* gfx, float px, float py)
 {
 
 
-	float pix =	20;
-	float piy = 20;
+	float pix = 10;
+	float piy = 10;
 
 
 
-	gfx->DrawPartialDecal({ (pix +offsetX),(piy+offsetY) }, g_engine->D_Ui, { (float)sourcePosX,(float)sourcePosY }, { (float)sourceSizeX,(float)sourceSizeY });   //offset pulling player back into the screen
+	gfx->DrawPartialDecal({ (pix + (offsetX * g_engine->fscale)),(piy + (offsetY * g_engine->fscale)) }, g_engine->D_Ui, { (float)sourcePosX,(float)sourcePosY }, { (float)sourceSizeX,(float)sourceSizeY }, { 0.5f * g_engine->fscale,0.5f * g_engine->fscale });   //offset pulling player back into the screen
 	
 }
 
@@ -855,21 +853,21 @@ cSpellPlace::cSpellPlace() : cStaticUi("Spell Place")
 
 cNumber::cNumber() :cStaticUi("Level Number")
 {
-	offsetX = 18;
+	offsetX = 8;
 	offsetY = 0;
 }
 
-void  cNumber::DrawSelf(olc::PixelGameEngine* gfx, int px, int py)
+void  cNumber::DrawSelf(olc::PixelGameEngine* gfx, float px, float py)
 {
 	int i = 0;
 	int x = g_engine->GetLvl();
 	std::string sText =  std::to_string(x);
 
-	float pix = 20;
-	float piy = 20;
+	float pix = 10;
+	float piy = 10;
 
 
-	g_engine->DrawBigText(sText, (pix +offsetX), (piy +offsetY), 1,1, olc::YELLOW);
+	g_engine->DrawBigText(sText, (pix + (offsetX * g_engine->fscale)), (piy + (offsetY * g_engine->fscale)), 0.5f * g_engine->fscale, 0.5f * g_engine->fscale, olc::YELLOW);
 
 	//gfx->DrawPartialDecal({ ((float)px + offsetX),((float)py + offsetY) }, pSpriteFull, { 0,0 }, { (float)pSpriteFull->sprite->width,(float)pSpriteFull->sprite->height });   //offset pulling player back into the screen
 

@@ -43,25 +43,26 @@ bool cQuset_MainQuest::PopulateDynamics(std::vector<cDynamic*>& vecDyns, std::st
 
 			vecDyns.push_back(c2);
 
-
-			cDynamic* g1 = new cDynamic_creature_Bandit();
-			g1->setFlag(g1->quested);  // when we don't want to add him in initializepool after death
+			olc::vf2d pos{ 81,26 };
+			cDynamic* g1 = g_engine->SpawnBandit(pos);
+			//g1->setFlag(g1->quested);  // when we don't want to add him in initializepool after death
 			g1->sName = "FirstBandit";
 			g1->px = 81;
 			g1->py = 26;
 			g1->clearFlag(g1->bControllable);
-			vecDyns.push_back(g1);
+			//vecDyns.push_back(g1);
 
 
-
-			cDynamic_creature_WereWolf* z1 = new cDynamic_creature_WereWolf();
+			pos.x = 178;
+			pos.y = 26;
+			cDynamic_creature_WereWolf* z1 = (cDynamic_creature_WereWolf *)g_engine->SpawnWerewolf(pos);
 			z1->sName = "werewolf";
 			z1->bTransformed = false;
-			z1->setFlag(z1->quested) ;
+			//z1->setFlag(z1->quested) ;
 			z1->clearFlag(z1->bControllable);
 			z1->px = 178;
 			z1->py = 26;
-			vecDyns.push_back(z1);
+		//	vecDyns.push_back(z1);
 
 			//cDynamic_Creature* c3 = new cDynamic_Creature("MeetScene1", RPG_Assets::get().GetSprite("BanditRight"), RPG_Assets::get().GetSprite("BanditLeft"));  // meet werewolf
 			cDynamic_ClipTrigger* c3 = new cDynamic_ClipTrigger("MeetScene1");  // meet werewolf
@@ -85,8 +86,13 @@ bool cQuset_MainQuest::PopulateDynamics(std::vector<cDynamic*>& vecDyns, std::st
 			c5->py = 26;
 			vecDyns.push_back(c5);
 			
-			g_script->AddCommand(new cComand_moveTo(vecDyns[0], 6,6, 1));
+			cDynamic_Creature* entity = (cDynamic_Creature*)vecDyns[1];
+			g_script->AddCommand(new cComand_moveCrowdTo(vecDyns, entity, -30, 25.5, 30, 25.5, 10,100, entity->getWalkData()));
+			g_script->AddCommand(new cComand_moveTo(vecDyns[0], 6,25.5, 1));
 			g_script->AddCommand(new cComand_ShowDialog({ "StoryTeller:","And our hero ended up in ","the forest" }));
+
+
+
 			m_nPhase = 1;
 
 		
@@ -191,7 +197,7 @@ bool cQuset_MainQuest::OnInteraction(std::vector<cDynamic*>& vecDynobs, cDynamic
 		g_script->AddCommand(new cComand_LockCamera);
 		g_script->AddCommand(new cComand_moveCamera(target, 175, 27.5, 1));  // <--Camera in center
 
-
+		
 
 		g_script->AddCommand(new cComand_ShowDialog({ "Man:","Another one"}));
 
@@ -319,7 +325,7 @@ bool cQuset_KillWerewolf::OnInteraction(std::vector<cDynamic*>& vecDynobs, cDyna
 		
 	
 
-		g_script->AddCommand(new cComand_moveTo(vecDynobs,"Fake", 10, 27.5,2)); //Situation when we want to animatin fake object. 10 means. that we add current position 10 or -10
+		g_script->AddCommand(new cComand_moveTo(vecDynobs,"Fake", 10, 27.5,2)); //Situation when we want to animating fake object. 10 means. that we add current position 10 or -10
 
 		g_script->AddCommand(new cComand_CleanDeath(vecDynobs, "Fake"));  // <--Cleaning fake death puppet
 

@@ -377,7 +377,8 @@ public:
 
 	
 
-
+	float getOffsetX() { return fOffsetX; };
+	float getOffsetY() { return fOffsetY; };
 	bool LoadFunction();
 	bool SaveFunction();
 	void AddQuest(cQuest* quest);
@@ -454,7 +455,7 @@ public:
 	void JumpDamage(cDynamic_Creature* projectile, cDynamic_Creature* victim);
 
 	void ShowDialog(std::vector<std::string> vecLines);
-	void DrawBigText(std::string sText, int x, int y, float scalex, float scaley, olc::Pixel color = olc::WHITE);
+	void DrawBigText(std::string sText, float x, float y, float scalex, float scaley, olc::Pixel color = olc::WHITE);
 	void DisplayDialog(std::vector<std::string> vecText, int x, int y);
 
 
@@ -479,18 +480,18 @@ public:
 	void ReturnTextToPool(cDynamic* Text);
 	
 	cDynamic* SpawnBattleText(const olc::vf2d position, std::string Text, olc::Pixel COlor =olc::WHITE);
-	cDynamic* SpawnBandit(const olc::vf2d* position);
-	cDynamic* SpawnBanditArcher(const olc::vf2d* position);
-	cDynamic* SpawnWerewolf(const olc::vf2d* position);
-	cDynamic* SpawnBoar(const olc::vf2d* position);
-	cDynamic* SpawnProjectile(const olc::vf2d* position);
+	cDynamic* SpawnBandit(const olc::vf2d position);
+	cDynamic* SpawnBanditArcher(const olc::vf2d position);
+	cDynamic* SpawnWerewolf(const olc::vf2d position);
+	cDynamic* SpawnBoar(const olc::vf2d position);
+	cDynamic* SpawnProjectile(const olc::vf2d position);
 	void SpawnRainDrops();
 	void SpawnClouds();
 
 
 
 	//cDynamic* FindpoolEntity( cDynamic* object);
-	cDynamic* SpawnDireWolf(const olc::vf2d* position);
+	cDynamic* SpawnDireWolf(const olc::vf2d position);
 
 	void SetMouseFocus(bool enable)
 	{
