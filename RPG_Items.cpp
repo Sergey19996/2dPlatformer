@@ -56,23 +56,22 @@ bool cWeapon::OnUse(cDynamic* object)
 
 	if (aggressor->GetFacingDirection() == 1) // West
 	{
-		x = aggressor->px - 0.95f;
-		y = aggressor->py;
+		x = aggressor->px+1.0f;
+		y = aggressor->py+1.0f;
 		vx = aggressor->vx; vy = aggressor->vy;
 
 		attackdir = -aggressor->attackdirectionX;
 	}
-
-
-
-	if (aggressor->GetFacingDirection() == 3) // East
+	else
 	{
-		x = aggressor->px + 0.85f;
-		y = aggressor->py;
+		x = aggressor->px+1.0f;
+		y = aggressor->py+1.0f;
 		vx = aggressor->vx; vy = aggressor->vy;
 
 		attackdir = aggressor->attackdirectionX;
+
 	}
+
 	if (aggressor->GetFacingDirectionVertical() == 1)  // Up
 	{
 		x = aggressor->px+1.0f;
@@ -84,7 +83,7 @@ bool cWeapon::OnUse(cDynamic* object)
 	}
 	if (aggressor->GetFacingDirectionVertical() == 0)  // Down
 	{
-		x = aggressor->px + 1.0f;
+		x = aggressor->px+1 ;
 		y = aggressor->py;
 		vx = 0; vy = aggressor->vy;
 	//	aggressor->sparedVx = 0;

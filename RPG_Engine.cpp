@@ -1248,7 +1248,7 @@ if (IsFocused())
 
 		
 
-
+std::cout << m_pPlayer->px << '\n' << m_pPlayer->py << std::endl;
 			bool bWorkingWithProjectiles = false;
 			bUibackstub = false;
 			for (auto& source : { &m_vecVisibleDynamics, &m_vecProjectiles })
@@ -2522,7 +2522,7 @@ bool RPG_Engine::UpdateWarehouse(float fElapsedTime)
 
 
 	olc::vf2d mouse = { (float)GetMouseX(), (float)GetMouseY() };
-	olc::vf2d mousefix = { (mouse.x / CellSize), (mouse.y / CellSize) };
+	olc::vf2d mousefix = { (mouse.x / (CellSize*fscale)), (mouse.y / (CellSize*fscale)) };
 
 	
 
@@ -2537,27 +2537,30 @@ bool RPG_Engine::UpdateWarehouse(float fElapsedTime)
 	const float ReqSocketsY = (float)(128 / 64) * fscale;
 	const float RqSocketsX = (float)(192 / 64) * fscale;
 	
-
+	float Scale = 0.5f * fscale;
 
 	olc::vf2d inventorySockets = { 0,250 };
 
-	DrawPartialDecal({ (float)4 * 64 * fscale, (float)(4) * 64 * fscale }, Inventoryback,{0,0}, {512,523}, {fscale,fscale});  // draw sockets and inventary name
+	DrawPartialDecal({ (float)4 * CellSize * fscale, (float)(4) * CellSize * fscale }, Inventoryback,{0,0}, {512,523}, { Scale,Scale });  // draw sockets and inventary name
 
 
 	
-	DrawPartialDecal({ (float)14 * 64 * fscale, (float)(8) * 64 * fscale }, Inventoryback, inventorySockets, { 512,199 }, { fscale,fscale });  // draw sockets 
-	DrawPartialDecal({ (float)15.85 * 64 * fscale, (float)11 * 64 * fscale }, Inventoryback, { 725,75 }, { 273,76 }, { fscale,fscale });  // draw sockets 
+	DrawPartialDecal({ (float)14 * CellSize * fscale, (float)(8) * CellSize * fscale }, Inventoryback, inventorySockets, { 512,199 }, { Scale,Scale });  // draw sockets 
+	DrawPartialDecal({ (float)15.85 * CellSize * fscale, (float)11 * CellSize * fscale }, Inventoryback, { 725,75 }, { 273,76 }, { Scale,Scale });  // draw sockets 
 //	DrawPartialDecal({ (float)14 * 64*fscale, (float)8 * 64*fscale }, InventorySockeys, { 0,0 }, { invSocketsWidth,invSocketsHeigh }, { fscale,fscale });
 //	DrawPartialDecal({ (float)15.85 * 64*fscale, (float)11 * 64*fscale }, RPG_Assets::get().GetSprite("WarehouseName"), { 0,0 }, { 274,75 }, { fscale,fscale });
 	
-	DrawBigText(std::to_string(m_pPlayer->GetStats(2)), (9 ) * 64 * fscale, (5 + 0.3) * 64 * fscale, fscale, fscale); //Strength
-	DrawBigText(std::to_string(m_pPlayer->GetStats(1)), (9 ) * 64 * fscale, (6 + 0.3) * 64 * fscale, fscale, fscale); //Agility
-	DrawBigText(std::to_string(m_pPlayer->GetStats(3)), (9 ) * 64 * fscale, (7 + 0.2) * 64 * fscale, fscale, fscale); //Intelegence
-	DrawBigText(std::to_string(m_pPlayer->GetStats(4)), (5 ) * 64 * fscale, 7 * 64 * fscale, 0.5, 0.5); //Defence
+	DrawBigText(std::to_string(m_pPlayer->GetStats(2)), (9) * CellSize * fscale, (5 + 0.3) * CellSize * fscale, Scale, Scale); //Strength
+	DrawBigText(std::to_string(m_pPlayer->GetStats(1)), (9) * CellSize * fscale, (6 + 0.3) * CellSize * fscale, Scale, Scale); //Agility
+	DrawBigText(std::to_string(m_pPlayer->GetStats(3)), (9) * CellSize * fscale, (7 + 0.2) * CellSize * fscale, Scale, Scale); //Intelegence
 	//DrawBigText(std::to_string(m_pPlayer->GetStats(5)), (4) * 64, (6) * 64, 0.5, 0.5); //MovementSpeed
-	DrawBigText(std::to_string(m_pPlayer->GetStats(6)), (5) * 64 * fscale, (6) * 64 * fscale, 0.5, 0.5); //AverageAttack
+	DrawBigText(std::to_string(m_pPlayer->GetStats(6)), (5.2) * CellSize * fscale, (5.8) * CellSize * fscale, Scale-0.1f, Scale -0.1f); //AverageAttack
+	DrawBigText(std::to_string(m_pPlayer->GetStats(4)), (5.2 ) * CellSize * fscale, (6.8) * CellSize * fscale, Scale -0.1f, Scale -0.1f); //Defence
 	//DrawBigText(std::to_string(m_pPlayer->GetStats(7)), (4) * 64, (8) * 64, 0.5, 0.5); //fHpRegeneration
 	//DrawBigText(std::to_string(m_pPlayer->GetStats(8)), (4) * 64, (9) * 64, 0.5, 0.5); //Versality
+
+//	DrawBigText(std::to_string(m_pPlayer->GetStats(6)), (squeX - 1.3 + ((inventoryWidth / 64) / 2) * fscale) * CellSize, (squeY - 1.1 + ((inventoryHeight / 64) / 2) * fscale) * CellSize, Scale - 0.1f, Scale - 0.1f); //AverageAttack
+//	DrawBigText(std::to_string(m_pPlayer->GetStats(4)), (squeX - 1.3 + ((inventoryWidth / 64) / 2) * fscale) * CellSize, (squeY - 0.6 + ((inventoryHeight / 64) / 2) * fscale) * CellSize, Scale - 0.1f, Scale - 0.1f); //Defence
 
 
 	float EqSqueX = (3 + 7) * fscale;
@@ -2588,7 +2591,7 @@ bool RPG_Engine::UpdateWarehouse(float fElapsedTime)
 			if (item->checkFlag(item->Grabitem) == false)
 			{
 
-				DrawPartialDecal({ (float)(EqSqueX + (x * fscale)) * 64, (EqSqueY + (y * fscale)) * 64 }, item->Item->pSprite, { sprcoordX * 64,sprcoordY * 64 }, { 64,64 }, { fscale,fscale });
+				DrawPartialDecal({ (float)(EqSqueX + (x * fscale)) * CellSize, (EqSqueY + (y * fscale)) * CellSize }, item->Item->pSprite, { sprcoordX * 64,sprcoordY * 64 }, { 64,64 }, { Scale,Scale });
 
 				//item->ipy = y;
 
@@ -2629,7 +2632,7 @@ bool RPG_Engine::UpdateWarehouse(float fElapsedTime)
 		if (GrabItem != nullptr)
 		{
 			
-
+			
 			if ((int)mousefix.x >= squeX/fscale && (int)mousefix.y >= squeY/fscale && (int)mousefix.x <= 11 && (int)mousefix.y <= 10) //Inventory
 			{
 
@@ -2686,12 +2689,11 @@ bool RPG_Engine::UpdateWarehouse(float fElapsedTime)
 			if ((int)mousefix.x >= WHsqueX/fscale && (int)mousefix.y >= squeY/fscale && (int)mousefix.x <= 21 && (int)mousefix.y <= 10)   //Warehouse
 			{
 
-
-				if (!GrabItem->checkFlag(GrabItem->binWarehouse))
+				 
+				if (!GrabItem->checkFlag(GrabItem->binWarehouse))    // when we grabed from inv
 				{
 					
 					//GrabItem->bInWarehouse = true;
-					GrabItem->setFlag(GrabItem->binWarehouse);
 						
 					int x = (int)mousefix.x  - (WHsqueX/fscale) ;    //calculate drop position for draged object
 					int y = (int)mousefix.y - (squeY / fscale);
@@ -2703,6 +2705,7 @@ bool RPG_Engine::UpdateWarehouse(float fElapsedTime)
 						m_listWarehouseItems[currIndex]->index= GrabItem->index; //switch indexes
 						GrabItem->index = currIndex;  // switch indexes
 						//m_listWarehouseItems[currIndex]->bInWarehouse = false;
+						GrabItem->setFlag(GrabItem->binWarehouse);   
 						m_listWarehouseItems[currIndex]->clearFlag(m_listWarehouseItems[currIndex]->binWarehouse);
 
 						std::swap(m_listWarehouseItems[currIndex], m_listItems[GrabedIndex]);
@@ -2765,19 +2768,21 @@ bool RPG_Engine::UpdateWarehouse(float fElapsedTime)
 					if (highlighted->checkFlag(highlighted->binWarehouse))
 					{
 
-						if (highlighted->Item->OnUse(m_pPlayer, m_listWarehouseItems))
+						if (highlighted->Item->OnUse(m_pPlayer, m_listWarehouseItems,highlighted))
 						{
 							// Item has signalled it must be consumed, so remove it
 							ClearAbsorbedSlots(m_listWarehouseItems); // find absorbed object and change them on empty sockets
+							highlighted = nullptr;
 							//TakeItem(highlighted, m_listWarehouseItems);
 
 							
 
 						}
 					}
-					else if (highlighted->Item->OnUse(m_pPlayer, m_listItems))
+					else if (highlighted->Item->OnUse(m_pPlayer, m_listItems,highlighted))
 					{
 						ClearAbsorbedSlots(m_listItems); // find absorbed object and change them on empty sockets
+						highlighted = nullptr;
 					//	TakeItem(highlighted, m_listItems);
 					}
 					
@@ -2801,9 +2806,9 @@ bool RPG_Engine::UpdateWarehouse(float fElapsedTime)
 
 
 	// MONEY
-	squeX = (4 * fscale) * 64;
-	squeY = (3 * fscale) * 64;
-	DrawBigText(std::to_string(Money), squeX + (64 * fscale), squeY + (16 * fscale), fscale, fscale, olc::YELLOW); //Money
+	squeX = (4 * fscale) * CellSize;
+	squeY = (3 * fscale) * CellSize;
+	DrawBigText(std::to_string(Money), squeX + Scale, squeY + (16 * fscale), 0.5f*fscale, 0.5f * fscale, olc::YELLOW); //Money
 //	DrawPartialDecal({ (float)squeX, (float)squeY }, RPG_Assets::get().GetSprite("Coin"), { 0,0 }, { (float)64,(float)64 }, { fscale,fscale });
 	//
 
@@ -2872,7 +2877,7 @@ void RPG_Engine::DrawWarehouse(const float offestX, const float offsetY, olc::vf
 					if (item->checkFlag(item->Grabitem) == false)
 					{
 
-						DrawPartialDecal({ (float)(offestX + (x * fscale)) * 64, (offsetY + (y * fscale)) * 64 }, item->Item->pSprite, { sprcoordX*64,sprcoordY*64 }, { 64,64 }, { fscale,fscale });
+						DrawPartialDecal({ (float)(offestX + (x * fscale)) * CellSize, (offsetY + (y * fscale)) * CellSize }, item->Item->pSprite, { sprcoordX * 64,sprcoordY * 64 }, { 64,64 }, { 0.5f * fscale,0.5f * fscale });
 
 						//item->ipy = y;
 
@@ -2880,9 +2885,9 @@ void RPG_Engine::DrawWarehouse(const float offestX, const float offsetY, olc::vf
 
 
 						if (item->Item->MaxStack > 1)
-							DrawBigText(std::to_string(item->currStacks), (float)(offestX + (x * fscale) + 0.05) * 64, (offsetY + (y * fscale)) * 64, fscale * 0.5f, fscale * 0.5f, olc::WHITE); //Money
+							DrawBigText(std::to_string(item->currStacks), (float)(offestX + (x * fscale) + 0.05) * CellSize, (offsetY + (y * fscale)) * CellSize, fscale * 0.5f, fscale * 0.5f, olc::WHITE); //Money
 						if (item->Gold > 0)
-							DrawBigText(std::to_string(item->Gold), (float)(offestX + (x * fscale) + 0.4) * 64, (offsetY + (y * fscale) + 0.3) * 64, fscale * 0.5f, fscale * 0.5f, olc::YELLOW); //Money
+							DrawBigText(std::to_string(item->Gold), (float)(offestX + (x * fscale) + 0.4) * CellSize, (offsetY + (y * fscale) + 0.3) * CellSize, fscale * 0.5f, fscale * 0.5f, olc::YELLOW); //Money
 
 
 
@@ -2892,7 +2897,7 @@ void RPG_Engine::DrawWarehouse(const float offestX, const float offsetY, olc::vf
 					}
 					else
 					{
-						DrawPartialDecal({ (float)(mouse.x - (32 / 2)) , (float)(mouse.y - (32 / 2)) }, item->Item->pSprite, { sprcoordX * 64,sprcoordY * 64 }, { 64,64 }, { fscale,fscale });
+						DrawPartialDecal({ (float)(mouse.x - ((32 / 2)*fscale)) , (float)(mouse.y - ((32 / 2)*fscale)) }, item->Item->pSprite, { sprcoordX * 64,sprcoordY * 64 }, { 64,64 }, {0.5f* fscale,0.5f*fscale });
 						Grabitem = item;
 
 					}
@@ -2965,26 +2970,24 @@ void RPG_Engine::uiCellUpdate(olc::vi2d mouse)
 	// GrabItem = nullptr;
 	
 	
-	olc::vi2d mousefix = { (mouse.x / (int)(64 * fscale)),(mouse.y / (int)(64 * fscale)) };
+	olc::vi2d mousefix = { (mouse.x / (int)(CellSize*fscale)),(mouse.y / (int)(CellSize*fscale)) };
 	uint8_t SelObjSize =64;
 
 	uint8_t spriteCoordX = 4 % 32;
 	uint8_t spriteCoordY = 4/32;
 
-
-
 	//uint8_t UiFirstCellX = 64 * fscale / (64 * fscale);
-	uint8_t UiFirstCellY = (ScreenHeight() - (ScreenHeight() / 6)) / (64 * fscale);
+	uint8_t UiFirstCellY = (ScreenHeight() - (ScreenHeight() / 6)) / (CellSize);
 
 //	uint8_t UiSecondCellX = 64 * 3 * fscale / (64 * fscale);
 	//uint8_t UiSecondCellY = (ScreenHeight() - (ScreenHeight() / 6)) / (64 * fscale);
 
-	DrawPartialDecal({ (float)SelObjSize * fscale, (float)ScreenHeight() - (ScreenHeight() / 6) }, m_Items, { (float)spriteCoordX*64,(float)spriteCoordY*64 }, { (float)SelObjSize, (float)SelObjSize }, { fscale*fscale,fscale*fscale });
-	DrawBigText("Q", (float)SelObjSize * fscale + (32 / 2 * (fscale - 0.2f)), (float)ScreenHeight() - (ScreenHeight() / 9), (fscale + 0.2f)*fscale, (fscale + 0.2f)*fscale, olc::WHITE);
+	DrawPartialDecal({ (float)CellSize * fscale, (float)ScreenHeight() - (ScreenHeight() / 6) }, m_Items, { (float)spriteCoordX*64,(float)spriteCoordY*64 }, { (float)SelObjSize, (float)SelObjSize }, { 0.5f*fscale,0.5f*fscale });
+	DrawBigText("Q", (float)CellSize * fscale + (32 / 2 * (fscale - 0.2f)), (float)ScreenHeight() - (ScreenHeight() / 9), (fscale + 0.2f)*fscale, (fscale + 0.2f)*fscale, olc::WHITE);
 
 
-	DrawPartialDecal({ (float)SelObjSize * 3 * fscale, (float)ScreenHeight() - (ScreenHeight() / 6) }, m_Items, { (float)spriteCoordX * 64,(float)spriteCoordY * 64 }, { (float)SelObjSize, (float)SelObjSize }, { fscale*fscale,fscale*fscale });
-	DrawBigText("E", (float)SelObjSize * 3 * fscale + (32 / 2 * (fscale - 0.2f)), (float)ScreenHeight() - (ScreenHeight() / 9), (fscale + 0.2f)*fscale, (fscale + 0.2f)*fscale, olc::WHITE);
+	DrawPartialDecal({ (float)CellSize * 3 * fscale, (float)ScreenHeight() - (ScreenHeight() / 6) }, m_Items, { (float)spriteCoordX * 64,(float)spriteCoordY * 64 }, { (float)SelObjSize, (float)SelObjSize }, { 0.5f*fscale,0.5f*fscale });
+	DrawBigText("E", (float)CellSize * 3 * fscale + (32 / 2 * (fscale - 0.2f)), (float)ScreenHeight() - (ScreenHeight() / 9), (fscale + 0.2f)*fscale, (fscale + 0.2f)*fscale, olc::WHITE);
 
 	//std::cout << mousefix.x << '\t' << mousefix.y << std::endl;
 	uint8_t xcoor = 1;
@@ -3004,11 +3007,11 @@ void RPG_Engine::uiCellUpdate(olc::vi2d mouse)
 
 			{
 
-			DrawPartialDecal({ (float)SelObjSize * xcoor * fscale, (float)ScreenHeight() - (ScreenHeight() / 6) }, i->Item->pSprite, { x*64,y*64 }, { (float)SelObjSize, (float)SelObjSize }, { fscale,fscale });
+			DrawPartialDecal({ (float)CellSize * xcoor * fscale, (float)ScreenHeight() - (ScreenHeight() / 6) }, i->Item->pSprite, { x*64,y*64 }, { (float)SelObjSize, (float)SelObjSize }, { 0.5f*fscale,0.5f*fscale });
 
 		//	std::cout << SelObjSize * xcoor * fscale / (64*fscale) << '\t' << mousefix.y << std::endl;
 
-			if ((int)mousefix.x == SelObjSize * xcoor * fscale / (64 * fscale) && mousefix.y ==UiFirstCellY)
+			if ((int)mousefix.x == CellSize * xcoor * fscale / CellSize && mousefix.y ==UiFirstCellY)
 			{
 				highlighted = i;
 			}
@@ -3082,11 +3085,11 @@ bool RPG_Engine::UpdateInventory(float fElapsedTIme)
 
 	const int inventoryHeight = 523;
 	const int inventoryWidth = 512;
-	float Scale =fscale;
+	float Scale =0.5f*fscale;
 	olc::vi2d mouse = {(GetMouseX()), (GetMouseY()) };
 
 
-	olc::vi2d mousefix = { (mouse.x / (int)(64 * fscale)),(mouse.y / (int)(64 * fscale)) };
+	olc::vi2d mousefix = { (mouse.x / (int)(CellSize * fscale)),(mouse.y / (int)(CellSize * fscale)) };
 	
 	
 
@@ -3101,7 +3104,7 @@ bool RPG_Engine::UpdateInventory(float fElapsedTIme)
 
 
 	
-	DrawPartialDecal({ (float)squeX * 64, (float)(squeY * 64)  },Inventoryback, { 0,0 }, { (float)inventoryWidth,(float)inventoryHeight}, { Scale,  Scale});
+	DrawPartialDecal({ (float)squeX * CellSize, (float)(squeY * CellSize)  },Inventoryback, { 0,0 }, { (float)inventoryWidth,(float)inventoryHeight}, { Scale,  Scale});
 	
 
 
@@ -3131,7 +3134,7 @@ bool RPG_Engine::UpdateInventory(float fElapsedTIme)
 			 if (item->checkFlag(item->Grabitem) == false)
 			 {
 
-				 DrawPartialDecal({ (float)(EqSqueX + (x * fscale)) * 64, (EqSqueY + (y * fscale)) * 64 }, item->Item->pSprite, { sprcoordX * 64,sprcoordY * 64 }, { 64,64 }, { fscale,fscale });
+				 DrawPartialDecal({ (float)(EqSqueX + (x * fscale)) * CellSize, (EqSqueY + (y * fscale)) * CellSize }, item->Item->pSprite, { sprcoordX * 64,sprcoordY * 64 }, { 64,64 }, { Scale,Scale });
 
 				 //item->ipy = y;
 
@@ -3143,7 +3146,7 @@ bool RPG_Engine::UpdateInventory(float fElapsedTIme)
 			 }
 			 else
 			 {
-				 DrawPartialDecal({ (float)(mouse.x - (32 / 2)) , (float)(mouse.y - (32 / 2)) }, item->Item->pSprite, { sprcoordX * 64,sprcoordY * 64 }, { 64,64 }, { fscale,fscale });
+				 DrawPartialDecal({ (float)(mouse.x - (32 / 2)) , (float)(mouse.y - (32 / 2)) }, item->Item->pSprite, { sprcoordX * 64,sprcoordY * 64 }, { 64,64 }, { Scale,Scale });
 				 GrabItem = item;
 
 			 }
@@ -3156,14 +3159,14 @@ bool RPG_Engine::UpdateInventory(float fElapsedTIme)
 
 
 
-	DrawBigText(std::to_string(m_pPlayer->GetStats(1)), (squeX + Scale + ((inventoryWidth / 64) / 2) * Scale) * 64, (squeY - 0.9 + ((inventoryHeight / 64) / 2) * Scale) * 64, Scale, Scale, olc::YELLOW); //Agility
-	DrawBigText(std::to_string(m_pPlayer->GetStats(2)), (squeX + Scale + ((inventoryWidth / 64) / 2) * Scale) * 64, (squeY - 1.4 + ((inventoryHeight / 64) / 2) * Scale) * 64, Scale, Scale, olc::RED); //Strength
-	DrawBigText(std::to_string(m_pPlayer->GetStats(3)), (squeX + Scale + ((inventoryWidth / 64) / 2) * Scale) * 64, (squeY - 0.4 + ((inventoryHeight / 64) / 2) * Scale) * 64, Scale, Scale,olc::BLUE); //Intelegence
+	DrawBigText(std::to_string(m_pPlayer->GetStats(1)), (squeX + fscale + ((inventoryWidth / 64) / 2) * fscale) * CellSize, (squeY - 0.9 + ((inventoryHeight / 64) / 2) * fscale) * CellSize, Scale, Scale, olc::YELLOW); //Agility
+	DrawBigText(std::to_string(m_pPlayer->GetStats(2)), (squeX +fscale + ((inventoryWidth / 64) / 2) * fscale) * CellSize, (squeY - 1.4 + ((inventoryHeight / 64) / 2) * fscale) * CellSize, Scale, Scale, olc::RED); //Strength
+	DrawBigText(std::to_string(m_pPlayer->GetStats(3)), (squeX + fscale + ((inventoryWidth / 64) / 2) * fscale) * CellSize, (squeY - 0.4 + ((inventoryHeight / 64) / 2) * fscale) * CellSize, Scale, Scale,olc::BLUE); //Intelegence
 
 	//DrawBigText(std::to_string(m_pPlayer->GetStats(5)), (4) * 64, (6) * 64, 0.5, 0.5); //MovementSpeed
 
-	DrawBigText(std::to_string(m_pPlayer->GetStats(6)), (squeX - 1.3 + ((inventoryWidth / 64) / 2) * Scale) * 64, (squeY - 1.1 + ((inventoryHeight / 64) / 2) * Scale) * 64, Scale-0.2, Scale - 0.2); //AverageAttack
-	DrawBigText(std::to_string(m_pPlayer->GetStats(4)), (squeX - 1.3 + ((inventoryWidth / 64) / 2) * Scale) * 64, (squeY - 0.5 + ((inventoryHeight / 64) / 2) * Scale) * 64, Scale-0.2, Scale-0.2); //Defence
+	DrawBigText(std::to_string(m_pPlayer->GetStats(6)), (squeX - 1.3 + ((inventoryWidth / 64) / 2) * fscale) * CellSize, (squeY - 1.1 + ((inventoryHeight / 64) / 2) * fscale) * CellSize, Scale-0.1f, Scale-0.1f ); //AverageAttack
+	DrawBigText(std::to_string(m_pPlayer->GetStats(4)), (squeX - 1.3 + ((inventoryWidth / 64) / 2) * fscale) * CellSize, (squeY - 0.6 + ((inventoryHeight / 64) / 2) * fscale) * CellSize, Scale-0.1f, Scale-0.1f); //Defence
 
 	//DrawBigText(std::to_string(m_pPlayer->GetStats(7)), (4) * 64, (8) * 64, 0.5, 0.5); //fHpRegeneration
 	//DrawBigText(std::to_string(m_pPlayer->GetStats(8)), (4) * 64, (9) * 64, 0.5, 0.5); //Versality
@@ -3178,7 +3181,7 @@ bool RPG_Engine::UpdateInventory(float fElapsedTIme)
 	//	highlighted = m_pPlayer->pEquipedWeapon;
 
 
-	const float YcellOffset = (squeY + (inventoryHeight / 64 - 4) * Scale); // <-- offset from higher point of inventory picture to cells where they drawing
+	const float YcellOffset = (squeY + (inventoryHeight / 64 - 4) * 0.5f); // <-- offset from higher point of inventory picture to cells where they drawing
 
 	DrawInventory(squeX, YcellOffset,mouse, mousefix,highlighted,GrabItem);
 	
@@ -3243,8 +3246,8 @@ bool RPG_Engine::UpdateInventory(float fElapsedTIme)
 	float coinsprX = 3 % 32;
 	float coinsprY = 3 / 32;
 
-	DrawBigText(std::to_string(Money), (float)(squeX + ((64 * Scale) / 64)) * 64, (float)(squeY + 0.1-((64 * Scale) / 64)) * 64, Scale, Scale, olc::YELLOW); //Money
-	DrawPartialDecal({ (float)squeX*64, (float)(squeY-((64*Scale)/64))*64 }, m_Items, { coinsprX*64,coinsprY }, { (float)64,(float)64 }, { Scale ,Scale });
+	DrawBigText(std::to_string(Money), (float)(squeX + ((64 * fscale) / 64))* CellSize, (float)(squeY + 0.1 - ((64 * fscale) / 64))* CellSize, Scale, Scale, olc::YELLOW); //Money
+	DrawPartialDecal({ (float)squeX * CellSize, (float)(squeY - ((64 * fscale) / 64)) * CellSize }, m_Items, { coinsprX * 64,coinsprY }, { (float)64,(float)64 }, { Scale ,Scale });
 	//
 
 
@@ -3313,7 +3316,7 @@ void RPG_Engine::DrawInventory(float offestX, float offsetY, olc::vi2d mouse, ol
 		if (item->checkFlag(item->Breserved))
 		{
 
-	AddMoney(item->Gold);
+		AddMoney(item->Gold);
 		x = i % 8;
 		y = i / 8;
 		float sprcoordX = item->Item->spriteindex % 32;
@@ -3333,15 +3336,15 @@ void RPG_Engine::DrawInventory(float offestX, float offsetY, olc::vi2d mouse, ol
 		if (item->checkFlag(item->Grabitem) == false)
 		{
 
-			DrawPartialDecal({ (float)(offestX + (x  * fscale)) * 64, (offsetY  + (y  * fscale)) * 64 }, item->Item->pSprite, { sprcoordX*64,sprcoordY*64 }, { 64,64 }, { fscale,fscale });
+			DrawPartialDecal({ (float)(offestX + (x  * fscale)) * CellSize, (offsetY  + (y  * fscale)) * CellSize }, item->Item->pSprite, { sprcoordX*64,sprcoordY*64 }, { 64,64 }, { 0.5f*fscale,0.5f*fscale });
 			
 			//item->ipy = y;
 			
 
 			if (item->Item->MaxStack>1)
-			DrawBigText( std::to_string(item->currStacks), (float)(offestX + (x * fscale)+0.05) * 64, (offsetY + (y * fscale)) * 64, fscale*0.5f, fscale*0.5f,olc::WHITE); //Money
+			DrawBigText( std::to_string(item->currStacks), (float)(offestX + (x * fscale)+0.05) * CellSize, (offsetY + (y * fscale)) * CellSize, fscale*0.5f, fscale*0.5f,olc::WHITE); //Money
 			if (item->Gold > 0)
-			DrawBigText(std::to_string(item->Gold), (float)(offestX + (x * fscale)+0.4) * 64, (offsetY + (y * fscale)+0.3) * 64, fscale*0.5f, fscale*0.5f, olc::YELLOW); //Money
+			DrawBigText(std::to_string(item->Gold), (float)(offestX + (x * fscale)+0.4) * CellSize, (offsetY + (y * fscale)+0.3) * CellSize, fscale*0.5f, fscale*0.5f, olc::YELLOW); //Money
 
 			if (mouseFixed.x == ((offestX / fscale) + x ) && mouseFixed.y == (offsetY / fscale) + y )
 				highlighted = item;
@@ -3349,7 +3352,7 @@ void RPG_Engine::DrawInventory(float offestX, float offsetY, olc::vi2d mouse, ol
 		}
 		else
 		{
-			DrawPartialDecal({ (float)(mouse.x - (32 / 2)) , (float)(mouse.y - (32 / 2)) }, item->Item->pSprite, { sprcoordX * 64,sprcoordY * 64 }, { 64,64 }, { fscale,fscale });
+			DrawPartialDecal({ (float)(mouse.x - ((32 / 2)*fscale)) , (float)(mouse.y - ((32 / 2)*fscale)) }, item->Item->pSprite, { sprcoordX * 64,sprcoordY * 64 }, { 64,64 }, { 0.5f*fscale,0.5f*fscale });
 			Grabitem = item;
 
 		}
@@ -3420,12 +3423,12 @@ void RPG_Engine::moveteItems(olc::vi2d mouse, float x, float y,float eqX,float e
 	const int cellsEqCoordY = mouse.y - (eqY / fscale);
 
 
+	
+	uint8_t UiFirstCellX = 1;
+	uint8_t UiFirstCellY = (ScreenHeight() - (ScreenHeight() / 6)) / (int)(CellSize * fscale);
 
-	uint8_t UiFirstCellX = 64 * fscale / (64 * fscale);
-	uint8_t UiFirstCellY = (ScreenHeight() - (ScreenHeight() / 6)) / (64 * fscale);
-
-	uint8_t UiSecondCellX = 64 * 3 * fscale / (64 * fscale);
-	uint8_t UiSecondCellY = (ScreenHeight() - (ScreenHeight() / 6)) / (64 * fscale);
+	uint8_t UiSecondCellX = 3;
+	uint8_t UiSecondCellY = (ScreenHeight() - (ScreenHeight() / 6)) / (int)(CellSize * fscale);
 	
 	//std::cout << "Invenotry -" << '\t' << cellsInvCoordX << '\t' << cellsInvCoordY << std::endl;
 	//std::cout << "Equip -" << '\t' << cellsEqCoordX << '\t' << cellsEqCoordY << std::endl;
@@ -4568,18 +4571,18 @@ void RPG_Engine::DrawDescriptionPattern(InventaryItem* highlighted, olc::vi2d mo
 		}
 		}
 			
-		const float mouseoffset = (64 * fscale);
+		const float mouseoffset = (CellSize * fscale);
 		
-		DrawPartialDecal({ (float)(mouse.x + mouseoffset) , (float)(mouse.y + mouseoffset) }, RPG_Assets::get().GetSprite("DescriptionPattern"), { 0,0 }, { (float)nLinesX,(float)(nLinesY) * (64*fscale) }, { fscale,fscale });
+		DrawPartialDecal({ (float)(mouse.x + mouseoffset) , (float)(mouse.y + mouseoffset) }, RPG_Assets::get().GetSprite("DescriptionPattern"), { 0,0 }, { (float)nLinesX,(float)(nLinesY) * (64*fscale) }, { 0.5f*fscale,0.5f*fscale });
 	
 
 		//DrawString(4 * 64, squeY - 64, highlighted->sName, olc::WHITE,3);
-		DrawBigText(highlighted->Item->sName, (mouse.x + mouseoffset), mouse.y + mouseoffset, fscale, fscale);
+		DrawBigText(highlighted->Item->sName, (mouse.x + mouseoffset), mouse.y + mouseoffset, 0.5f*fscale, 0.5f * fscale);
 
 		//DrawString(8, 190, "SELECTED", olc::WHITE,3);
 		//DrawString(4*64, squeY-32, highlighted->sDescription, olc::WHITE,2);
 
-		DrawBigText(highlighted->Item->sDescription, (mouse.x + mouseoffset), mouse.y + (32*fscale) + mouseoffset, fscale, fscale, { 169,223,227 });
+		DrawBigText(highlighted->Item->sDescription, (mouse.x + mouseoffset), mouse.y + (32*fscale) + mouseoffset, 0.5f * fscale, 0.5f * fscale, { 169,223,227 });
 
 		
 
@@ -4602,11 +4605,11 @@ void RPG_Engine::DrawDescriptionPattern(InventaryItem* highlighted, olc::vi2d mo
 			if (!highlighted->Item->bKeyItem )
 			{
 				//DrawString(80, squeY-160, "(Press SPACE to use)", olc::WHITE,2);
-				DrawBigText("(Useable)", (mouse.x + (64 * fscale)), (mouse.y + ((nLinesY + 1)*fscale) * (64*fscale)), fscale - 0.1, fscale - 0.1, { 218,14,0,255 });
+				DrawBigText("(Useable)", (mouse.x + (CellSize * fscale)), (mouse.y + ((nLinesY + 1)*fscale) * (CellSize*fscale)), 0.4f * fscale, 0.4f * fscale, { 218,14,0,255 });
 			}
 			else
 			{
-				DrawBigText("(Can't Use)", (mouse.x + (64 * fscale)), (mouse.y + ((nLinesY + 1)*fscale) * (64*fscale)) , fscale - 0.1, fscale - 0.1, { 218,14,0,255 });
+				DrawBigText("(Can't Use)", (mouse.x + (CellSize * fscale)), (mouse.y + ((nLinesY + 1)*fscale) * (CellSize*fscale)) , 0.4f * fscale, 0.4f*fscale, { 218,14,0,255 });
 			}
 			}
 			//
@@ -4623,7 +4626,7 @@ void RPG_Engine::DrawDescriptionPattern(InventaryItem* highlighted, olc::vi2d mo
 				}
 				else
 				{
-					DrawBigText("(Can't Use)", (mouse.x + (64 * fscale)), (mouse.y + ((nLinesY + 1) * fscale) * (64 * fscale)), fscale - 0.1, fscale - 0.1, { 218,14,0,255 });
+					DrawBigText("(Can't Use)", (mouse.x + (CellSize * fscale)), (mouse.y + ((nLinesY + 1) * fscale) * (CellSize * fscale)), 0.4f*fscale, 0.4f * fscale, {218,14,0,255});
 				}
 			}
 
@@ -4633,7 +4636,7 @@ void RPG_Engine::DrawDescriptionPattern(InventaryItem* highlighted, olc::vi2d mo
 
 				//DrawString(80, squeY-160, "(Press SPACE to use)", olc::WHITE,2);
 			//	DrawBigText("(Press Right Button to use)", (mouse.x + (64 * fscale)), (mouse.y + ((nLinesY + 1) * fscale) * (64 * fscale)), fscale - 0.1, fscale - 0.1, { 218,14,0,255 });
-				DrawBigText("Buy:" + std::to_string(highlighted->Item->sTradeBuyPrice), (mouse.x + (64 * fscale)), (mouse.y + ((nLinesY + 1) * fscale) * (64 * fscale)), fscale, fscale, olc::YELLOW); //Money
+				DrawBigText("Buy:" + std::to_string(highlighted->Item->sTradeBuyPrice), (mouse.x + (CellSize * fscale)), (mouse.y + ((nLinesY + 1) * fscale) * (CellSize * fscale)), 0.5f * fscale, 0.5f*fscale, olc::YELLOW); //Money
 
 
 			}
@@ -5534,30 +5537,7 @@ void RPG_Engine::AddVecDynamic(cDynamic* proj)
 {
 	m_vecDynamics.push_back(proj);
 }
-void RPG_Engine::EraseEnemysPool(cDynamic* proj)
-{
-	
 
-	for (auto it = enemysPool.begin(); it != enemysPool.end(); ++it) {
-		cDynamic* entity = *it;
-	
-		if (proj == entity){
-
-			std::cout << "Hello" << std::endl;
-		entity->setFlag(entity->binitialized);
-		entity->px = proj->px;
-		entity->py = proj->py;
-		m_vecDynamics.push_back(proj); // Add the Bandit entity to the game
-		enemysPool.erase(it); // Remove the Bandit entity from the pool
-			break;
-
-		
-		}
-	}
-
-
-	
-}
 //void RPG_Engine::AddEnvironment(Environment* env)
 //{
 //	m_vecEnviroment.push_back(env);
@@ -6524,6 +6504,22 @@ void RPG_Engine::ReturnTextToPool(cDynamic* Text)
 }
 
 
+cDynamic* RPG_Engine::SpawnItem(const olc::vf2d position, cItem* item)
+{
+	for (auto it = ItemPool.begin(); it != ItemPool.end(); it++)
+	{
+		cDynamic* entity = *it;
+
+		cDynamic_Item* Item = (cDynamic_Item*)entity;
+		Item->clearFlag(Item->bDead);
+		Item->Spawn(position, item);
+		m_vecDynamics.push_back(Item); // Add the Bandit entity to the game
+		ItemPool.erase(it); //erase
+		return entity;
+	}
+	return nullptr;
+}
+
 cDynamic* RPG_Engine::SpawnBattleText(const olc::vf2d position, std::string Text, olc::Pixel Color )
 {
 
@@ -6750,7 +6746,12 @@ void RPG_Engine:: ReturnToPool(cDynamic* entity) {
 		archer->nHealth = archer->nHealthMax;
 		BanditsArcherPool.push_back(archer);
 	}
-	else {
+	else if (auto* wolf = dynamic_cast<cDynamic_Item*>(entity)) {
+		wolf->sName = "pickup";
+		wolf->item = nullptr;
+		ItemPool.push_back(wolf);
+	}else
+	{
 		// Логирование или выброс исключения при неизвестном типе
 		std::cerr << "Unknown entity type. Could not return to pool.\n";
 		// Или бросить исключение:

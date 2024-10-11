@@ -292,15 +292,17 @@ void cComand_CleanDeath::Start()
 	
 }
 
-cComand_CreateItem::cComand_CreateItem(cDynamic* object, std::vector<cDynamic*>& vecDynobs)
+cComand_CreateItem::cComand_CreateItem(cDynamic* object, std::vector<cDynamic*>& vecDynobs,cItem* item)
 {
 	m_pObject = object;
 	vecDyn = &vecDynobs;
+	itemname = item;
+
 }
 
 void cComand_CreateItem::Start()
 {
-	vecDyn->push_back(new cDynamic_Item(m_pObject->px + m_pObject->CollbordersX, m_pObject->py + m_pObject->CollbordersY, RPG_Assets::get().GetItem("Broken Sword")));
+	g_engine->SpawnItem(olc::vf2d{ m_pObject->px + m_pObject->CollbordersX, m_pObject->py + m_pObject->CollbordersY },itemname);
 
 	bCompleted = true;
 

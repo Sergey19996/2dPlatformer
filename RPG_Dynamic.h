@@ -544,8 +544,8 @@ public:
 	{
 		uint32_t frameData = 0;    // 0000 0000 0000 0000
 		//      Amnt   Y    X 
-		frameData = (frameData & 0xFFFFFF00) | 0; // X  //Data take from idle indicate state
-		frameData = (frameData & 0xFFFF00FF) | (0 << 8); // Y
+		frameData = (frameData & 0xFFFFFF00) | 0; // posX  //Data take from idle indicate state sprite
+		frameData = (frameData & 0xFFFF00FF) | (0 << 8); // posY
 		frameData = (frameData & 0xFF00FFFF) | (8 << 16); // Amount frames
 
 		return frameData;
@@ -950,10 +950,20 @@ private:
 class cDynamic_Item : public cDynamic
 {
 public:
-	cDynamic_Item(float x, float y, cItem* item);
+	
 	cDynamic_Item();
 	void DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy) override;
 	void OnInteract(cDynamic* player = nullptr) override;
+	void Spawn(const olc::vf2d pos, cItem* Item)
+	{
+		px = pos.x;
+		py = pos.y;
+		item = Item;
+
+		bSolidVsMap = true;
+		bCollected = false;
+	
+	}
 
 	~cDynamic_Item()
 	{

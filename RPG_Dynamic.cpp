@@ -164,8 +164,7 @@ void cDynamic_Creature::Update(float fElapsedTime, cDynamic* player)
 			clearFlag(bDraw);
 			setFlag(bDead);
 			g_engine->SetCurrentExp(calculateDeathExp()); // Get exp from dead enemy
-			g_engine->AddVecDynamic(new cDynamic_Item(this->px, this->py,RPG_Assets::get().GetItem("Coin")));
-
+			g_engine->SpawnItem(olc::vf2d{ this->px,this->py }, RPG_Assets::get().GetItem("Coin"));
 			if (!checkFlag(quested))
 			{
 			this->DeathFun(); // droping fx object
@@ -1218,11 +1217,10 @@ void cDynamic_creature_Bandit::SpecAttack(float targetX, float targetY, float Di
 	
 	
 	
-
-	ProjCollbordersX = 0.75f;
-	ProjCollbordersXF = 1.25f;
-	ProjCollbordersY = 0.95f;
-	ProjCollbordersYF = 1.25f;
+	ProjCollbordersX = -0.25f;
+	ProjCollbordersXF = 0.25f;
+	ProjCollbordersY = 0.0f;
+	ProjCollbordersYF = 0.25f;
 
 	m_nGraphicCounterY = 3;
 	m_nGraphicCounterX = 0;
@@ -2023,7 +2021,7 @@ void cDynamic_creature_Pantir::Behaviour(float fElapsedTime, cDynamic* player)
 
 cDynamic_creature_BanditArcher::cDynamic_creature_BanditArcher() : cDynamic_creature_Bandit()
 {
-	sName = "BanditArcher";
+	 sName = "BanditArcher";
 	 fSpecAtckdist = 5.0f;
 	 fAttackDist = 5.0f;
 	 vxBorder = 5.0f;
@@ -2170,7 +2168,7 @@ void cDynamic_creature_BanditArcher::SpecAttack(float targetX, float targetY, fl
 
 	FxColumn = 0;
 	FXFrame = 4;
-//	M_nFacingDirectionVertical = NOTLOOKING;  // Need for  correctly spawn prjectile
+	M_nFacingDirectionVertical = NORTH;  // Need for  correctly spawn prjectile
 	
 }
 
@@ -2274,29 +2272,6 @@ void cDynamic_creature_Pantir::PerformAttack()
 }
 
 
-
-cDynamic_Item::cDynamic_Item(float x, float y, cItem* i) : cDynamic("pickup")     //Constructror
-{
-	px = x;
-	py = y;
-	
-	bSolidVsMap = true;
-	
-	m_layer = Neutral;
-	bCollected = false;
-	item = i;
-
-	CollbordersX = 0.0f;
-	CollbordersXF = 0.5f;
-
-
-	CollbordersY = 0.0f;
-	CollbordersYF = 0.5f;
-
-	setFlag(gravity);
-
-}
-
 void cDynamic_Item::OnInteract(cDynamic* player)
 {
 	if (bCollected)
@@ -2322,6 +2297,14 @@ void cDynamic_Item::OnInteract(cDynamic* player)
 }
 cDynamic_Item::cDynamic_Item() : cDynamic("pickup")     //Constructror
 {
+	px = 0;
+	py = 0;
+	m_layer = Neutral;
+	CollbordersX = 0.0f;
+	CollbordersXF = 0.5f;
+	CollbordersY = 0.0f;
+	CollbordersYF = 0.5f;
+	setFlag(gravity);
 }
 void cDynamic_Item::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)
 {
@@ -4034,8 +4017,8 @@ void cDynamic_creature_Enemy::PerformAttack()
 
 cDynamic_creature_BossBandit::cDynamic_creature_BossBandit():  cDynamic_creature_Enemy("BanditBoss", RPG_Assets::get().GetSprite("BanditBossRight"), RPG_Assets::get().GetSprite("BanditBossLeft"))
 {
-	nSheetSizeX = 256.0f;
-	nSheetSizeY = 256.0f;
+	//nSheetSizeX = 256.0f;
+//	nSheetSizeY = 256.0f;
 	looptimes = 3;
 
 	//collision borders

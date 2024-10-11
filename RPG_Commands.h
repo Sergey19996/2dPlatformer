@@ -242,10 +242,11 @@ private:
 class cComand_CreateItem : public cComand
 {
 public:
-	cComand_CreateItem(cDynamic* object, std::vector<cDynamic*>& vecDynobs);
+	cComand_CreateItem(cDynamic* object, std::vector<cDynamic*>& vecDynobs,cItem* ItemName);
 	void Start() override;
 private:
 	cDynamic* m_pObject;
+	cItem* itemname;
 	std::vector<cDynamic*>* vecDyn;
 };
 

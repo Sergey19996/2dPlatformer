@@ -228,7 +228,7 @@ private:
 	//
 	std::vector<cDynamic*> m_vecDynamics;    // Fixed
 
-	std::vector<cDynamic*> enemysPool;
+	
 	std::vector<cDynamic*> BanditsPool;
 	std::vector<cDynamic*> BanditsArcherPool;
 	std::vector<cDynamic*> DireWolfsPool;
@@ -421,7 +421,7 @@ public:
 
 	void AddProjectile(cDynamic* proj);
 	void AddVecDynamic(cDynamic* proj);
-	void EraseEnemysPool(cDynamic* proj);
+	
 	void AddEnvironment(Environment* env);
 	void AddIndicators(cDynamic* Ind);
 
@@ -479,6 +479,7 @@ public:
 	void ReturnEnvironmentToPool(Environment* entity);
 	void ReturnTextToPool(cDynamic* Text);
 	
+	cDynamic* SpawnItem(const olc::vf2d position, cItem* item);
 	cDynamic* SpawnBattleText(const olc::vf2d position, std::string Text, olc::Pixel COlor =olc::WHITE);
 	cDynamic* SpawnBandit(const olc::vf2d position);
 	cDynamic* SpawnBanditArcher(const olc::vf2d position);

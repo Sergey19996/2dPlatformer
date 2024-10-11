@@ -86,8 +86,7 @@ bool cQuset_MainQuest::PopulateDynamics(std::vector<cDynamic*>& vecDyns, std::st
 			c5->py = 26;
 			vecDyns.push_back(c5);
 			
-			cDynamic_Creature* entity = (cDynamic_Creature*)vecDyns[1];
-			g_script->AddCommand(new cComand_moveCrowdTo(vecDyns, entity, -30, 25.5, 30, 25.5, 10,100, entity->getWalkData()));
+		
 			g_script->AddCommand(new cComand_moveTo(vecDyns[0], 6,25.5, 1));
 			g_script->AddCommand(new cComand_ShowDialog({ "StoryTeller:","And our hero ended up in ","the forest" }));
 
@@ -103,7 +102,11 @@ bool cQuset_MainQuest::PopulateDynamics(std::vector<cDynamic*>& vecDyns, std::st
 
 	if (sMap == "VillageInFire")
 	{
-		g_script->AddCommand(new cComand_moveTo(vecDyns[0], 6, vecDyns[0]->py, 1));
+		cDynamic_Creature* entity = (cDynamic_Creature*)vecDyns[1];
+		g_script->AddCommand(new cComand_moveCrowdTo(vecDyns, entity, -12, 10,
+																	   15, 10,
+																			   10, 100, entity->getWalkData()));
+		g_script->AddCommand(new cComand_moveTo(vecDyns[0], 6, 10, 1));
 		g_script->AddCommand(new cComand_ShowDialog({ "StoryTeller:","Village in fire","Bandit in the center" }));
 	}
 
@@ -268,7 +271,7 @@ bool cQuset_FirstBandit::OnInteraction(std::vector<cDynamic*>& vecDynobs, cDynam
 		g_script->AddCommand(new cComand_ShowDialog({ "Bandit:", "Well Done", "But our boss", "he's really strong" }));
 		g_script->AddCommand(new cComand_CleanDeath(vecDynobs, "Fake"));
 		sDescription = "Kill 5 bandits";
-		g_script->AddCommand(new cComand_CreateItem(target, vecDynobs));
+		g_script->AddCommand(new cComand_CreateItem(target, vecDynobs, RPG_Assets::get().GetItem("Broken Sword")));
 
 		m_nPhase = 1;
 
