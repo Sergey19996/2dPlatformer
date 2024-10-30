@@ -2184,9 +2184,12 @@ if (IsFocused())
 
 						DrawBigText("Options", (ScreenWidth() / 2) + ((167 - 144)*fscale), ScreenHeight() / 2 + (31*fscale), 1*fscale, 1*fscale, olc::WHITE);
 
+#ifdef  DEBUG_MODE
+
 						SetPixelMode(olc::Pixel::NORMAL);
 						EnableLayer(layer, true);
 						SetDrawTarget(nullptr);
+#endif // DEBUG
 
 					
 						DrawRect((ScreenWidth() / 2) - (167 * fscale), ScreenHeight() / 2 + (31 * fscale), 40,20);
@@ -2266,9 +2269,12 @@ if (IsFocused())
 					frameIndex = 0;
 				}
 				//
+#ifdef  DEBUG_MODE
+
 				SetPixelMode(olc::Pixel::NORMAL);
 				EnableLayer(layer, true);
 				SetDrawTarget(nullptr);
+#endif // DEBUG
 
 				// Limit the frame rate to 60 frames per second
 			//	Sleep(4); // Sleep for the appropriate time to achieve desired frame rate
@@ -4411,8 +4417,8 @@ bool RPG_Engine::UpdateMap(float fElapsedTime)
 	{
 
 
-		if (mouse.x >=OffsetX+MapPosAr[i].x*fscale && mouse.x<= OffsetX+(SpritesData_map[MapSpritesIndexes[i]].Size.x)*fscale &&
-			mouse.y >=OffsetY+MapPosAr[i].y*fscale && mouse.y <=OffsetY+(MapPosAr[i].y+ SpritesData_map[MapSpritesIndexes[i]].Size.y)*fscale){
+		if (mouse.x >= OffsetX + MapPosAr[i].x * fscale && mouse.x <= OffsetX + (MapPosAr[i].x + SpritesData_map[MapSpritesIndexes[i]].Size.x) * fscale &&
+			mouse.y >= OffsetY + MapPosAr[i].y * fscale && mouse.y <= OffsetY + (MapPosAr[i].y + SpritesData_map[MapSpritesIndexes[i]].Size.y) * fscale) {
 
 			highlighted = i + 1;
 			DrawElement(MapSpritesIndexes[i], { (OffsetX + MapPosAr[i].x*fscale)/CellSize ,(OffsetY + MapPosAr[i].y*fscale)/CellSize }, fscale, D_Map);
@@ -4441,7 +4447,7 @@ bool RPG_Engine::UpdateMap(float fElapsedTime)
 		if (bOpenTravelAsk)
 		{
 			
-			if (mouse.x >= (ScreenWidth() / 2) + 160 - 36 - 7 && mouse.x <= (ScreenWidth() / 2) + 160 - 36 - 7+64 && mouse.y >= ScreenHeight() / 2 + 31 && mouse.y <= ScreenHeight() / 2 + 31+32) //No
+			if (mouse.x >= (ScreenWidth() / 2) + (160 - 36 - 7)*fscale && mouse.x <= (ScreenWidth() / 2) + (160 - 36 - 7+64)*fscale && mouse.y >= ScreenHeight() / 2 + 31*fscale && mouse.y <= ScreenHeight() / 2 + (31+32)*fscale) //No
 			{
 
 				bOpenTravelAsk = false;
@@ -4487,7 +4493,7 @@ bool RPG_Engine::UpdateMap(float fElapsedTime)
 		const auto& SPellUi = GetSpriteData(DataStruct::UiPlatform);
 
 
-		DrawElement(DataStruct::UiPlatform, { (((float)ScreenWidth() / 2) - 167 * fscale) / CellSize, ((float)ScreenHeight() / 2 - 71 * fscale) / CellSize }, fscale, D_Map);
+		DrawElement(DataStruct::UiPlatform, { ((float)ScreenWidth() / 2 - 167 * fscale) / CellSize, ((float)ScreenHeight() / 2 - 71 * fscale) / CellSize }, fscale, D_FullUi);
 	//DrawPartialDecal({ ((float)ScreenWidth() / 2 )-167*fscale, (float)ScreenHeight()/2-71*fscale}, RPG_Assets::get().GetSprite("SpellUi"), {0,0}, {334,142});
 	DrawBigText("Travel ?", (ScreenWidth() / 2) -72*fscale, ScreenHeight() / 2 -62*fscale , fscale,fscale,olc::WHITE);
 

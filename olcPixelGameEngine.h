@@ -3878,7 +3878,7 @@ namespace olc
 
 	void PixelGameEngine::olc_CoreUpdate()
 	{
-		auto Start = std::chrono::steady_clock::now();
+		//auto Start = std::chrono::steady_clock::now();
 
 
 
