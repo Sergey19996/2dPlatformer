@@ -180,7 +180,7 @@ struct Tile {
 	uint8_t Collision;
 	//uint8_t AdaptClsn;
 
-	olc::vf2d position;
+	olc::vi2d position;
 
 
 	struct layerinfo

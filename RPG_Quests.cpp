@@ -33,15 +33,10 @@ cQuset_MainQuest::cQuset_MainQuest()
 
 bool cQuset_MainQuest::PopulateDynamics(std::vector<cDynamic*>& vecDyns, std::string sMap)
 {
-	if (sMap == "Forest"&& m_nPhase ==0 )
+	if (sMap == "Forest"&& m_nPhase <=3 )
 	{
 	
-			cDynamic_ClipTrigger* c2 = new cDynamic_ClipTrigger("MeetScene");  //mett first bandit
-			c2->px = 76;
-			c2->py = 26;
-			c2->CollbordersY = -10;
-
-			vecDyns.push_back(c2);
+			
 
 			olc::vf2d pos{ 81,26 };
 			cDynamic* g1 = g_engine->SpawnBandit(pos);
@@ -63,6 +58,13 @@ bool cQuset_MainQuest::PopulateDynamics(std::vector<cDynamic*>& vecDyns, std::st
 			z1->px = 178;
 			z1->py = 26;
 		//	vecDyns.push_back(z1);
+
+			cDynamic_ClipTrigger* c2 = new cDynamic_ClipTrigger("MeetScene");  //mett first bandit
+			c2->px = 78;
+			c2->py = 26;
+			c2->CollbordersY = -10;
+
+			vecDyns.push_back(c2);
 
 			//cDynamic_Creature* c3 = new cDynamic_Creature("MeetScene1", RPG_Assets::get().GetSprite("BanditRight"), RPG_Assets::get().GetSprite("BanditLeft"));  // meet werewolf
 			cDynamic_ClipTrigger* c3 = new cDynamic_ClipTrigger("MeetScene1");  // meet werewolf
@@ -89,25 +91,47 @@ bool cQuset_MainQuest::PopulateDynamics(std::vector<cDynamic*>& vecDyns, std::st
 		
 			g_script->AddCommand(new cComand_moveTo(vecDyns[0], 6,25.5, 1));
 			g_script->AddCommand(new cComand_ShowDialog({ "StoryTeller:","And our hero ended up in ","the forest" }));
-
+			g_script->AddCommand(new cComand_SaverFunction());
 
 
 			m_nPhase = 1;
 
-		
+			return false;
 		
 	
 
 	}
 
-	if (sMap == "VillageInFire")
+	if (sMap == "VillageInFire" && m_nPhase <=4)
 	{
+
+
+		cDynamic_ClipTrigger* c3 = new cDynamic_ClipTrigger("MeetScene3");  // meet Boss
+		c3->px = 30;
+		c3->py = 12;
+		c3->CollbordersY = -10;
+
+		vecDyns.push_back(c3);
+
+		g_script->AddCommand(new cComand_SaverFunction());
+
+		cDynamic* BossFake = g_engine->SpawnBossBandt({ 3,12 });
+
+		g_script->AddCommand(new cComand_CheatDeath(BossFake));
+		g_script->AddCommand(new cComand_ShowDialog({ "Boss:","C'mon boys","Grab their asses..." }));
+		g_script->AddCommand(new cComand_ShowDialog({ "Boss:","i gonna meet","some pussy"}));
+		g_script->AddCommand(new cComand_moveTo(BossFake, 18, 12, 2));
+		g_script->AddCommand(new cComand_CleanDeath(vecDyns, "Fake"));
 		cDynamic_Creature* entity = (cDynamic_Creature*)vecDyns[1];
-		g_script->AddCommand(new cComand_moveCrowdTo(vecDyns, entity, -12, 10,
-																	   15, 10,
-																			   10, 100, entity->getWalkData()));
-		g_script->AddCommand(new cComand_moveTo(vecDyns[0], 6, 10, 1));
+		g_script->AddCommand(new cComand_moveCrowdTo(vecDyns, entity, -23, 13.5,
+																	   18, 13.5,
+																			   8, 50, entity->getWalkData()));
+		g_script->AddCommand(new cComand_moveTo(vecDyns[0], 6, 13.5, 1));
 		g_script->AddCommand(new cComand_ShowDialog({ "StoryTeller:","Village in fire","Bandit in the center" }));
+
+
+
+		return false;
 	}
 
 	/*if (sMap == "home")
@@ -125,7 +149,7 @@ bool cQuset_MainQuest::PopulateDynamics(std::vector<cDynamic*>& vecDyns, std::st
 			//g_script->AddCommand(new cComand_moveTo(vecDyns[0], 6, vecDyns[0]->py, 3));
 			g_script->AddCommand(new cComand_ShowDialog({ "StoryTeller:","the village was liberated from enemies","But people need your help" }));
 			m_nPhase = 5;	
-
+			return false;
 	}
 	
 	if (sMap == "Forest" && m_nPhase > 4)   // <--After killing bandit Boss  we open the way in cave
@@ -242,6 +266,21 @@ bool cQuset_MainQuest::OnInteraction(std::vector<cDynamic*>& vecDynobs, cDynamic
 
 
 
+	if (target->sName == "MeetScene3" && Nature == WALK)   // Getting close to village 
+	{
+
+		g_script->AddCommand(new cComand_LockCamera);
+		g_script->AddCommand(new cComand_moveCamera(target, 47, 13.5, 1));  // <--Camera in center
+		g_script->AddCommand(new cComand_ShowDialog({ "Bandit Boss:","well well well" }));
+		g_script->AddCommand(new cComand_moveTo(vecDynobs[0], vecDynobs[0]->px, 13.5f, 0.1));
+		g_script->AddCommand(new cComand_moveTo(vecDynobs[0], 43, 13.5f, 3));
+		g_script->AddCommand(new cComand_ShowDialog({ "Bandit Boss:","I eat you and all in this","Village"}));
+
+		//g_script->AddCommand(new cComand_moveTo(vecDynobs[0], vecDynobs[0]->px + 10, vecDynobs[0]->py, 2));
+		target->bDead;
+
+		return false;
+	}
 
 
 
@@ -274,6 +313,9 @@ bool cQuset_FirstBandit::OnInteraction(std::vector<cDynamic*>& vecDynobs, cDynam
 		g_script->AddCommand(new cComand_CreateItem(target, vecDynobs, RPG_Assets::get().GetItem("Broken Sword")));
 
 		m_nPhase = 1;
+
+
+		
 
 		return true;
 
@@ -314,7 +356,7 @@ bool cQuset_KillWerewolf::OnInteraction(std::vector<cDynamic*>& vecDynobs, cDyna
 
 	if (target->sName == "werewolf" && Nature == KILL && m_nPhase == 0)   // Talking with first Bandit
 	{
-		cDynamic* ReturnCamera = nullptr;
+ 		cDynamic* ReturnCamera = nullptr;
 		//cDynamic* FakeWerewolf = nullptr;
 		for (auto& quest : vecDynobs)
 			if (quest->sName == "WerefolfReturnCamera")
@@ -322,6 +364,10 @@ bool cQuset_KillWerewolf::OnInteraction(std::vector<cDynamic*>& vecDynobs, cDyna
 				ReturnCamera = quest;
 				break;
 			}
+		
+		cDynamic_creature_WereWolf* Werewolf = (cDynamic_creature_WereWolf*)target;
+		Werewolf->DeathWolfs();
+
 		g_script->AddCommand(new cComand_CheatDeath(target));   // original died allready,  but we create copy of it for scene
 		g_script->AddCommand(new cComand_ShowDialog({ "Werewolf:", "I..", "Just wont...", "to protect.." }));
 		g_script->AddCommand(new cComand_ShowDialog({ "Werewolf:", "My Village..." }));
@@ -373,7 +419,7 @@ bool cQuset_KillBanditBoss::OnInteraction(std::vector<cDynamic*>& vecDynobs, cDy
 
 	if (target->sName == "BossBandit" && Nature == KILL && m_nPhase ==0)   // After Killing Bandit Boss in Village of fire
 	{
-		g_script->AddCommand(new cComand_ShowDialog({ "Bandit Boss:","New God lead us in the light..." }));
+		g_script->AddCommand(new cComand_ShowDialog({ "Bandit Boss:","New God lead us on the way of light..." }));
 		g_script->AddCommand((new cComand_HideScreen(3)));
 		g_script->AddCommand(new cComand_Changemap("Village", vecDynobs[0]->px, vecDynobs[0]->py));
 		bCompleted = true;

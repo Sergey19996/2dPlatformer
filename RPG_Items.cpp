@@ -34,6 +34,8 @@ cWeapon::cWeapon(std::string name, olc::Decal* sprite,olc::Decal* PrjctLeft,olc:
 	ProjectileRight = PrjctRight;
 	sTradePrice = price;
 	this->equipIndex = 3;  // - when equipIndex =0  , Means that we can't equip item
+
+
 }
 
 bool cWeapon::OnInteract(cDynamic* object)
@@ -77,8 +79,9 @@ bool cWeapon::OnUse(cDynamic* object)
 		x = aggressor->px+1.0f;
 		y = aggressor->py;
 		vx = 0; vy = aggressor->vy;
-	//	aggressor->sparedVx = 0;
-
+		
+		aggressor->setFlag(aggressor->isprojEqualX);  // px projectile be on the same position where owner 
+	
 
 	}
 	if (aggressor->GetFacingDirectionVertical() == 0)  // Down
@@ -86,8 +89,9 @@ bool cWeapon::OnUse(cDynamic* object)
 		x = aggressor->px+1 ;
 		y = aggressor->py;
 		vx = 0; vy = aggressor->vy;
-	//	aggressor->sparedVx = 0;
-
+		aggressor->setFlag(aggressor->isprojEqualX);
+	
+	
 
 	}
 
@@ -98,17 +102,18 @@ bool cWeapon::OnUse(cDynamic* object)
 	{
 		
 		olc::vf2d pos{ x, y };
-
+		
 	
+
 		cDynamic_Projectile* p = (cDynamic_Projectile*)g_engine->SpawnProjectile(pos);
 		p->SetSprites(ProjectileRight, ProjectileLeft);
 		p->SetAgressorData(aggressor);
-		p->px = x;
-		p->py = y;
 		p->bSolidVsMap = true;
 		p->bOneHit = true;
 		p->attackDirectionX = attackdir;
 		p->rageamount = aggressor->rageset;
+
+		aggressor->clearFlag(aggressor->isprojEqualX);
 	
 		return false;
 	}
@@ -127,12 +132,12 @@ bool cWeapon::OnUse(cDynamic* object)
 		//cDynamic_Projectile* p = new cDynamic_Projectile(x, y, aggressor->m_layer, aggressor->sparedVx, aggressor->sparedVy, 1, ProjectileLeft, ProjectileRight, aggressor->FxColumn, aggressor->m_nShockTime, aggressor->rageset);
 		
 		
-		
+		aggressor->clearFlag(aggressor->isprojEqualX);
 		
 		return false;
 	}
 	
-
+	aggressor->clearFlag(aggressor->isprojEqualX);
 	
 	return false;
 }
@@ -291,7 +296,7 @@ bool cSmallWallet::OnCraft(bool click)
 	if (g_engine->HasItem(FirstItem) && g_engine->HasItem(SecondItem))
 	{
 		if (click==1)
-		g_engine->GiveItem("SmallWallet",1);
+		g_engine->GiveItem(this->sName,1);
 	return true;
 	}
 	
@@ -317,6 +322,30 @@ cEquip::cEquip(std::string name, olc::Decal* sprite, std::string desc, uint8_t d
 	equipIndex = equipindex;
 	spriteindex = sprtindex;
 	sTradePrice = price;
+
+
+	switch (spriteindex)
+	{
+	case 35:
+		FirstItem = "Cooper";
+		SecondItem = "White Nuggets";
+		sCraftRequaries = std::to_string(1) + FirstItem + "\n" + std::to_string(1) + SecondItem + "\n";;
+		break;
+
+	case 32:
+		FirstItem = "Piece Of Leather";
+		SecondItem = "Cooper";
+		sCraftRequaries = std::to_string(10) + FirstItem + "\n" + std::to_string(3) + SecondItem + "\n";;
+		break;
+	case 33:
+		FirstItem = "Piece Of Leather";
+		SecondItem = "Cooper";
+		ThirdItem = "Red Sample";
+		sCraftRequaries = std::to_string(10) + FirstItem + "\n" + std::to_string(1) + SecondItem + "\n" + std::to_string(1) + ThirdItem + "\n";
+		break;
+
+	}
+	//sCraftRequaries = std::to_string(1) + FirstItem + "\n" + std::to_string(1) + SecondItem + "\n"+ std::to_string(1) + ThirdItem + "\n"+ std::to_string(1) + FourItem;
 }
 
 bool cEquip::OnInteract(cDynamic* object)
@@ -326,6 +355,20 @@ bool cEquip::OnInteract(cDynamic* object)
 
 bool cEquip::OnUse(cDynamic* object)
 {
+	return false;
+}
+
+bool cEquip::OnCraft(bool click)
+{
+
+
+			if (g_engine->HasItem(FirstItem) && g_engine->HasItem(SecondItem)&& g_engine->HasItem(ThirdItem)&& g_engine->HasItem(FourItem))
+			{
+				if (click == 1)
+					g_engine->GiveItem(this->sName, 1);
+				return true;
+			}
+
 	return false;
 }
 
@@ -342,7 +385,7 @@ bool cEmptySlot::OnUse(cDynamic* object)
 	return false;
 }
 
-cHealthElixir::cHealthElixir() : cItem("Health Elixir", RPG_Assets::get().GetSprite("Items"), "Recover 100 Helth\n")
+cHealthElixir::cHealthElixir() : cItem("Health Elixir", RPG_Assets::get().GetSprite("Items"), "Good Smelling Elixir,\nRecover 100 Helth\n")
 {
 	spriteindex = 1;
 	MaxStack = 10;
@@ -374,7 +417,7 @@ bool cHealthElixir::OnUse(cDynamic* object, std::vector<InventaryItem*>& m_listI
 	return true;  // <--Return true  when object will die
 }
 
-cEnergyElixir::cEnergyElixir() : cItem("Energy Elixir", RPG_Assets::get().GetSprite("Items"), "Recover 60 Energy\n")
+cEnergyElixir::cEnergyElixir() : cItem("Energy Elixir", RPG_Assets::get().GetSprite("Items"), "Rare Elixir,\nRecover 60 Energy\n")
 {
 	spriteindex = 2;
 	MaxStack = 10;
@@ -413,7 +456,7 @@ bool cEnergyElixir::OnUse(cDynamic* object, std::vector<InventaryItem*>& m_listI
 	
 }
 
-cRageElixir::cRageElixir() : cItem("Rage Elixir", RPG_Assets::get().GetSprite("Items"), "Recover 30 Rage\n")
+cRageElixir::cRageElixir() : cItem("Rage Elixir", RPG_Assets::get().GetSprite("Items"), "Very Rare Elixir,\nRecover 30 Rage\n")
 {
 	spriteindex = 0;
 	MaxStack = 10;
@@ -452,4 +495,38 @@ bool cRageElixir::OnUse(cDynamic* object, std::vector<InventaryItem*>& m_listIte
 cFullSmallWallet::cFullSmallWallet() : cGold("FullSmallWallet", RPG_Assets::get().GetSprite("Items"), "Keep 6 golds:  " + std::to_string(60) + "/60\n", 0)
 {
 	spriteindex = 66;
+}
+
+cWeaponBanditBoss::cWeaponBanditBoss() : cWeapon("Bandit Boss Sword", RPG_Assets::get().GetSprite("Items"), RPG_Assets::get().GetSprite("Bandit Boss SwordLeftFx"), RPG_Assets::get().GetSprite("Bandit Boss SwordRightFx"), "usually these kind of swords \nare used by bandits\n", 10, 0, 0, 0, 0, 67, 3, 3)
+{
+
+}
+
+PieceOfLeather::PieceOfLeather() : cItem("Piece Of Leather", RPG_Assets::get().GetSprite("Items"), "ingredient for,\nCraft\n")
+{
+	spriteindex = 32 * 4;
+	MaxStack = 10;
+	sTradePrice = 3;
+}
+
+WhiteNuggets::WhiteNuggets() : cItem("White Nuggets", RPG_Assets::get().GetSprite("Items"), "ingredient for,\nCraft\n")
+{
+	spriteindex = 32 * 3 + 1;
+	MaxStack = 10;
+	sTradePrice = 10;
+
+}
+
+RedSample::RedSample() : cItem("Red Sample", RPG_Assets::get().GetSprite("Items"), "ingredient for,\nCraft\n")
+{
+	spriteindex = 32 * 3 + 2;
+	MaxStack = 10;
+	sTradePrice = 13;
+}
+
+copper::copper() : cItem("Cooper", RPG_Assets::get().GetSprite("Items"), "ingredient for,\nCraft\n")
+{
+	spriteindex = 5;
+	MaxStack = 1;
+	sTradePrice = 20;
 }

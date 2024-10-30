@@ -82,7 +82,7 @@ cDynamic_Creature::cDynamic_Creature(const std::string name, olc::Decal* spriteR
 	nHealthMax = 10;
 	//M_nFacingDirection = SOUTH;
 
-	m_fTimer = 0.0f;
+	//m_fTimer = 0.0f;
 
 	setFlag(bIsAttackable);
 	setFlag(bControllable);
@@ -91,7 +91,7 @@ cDynamic_Creature::cDynamic_Creature(const std::string name, olc::Decal* spriteR
 	clearFlag(IsOnePlay);
 	setFlag(gravity);
 
-
+	CenterX = (nSheetSizeX / g_engine->CellSize) / 2;
 	m_nGraphicCounterX = 0;
 	m_nGraphicCounterY = 0;
 	FXFrame = 0;
@@ -201,7 +201,15 @@ void cDynamic_Creature::Update(float fElapsedTime, cDynamic* player)
 
 		setEnum();
 
+
+		if (g_engine->getScriptActive())
+		{
 		Behaviour(fElapsedTime, player);
+		}
+		else
+		{
+			vx = 0;
+		}
 
 		if (gravityofftimer>0)
 		{
@@ -301,7 +309,7 @@ void cDynamic_Creature::calculateStats()
 			LvlDefence = defsup;
 		}
 	}
-
+	nHealthMax = nHealth;
 }
 
 void cDynamic_Creature::SetAlphaColor(uint8_t Alpha)
@@ -311,19 +319,28 @@ void cDynamic_Creature::SetAlphaColor(uint8_t Alpha)
 
 void cDynamic_Creature::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)
 {
-	
+	float nSheetOffsetY, nSheetOffsetX;
 	const int spriteWidth = m_pSpriteRight->sprite->width / nSheetSizeX;
 
 	                //0.12f   - 0.05f (20 lvl)
 	if (animspr >= framespeed-EndHaste)                 //it's speed of frames
 	{
 
-			frameIndicator++;
+
+
+		frameIndicator++;
+
+			
 
 		if (checkFlag(IsOnePlay) || checkFlag(isAttack) || checkFlag(bOnLanded) )                 // if we put left mouse key
 		{
 			//x stroke is getting growth
 
+			if (frameIndicator == FXFrame)   //   <---- summon projectile when attack
+			{
+				PerformAttack();
+				//clearFlag(isAttack);
+			}
 
 			if (frameIndicator >= m_nGraphicCounterX + m_nGraphicAmountFrames)
 			{
@@ -331,14 +348,11 @@ void cDynamic_Creature::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)
 				clearFlag(isAttack);
 				clearFlag(bOnLanded);
 				clearFlag(IsThrow);
-				//isprojfollow = false;
+				clearFlag(isprojfollow);
 				sparedVx =0.0f;
 			//	setEnum();
 			}
-			if (frameIndicator == FXFrame && checkFlag(isAttack))   //   <---- summon projectile when attack
-			{
-				PerformAttack();
-			}
+			
 		}
 		
 		animspr =0;
@@ -364,11 +378,11 @@ void cDynamic_Creature::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)
 	if (M_nFacingDirection == EAST)
 	{
 
-		gfx->DrawPartialDecal({ (px - ox) * (g_engine->fscale * 64.0f),(py - oy) * (g_engine->fscale * 64.0f) }, m_pSpriteRight, { nSheetOffsetX,nSheetOffsetY }, { nSheetSizeX,nSheetSizeY }, {1,1},olc::Pixel(getRed(), getGreen(), getBlue()));   //offset pulling player back into the screen
+		gfx->DrawPartialDecal({ (px - ox) * g_engine->CellSize,(py - oy) * g_engine->CellSize }, m_pSpriteRight, { nSheetOffsetX,nSheetOffsetY }, { nSheetSizeX,nSheetSizeY }, {1*entityScale,1 * entityScale },olc::Pixel(getRed(), getGreen(), getBlue()));   //offset pulling player back into the screen
 	}
 	else
 	{
-		gfx->DrawPartialDecal({ (px - ox) * (g_engine->fscale*64.0f),(py - oy) * (g_engine->fscale * 64.0f) }, m_pSpriteLeft, { nSheetOffsetX,nSheetOffsetY }, { nSheetSizeX,nSheetSizeY }, { 1,1 }, olc::Pixel(getRed(), getGreen(), getBlue()));   //offset pulling player back into the screen
+		gfx->DrawPartialDecal({ (px - ox) * g_engine->CellSize,(py - oy) * g_engine->CellSize }, m_pSpriteLeft, { nSheetOffsetX,nSheetOffsetY }, { nSheetSizeX,nSheetSizeY }, { 1 * entityScale,1 * entityScale }, olc::Pixel(getRed(), getGreen(), getBlue()));   //offset pulling player back into the screen
 
 	}
 
@@ -460,7 +474,7 @@ void cDynamic_Creature::SetUpDamage ()   //standart damage for all chars
 	case cDynamic_Creature::AirAttack:
 		calculatedDamage = EndAverageAttack+ rand3 * 2.65f;
 		break;
-	case cDynamic_Creature::Eviscirate:
+	case cDynamic_Creature::EviscirateDown:
 		calculatedDamage = EndAverageAttack+ rand3 + 20 * 3.6f;
 		
 		
@@ -538,7 +552,7 @@ bool cDynamic_Creature::setEnum()
 			break;
 		case 8:
 			vx = 0;
-			M_nGraphicState = Eviscirate;
+			M_nGraphicState = EviscirateDown;
 			IndicateAnim();
 			return true;
 			break;
@@ -580,9 +594,6 @@ bool cDynamic_Creature::setEnum()
 			IndicateAnim();
 			return true;
 			break;
-
-		
-
 		case 16:
 			M_nGraphicState = AttackBack;
 			IndicateAnim();
@@ -635,6 +646,12 @@ bool cDynamic_Creature::setEnum()
 
 		case 25:
 			M_nGraphicState = IdleReaction;
+			IndicateAnim();
+			return true;
+			break;
+
+		case 26:
+			M_nGraphicState = Eviscirate;
 			IndicateAnim();
 			return true;
 			break;
@@ -790,12 +807,11 @@ cDynamic_creature_DireWolf::cDynamic_creature_DireWolf() : cDynamic_creature_Ene
 {
 
 	pEquipedWeapon = (cWeapon*)RPG_Assets::get().GetItem("Bandit Sword");
-	hpUpdate = new cDynamic_HpBar(px, py, nHealth, this);
 
 	LvL = 1;
 
-	CollbordersX = 0.8f;
-	CollbordersXF = 1.1f;
+	CollbordersX = 0.75f;
+	CollbordersXF = CollbordersX + 0.5f;
 
 	CollbordersY = 0.6f;
 	CollbordersYF = 1.5f;
@@ -804,11 +820,13 @@ cDynamic_creature_DireWolf::cDynamic_creature_DireWolf() : cDynamic_creature_Ene
 	//EndMovementspeed = 20;
 	setBasicAgility(19);
 	setBasicInt(13);
-	setBasicStrength(9);
+	setBasicStrength(5);
 	//BasicAgility = 19;
 	//BasicStrength = 9;
 	//BasicIntelect = 13;
 	BasicAveAtck = 30;
+
+	hpUpdate = new cDynamic_HpBar(px, py, nHealth, this);
 
 	calculateStats();
 
@@ -834,7 +852,7 @@ cDynamic_creature_NPCBandit::cDynamic_creature_NPCBandit(std::string sname) : cD
 	nHealth = 1;
 	nHealthMax = 1;
 	clearFlag(bDead);
-	m_fStateTick = 0.2f;
+	//m_fStateTick = 0.2f;
 	clearFlag(bOnGround);
 	clearFlag(bIsAttackable);
 //	bSolidVsMap = true;
@@ -884,7 +902,7 @@ bool cDynamic_creature_Enemy::IsLanded()
 		{
 			return false;
 		}
-
+		m_fStateTick = 0.0f;
 		vx = 0;
 		enumCounter = 11;
 		clearFlag(isAttack);
@@ -1103,6 +1121,16 @@ void cDynamic_creature_DireWolf::DeathFun()
 
 }
 
+void cDynamic_creature_DireWolf::ReturnToPool()
+{
+	{
+		cDynamic_Creature::ReturnToPool();
+		this->sName = "DireWolf";
+		this->nHealth = this->nHealthMax;
+		g_engine->PoolsController(g_engine->getDireWolfsPool(), this);
+	}
+}
+
 //////
 
 
@@ -1172,7 +1200,7 @@ void cDynamic_creature_Bandit::IndicateAnim()
 
 
 		break;
-	case Eviscirate:
+	case EviscirateDown:
 		
 		break;
 	case AirEviscirate:  //(Vertical Attack - becouse fx suit
@@ -1248,17 +1276,17 @@ cDynamic_creature_Bandit::cDynamic_creature_Bandit() : cDynamic_creature_Enemy("
 	//
 	pEquipedWeapon = (cWeapon*)RPG_Assets::get().GetItem("Bandit Sword");
 	hpUpdate = new cDynamic_HpBar(px, py, nHealth, this);
-	LvL = 3;
+	LvL = 2;
 	setBasicAgility(19);
 	setBasicInt(13);
-	setBasicStrength(15);
+	setBasicStrength(9);
 
-	BasicAveAtck = 45;
+	BasicAveAtck = 25;
 	calculateStats();
 
 	EndAverageAttack = LvlAverageAttack;
 	
-	SetEndMovement(16);
+	SetEndMovement(17);
 	SetEndStrength(gettLvlStrength());
 	SetEndInt(getLvlInt());
 	SetEndAgility(getLvlAgil());
@@ -1285,7 +1313,7 @@ void cDynamic_creature_Bandit::AttackOne()
 
 
 	setFlag(isAttack);
-	
+	setFlag(isprojfollow);
 	vx = 0;
 	m_nGraphicCounterY = 5;
 	m_nGraphicCounterX = 0;
@@ -1316,7 +1344,7 @@ void cDynamic_creature_Bandit::AttackTwo()
 	ProjCollbordersY = 0.65f;
 	ProjCollbordersYF = 1.8f;
 
-
+	setFlag(isprojfollow);
 	vx = 0;
 	m_nGraphicCounterY = 4;
 	m_nGraphicCounterX = 0;
@@ -1350,6 +1378,16 @@ void cDynamic_creature_Bandit::DeathFun()
 	}
 }
 
+void cDynamic_creature_Bandit::ReturnToPool()
+{
+	{
+		cDynamic_Creature::ReturnToPool();
+		this->sName = "Bandit";
+		this->nHealth = this->nHealthMax;
+		g_engine->PoolsController(g_engine->getBanditsPool(), this);
+	};
+}
+
 cDynamic_creature_Pantir::cDynamic_creature_Pantir() : cDynamic_Creature("Pantir", RPG_Assets::get().GetSprite("PantirRight"), RPG_Assets::get().GetSprite("PantirLeft"))
 {
 	LvL = 1;
@@ -1357,7 +1395,7 @@ cDynamic_creature_Pantir::cDynamic_creature_Pantir() : cDynamic_Creature("Pantir
 	m_pSpriteGrabRight = RPG_Assets::get().GetSprite("PantirGrabRight");
 	M_BaseClass = AGILITY;
 	M_nGraphicState = Idle;                                            //Pantir constructor
-	m_fStateTick = 2.0f;
+	//m_fStateTick = 2.0f;
 	Jumpcounter = 0;
 	pEquipedWeapon = (cWeapon*)RPG_Assets::get().GetItem("Pantir's Dagger");
 	
@@ -1379,10 +1417,10 @@ cDynamic_creature_Pantir::cDynamic_creature_Pantir() : cDynamic_Creature("Pantir
 
 	clearFlag(bDead);
 	//Borders for collision
-	CollbordersX = 0.8f;
-	CollbordersXF = 1.1f ;
+	CollbordersX = 0.75f;
+	CollbordersXF =CollbordersX+0.5f;
 
-	CollbordersY = 0.6f ;
+	CollbordersY = 0.5f ;
 	CollbordersYF = 1.5f ;
 	
 
@@ -1498,14 +1536,24 @@ void cDynamic_creature_Pantir::IndicateAnim()
 		break;
 	case Attack:
 		enumCounter = 3;
+
+		if (frameIndicator  == FXFrame && checkFlag(isAttack))   //   <---- summon projectile when attack
+		{
+
+			clearFlag(isAttack);
+		}
 		
 		break;
 
 	case AttackGreat:
 		enumCounter = 5;
 	
-
-		// fAttackcount = 0;
+		if (frameIndicator == FXFrame && checkFlag(isAttack))   //   <---- summon projectile when attack
+		{
+			
+			//clearFlag(isAttack);
+		}
+		
 		break;
 
 	case AttackEasy:
@@ -1526,7 +1574,7 @@ void cDynamic_creature_Pantir::IndicateAnim()
 		enumCounter = 7;
 		
 		break;
-	case Eviscirate:
+	case EviscirateDown:
 		enumCounter = 8;
 		
 		break;
@@ -1769,7 +1817,14 @@ void cDynamic_creature_Pantir::IndicateAnim()
 		}
 
 		break;
+	
+	
 
+
+	case Eviscirate:
+		enumCounter = 26;
+
+		break;
 
 	}
 
@@ -1967,6 +2022,16 @@ void cDynamic_creature_Pantir::Behaviour(float fElapsedTime, cDynamic* player)
 	energyCount += fElapsedTime * 35.0f;
 	rageCount += fElapsedTime * 2.5f;
 
+	if (Combocounter >0)    // logic for combos
+	{
+	fAttackcount += fElapsedTime;
+		
+	if (fAttackcount >1.0f)
+	{
+		fAttackcount = 0.0f;
+		Combocounter = 0;
+	} // 
+	}
 
 	}
 	if (energyCount >=1)
@@ -2024,11 +2089,12 @@ cDynamic_creature_BanditArcher::cDynamic_creature_BanditArcher() : cDynamic_crea
 	 sName = "BanditArcher";
 	 fSpecAtckdist = 5.0f;
 	 fAttackDist = 5.0f;
-	 vxBorder = 5.0f;
+	// vxBorder = 5.0f;
 
 	  BeveOffsetpX = 5;   // offset for behave px
 	  BeveOffsetpY = 0; // py
 	  SetEndMovement(5);
+	  EndAverageAttack = EndAverageAttack / 2;
 	
 }
 
@@ -2114,6 +2180,235 @@ void cDynamic_creature_BanditArcher::AttackTwo()
 
 }
 
+void cDynamic_creature_BanditArcher::Behaviour(float fElapsedTime, cDynamic* player)
+{
+	if (checkFlag(bControllable)) // when we control in scripteditor
+	{
+		float Bevpx, Bevpy;
+		float bvhelper = -1;
+
+		float fTargetX = player->px - px;  // offset for archer 
+		float fTargetY = player->py - py;
+
+		float ftargetoffset;
+
+		//	std::cout << fTargetX << std::endl;
+
+		if (fTargetX > 0)  // means that mob in right  position
+		{
+			bvhelper = -1;
+			Bevpx = CollbordersXF + BeveOffsetpX * bvhelper;
+
+
+		}
+		else
+		{
+
+			Bevpx = BeveOffsetpX - CollbordersXF;
+			//Bevpy = BeveOffsetpY;
+
+		}
+		//	std::cout << Bevpx  << std::endl;
+		ftargetoffset = fTargetX + Bevpx;
+
+
+		
+		float fDistanceOffset = sqrtf(ftargetoffset * ftargetoffset + fTargetY * fTargetY);
+		float fDistance = sqrtf(fTargetX * fTargetX + fTargetY * fTargetY);
+
+		m_fStateTick -= fElapsedTime;
+
+		if (m_fStateTick <= 0.0f)          //only if stateTick less than zero we gonna do anything. For optimization
+		{
+			if (nHealth > 0)
+			{
+				if (fDistanceOffset < 9.0f) // before target
+				{
+
+
+					vx = 0;
+
+
+
+
+
+					if (checkFlag(bOnGround))  // if stay on ground
+					{
+
+						if (player->m_layer == Friend)
+						{
+
+
+
+							if (!checkFlag(isAttack) && !checkFlag(IsOnePlay))   // if no attack b noplay (hit)
+							{
+
+
+								if (fDistanceOffset > 0.3f)
+								{
+									vx = (ftargetoffset / fDistanceOffset) * (getEndMovement() / 4);
+								}
+
+
+								//vy = (fTargetY / fDistance) * 1.0f;
+
+								if (vx > 0)
+								{
+									M_nFacingDirection = EAST;
+
+								}
+								else
+								{
+									M_nFacingDirection = WEST;
+
+
+								}
+
+								if (fDistanceOffset < fSpecAtckdist && rand() % 5 == 4)  // && rand() % 25 == 5
+								{
+
+									SpecAttack(fTargetX, fTargetY, fDistance);
+
+
+								}
+								else if (fDistanceOffset < fAttackDist)
+								{
+									if (rand() % 10 >= 5 && !checkFlag(isAttack))
+									{
+
+										AttackOne();
+
+									}
+									else
+									{
+
+										AttackTwo();
+									}
+								}
+							}
+						}
+						else
+						{
+							vx = 0;
+						}
+
+					}
+					else
+					{
+
+
+
+					}
+				}
+				else
+				{
+					float vxhelp1, vxhelp2;
+
+
+
+
+
+
+
+
+					//Randomizer walking bandit 
+					vxhelp1 = rand() % 2;
+					vxhelp2 = rand() % 2;
+
+
+					vx = vxhelp2 - vxhelp1;
+
+
+
+					if (vx > 0)
+					{
+						M_nFacingDirection = EAST;
+
+					}
+					else
+					{
+						M_nFacingDirection = WEST;
+					}
+
+
+
+					//vy = 0;
+					cDynamic_TextDamage* T;
+					olc::vf2d textdamagecoord;
+					switch (rand() % 50)
+					{
+					case 1:
+
+						textdamagecoord = { (float)px + CollbordersX + 0.25f, (float)py };
+						T = (cDynamic_TextDamage*)g_engine->SpawnBattleText(textdamagecoord, "We shut all them.", olc::RED);
+
+
+						break;
+					case 2:
+						textdamagecoord = { (float)px + CollbordersX + 0.25f, (float)py };
+						T = (cDynamic_TextDamage*)g_engine->SpawnBattleText(textdamagecoord, "Boss Protect Us...", olc::RED);
+
+						break;
+					case 3:
+						if (abs(fTargetX) < 7.0f)
+						{
+
+
+							textdamagecoord = { (float)px + CollbordersX + 0.25f, (float)py };
+							T = (cDynamic_TextDamage*)g_engine->SpawnBattleText(textdamagecoord, "Fuck you!!!", olc::RED);
+
+						}
+						break;
+
+					}
+
+
+				}
+			}
+			else
+			{
+
+				setFlag(bDead);
+			}
+
+			m_fStateTick += 0.35f;
+
+		}
+
+		if (checkFlag(bOnGround))
+		{
+
+			if (M_nFacingDirection == EAST)
+			{
+
+				if (g_engine->CheckPosition(px + CollbordersXF + (vx * fElapsedTime), py + CollbordersYF + 0.4))
+					vx = 0;
+			}
+			else
+			{
+
+				if (g_engine->CheckPosition(px + CollbordersX + (vx * fElapsedTime), py + CollbordersYF + 0.4))
+					vx = 0;
+
+			}
+
+		}
+
+	}
+
+
+}
+
+void cDynamic_creature_BanditArcher::ReturnToPool()
+{
+	{
+		cDynamic_Creature::ReturnToPool();
+		this->sName = "BanditArcher";
+		this->nHealth = this->nHealthMax;
+		g_engine->PoolsController(g_engine->getBanditsArcherPool(), this);
+	}
+}
+
 
 void cDynamic_creature_BanditArcher::SpecAttack(float targetX, float targetY, float Distance)
 {
@@ -2126,8 +2421,8 @@ void cDynamic_creature_BanditArcher::SpecAttack(float targetX, float targetY, fl
 	vx = 0;
 	//setFlag(isDirectionLock);
 
-	float time =Distance;
-	float vxtest = targetX/Distance ;
+	float time =1.5f;
+	float vxtest = targetX/time ;
 
 	sparedVx = vxtest;
 					//дистанция по y +половину от гравитации, в нашем случае 5, домножая на время 5 в квадрате
@@ -2201,15 +2496,15 @@ void cDynamic_creature_Pantir::PerformAttack()
 			case cDynamic_Creature::Attack:
 
 				this->energyAmount -= 55;
-				calculatedDamage = (EndAverageAttack+rand3 ) * 2.65f;
+				calculatedDamage = (EndAverageAttack + rand3 - 20) * 5;
 				break;
 			case cDynamic_Creature::AttackEasy:
 				this->energyAmount -=35;
 				calculatedDamage = (EndAverageAttack + rand3 - 20) * 5;
 				break;
 			case cDynamic_Creature::AttackGreat:
-				this->energyAmount -= 100;
-				calculatedDamage = (EndAverageAttack + rand3 + 20 ) * 3;
+				this->energyAmount = 0;
+				calculatedDamage = (EndAverageAttack + rand3 - 20) * 5;
 				break;
 			case cDynamic_Creature::DoubleJump:
 				this->energyAmount -= 20;
@@ -2218,7 +2513,7 @@ void cDynamic_creature_Pantir::PerformAttack()
 				this->energyAmount -= 35;
 				calculatedDamage = (EndAverageAttack + rand3) * 2.65f;
 				break;
-			case cDynamic_Creature::Eviscirate:
+			case cDynamic_Creature::EviscirateDown:
 				this->energyAmount += 15;
 				calculatedDamage = (EndAverageAttack + rand3 - 20 ) * 3.6f;
 				this->rageAmount -= 35;
@@ -2244,7 +2539,7 @@ void cDynamic_creature_Pantir::PerformAttack()
 				break;
 			case cDynamic_Creature::UpEviscirate:
 				this->energyAmount += 15;
-				calculatedDamage = (EndAverageAttack + rand3 - 20 ) * 3.6f;
+				calculatedDamage = (EndAverageAttack + rand3 - 20 ) * 3.0f;
 				this->rageAmount -= 35;
 				break;
 			case cDynamic_Creature::AirDownEviscirate:
@@ -2264,8 +2559,11 @@ void cDynamic_creature_Pantir::PerformAttack()
 
 
 				break;
-
-
+			case cDynamic_Creature::Eviscirate:
+				this->energyAmount += 15;
+				calculatedDamage = (EndAverageAttack + rand3) * 2.0f;
+				this->rageAmount -= 35;
+				break;
 			}
 
 			pEquipedWeapon->OnUse(this);
@@ -2294,6 +2592,19 @@ void cDynamic_Item::OnInteract(cDynamic* player)
 	
 	setFlag(bDead);
 	bCollected = true;
+}
+void cDynamic_Item::ReturnToPool()
+{
+	{
+		setFlag(bControllable);
+		clearFlag(binitialized);
+		setFlag(bDraw);
+		clearFlag(bDead);
+		clearFlag(quested);
+		this->sName = "pickup";
+		this->item = nullptr;
+		g_engine->PoolsController(g_engine->getItemPool(), this);
+	};
 }
 cDynamic_Item::cDynamic_Item() : cDynamic("pickup")     //Constructror
 {
@@ -2399,21 +2710,7 @@ void cDynamic_Projectile::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy
 	if (checkFlag(IsThrow))  // when projectile on air we calculate angle 
 	{
 	
-		float  preangle = atan2(vy, vx);
-		if (preangle < 0)
-		{
-			preangle += 2 * 3.14;
-		}
-		preangle = floor(preangle * 100) / 100;
-
-
-
-		if (!checkFlag(bOnGround))   // when we o the ground we stop calculating angle and frame rate
-		{
-			angle = preangle;
-			Frameindicator = Frameindicator % 6;
-		}
-
+	
 
 		gfx->DrawPartialRotatedDecal({ (px - ox) * (64.0f*g_engine->fscale),(py - oy) * (64.0f*g_engine->fscale) }, pSpriteRight, angle, { nSheetSize / 2 ,nSheetSize / 2 }, { (float)Frameindicator * nSheetSize,(float)m_GraphicState * nSheetSize }, { nSheetSize,nSheetSize });
 
@@ -2454,6 +2751,32 @@ void cDynamic_Projectile::Update(float fElapsedTime, cDynamic* player)
 		setFlag(bRedundant);
 
 
+	if (checkFlag(IsThrow))  // when projectile in air we add to him time for life 
+	{
+
+		fDuration = 0.3f;
+		float  preangle = atan2(vy, vx);   // получаем угол в радианах от -1 до 1 ( не корректно)
+		if (preangle < 0)
+		{
+			preangle += 2 * 3.14;          //преобразуем их в радины от 0 до 3.14*2
+		}
+		preangle = floor(preangle * 100) / 100;
+
+
+
+		if (!checkFlag(bOnGround))   // when we o the ground we stop calculating angle and frame rate
+		{
+			angle = preangle;
+			Frameindicator = Frameindicator % 6;
+
+
+		}
+		else
+		{
+			setFlag(bRedundant);
+		}
+
+	}
 
 
 		if (repitable)
@@ -2467,8 +2790,7 @@ void cDynamic_Projectile::Update(float fElapsedTime, cDynamic* player)
 		}
 		else      // when  bOngraund = false 
 		{
-		if(checkFlag(IsThrow))  // when projectile in air we add to him time for life 
-		fDuration = 0.3f;
+			
 
 		}
 
@@ -2478,25 +2800,7 @@ void cDynamic_Projectile::Update(float fElapsedTime, cDynamic* player)
 		{
 
 			
-			if (agrsr->checkFlag(isprojfollow))
-			{
-				py = agrsr->py;
-
-				if (m_FacingDirection == 3)  // west
-
-				{
-
-					px = agrsr->px + agrsr->CollbordersXF- CollbordersX;
-					
-				}
-				else
-				{  
-					px = agrsr->px - 2.0f + agrsr->CollbordersX+(2.0f - CollbordersXF);
-					
-				}
-
-
-			}
+			SetFollowProjPos();
 		}
 
 }
@@ -2592,9 +2896,11 @@ void cDynamic_Projectile::SetDeafult()
 	pSpriteRight = nullptr;
 	pSpriteLeft = nullptr;
 	clearFlag(binitialized);
+	clearFlag(isprojEqualX);
 	clearFlag(bRedundant);
 	clearFlag(gravity);
 	clearFlag(IsThrow); // help switch draw method in this class
+	clearFlag(isprojfollow);
 	this->m_GraphicState = 0;
 	SetTimer(0);
 	knockbacktime = 0;
@@ -2624,6 +2930,49 @@ void cDynamic_Projectile::SetSprites(olc::Decal* IpSpriteRight, olc::Decal* IpSp
 {
 	pSpriteRight = IpSpriteRight;
 	pSpriteLeft = IpSpriteLeft;
+
+	nSheetSize = pSpriteLeft->sprite->width / 6;
+}
+
+void cDynamic_Projectile::ReturnToPool()
+{
+	{
+		SetDeafult();
+		g_engine->PoolsController(g_engine->getProjectilePool(), this);
+	}
+}
+
+void cDynamic_Projectile::SetFollowProjPos()
+{
+
+	if (checkFlag(isprojfollow))
+	{
+
+
+		py = agrsr->py;
+		if (checkFlag(isprojEqualX)==false)
+		{
+			if (m_FacingDirection == 3)  // west
+
+			{
+
+				px = agrsr->px + agrsr->CollbordersXF - CollbordersX;
+
+			}
+			else
+			{
+				px = agrsr->px - 2.0f + agrsr->CollbordersX + (2.0f - CollbordersXF);
+
+			}
+
+		}
+		else
+		{
+			px = agrsr->px;
+
+		}
+
+	}
 }
 
 void cDynamic_Projectile::SetAgressorThowData(cDynamic_Creature* aggresor, uint8_t Time)
@@ -2670,6 +3019,8 @@ void cDynamic_Projectile::SetAgressorThowData(cDynamic_Creature* aggresor, uint8
 
 void cDynamic_Projectile::SetAgressorData(cDynamic_Creature* Aggresor)
 {
+
+	
 	agrsr = Aggresor;
 	this->m_GraphicState = setEnum(Aggresor->FxColumn);
 	SetTimer(Aggresor->FxColumn);
@@ -2687,16 +3038,34 @@ void cDynamic_Projectile::SetAgressorData(cDynamic_Creature* Aggresor)
 	m_FacingDirection = Aggresor->GetFacingDirection();
 	m_VerticalFacingDirection = Aggresor->GetFacingDirectionVertical();
 	HitAmount = Aggresor->Hittimes;  //   < -- we add how many times our projectile should take damage before leave  default 1
-
-
 	
+	setFlag(isprojfollow);
+	if (Aggresor->checkFlag(Aggresor->isprojEqualX))
+	{
+		this->setFlag(this->isprojEqualX);
+	
+	}
+
+
+	SetFollowProjPos();
 
 }
 
 void cDynamic_HpBar::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)
 {
-	float hpdiff = charHp / procent;
-	charHp = Hpowner->nHealth;
+	float hpdiff;;
+	if (charHp<0)
+	{
+		hpdiff = 0;
+		charHp = 0;
+	}
+	else
+	{
+		hpdiff = charHp / procent;
+		charHp = Hpowner->nHealth;
+	}
+
+	
 
 	if (Hpowner->checkFlag(bDead))
 	{
@@ -2708,13 +3077,13 @@ void cDynamic_HpBar::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)
 	float drawPosY = (py - oy) * (64.0f * g_engine->fscale) + (18 * g_engine->fscale);
 
 	// Отрисовка общей рамки с использованием декали
-	gfx->DrawPartialDecal({ drawPosX, drawPosY }, g_engine->D_Ui,
+	gfx->DrawPartialDecal({ drawPosX, drawPosY }, g_engine->D_FullUi,
 		{ (float)soursceposX, (float)soursceposY + soursceSizeY },
 		{ (float)soursceSizeX, (float)soursceSizeY },
 		{ g_engine->fscale, g_engine->fscale });
 
 	// Отрисовка полоски здоровья (с учётом оставшегося HP)
-	gfx->DrawPartialDecal({ drawPosX, drawPosY }, g_engine->D_Ui,
+	gfx->DrawPartialDecal({ drawPosX, drawPosY }, g_engine->D_FullUi,
 		{ (float)soursceposX, (float)soursceposY },
 		{ hpdiff, (float)soursceSizeY },
 		{ g_engine->fscale, g_engine->fscale });
@@ -2868,6 +3237,15 @@ void cDynamic_TextDamage::SetDeafult()
 
 }
 
+void cDynamic_TextDamage::ReturnToPool()
+{
+	{
+		SetDeafult();
+		g_engine->PoolsController(g_engine->getTextPool(), this);
+
+	};
+}
+
 void cDynamic_creature_Pantir::MergeItemLvl()
 {
 
@@ -2923,7 +3301,7 @@ void cDynamic_creature_Pantir::EnergyMoveAttackAir()
 	if (!bHideMode )
 	{
 
-
+		
 		setFlag(isAttack);
 		clearFlag(IsOnePlay);
 		setFlag(isprojfollow);    // keep projectile follow at char 
@@ -2954,9 +3332,42 @@ void cDynamic_creature_Pantir::EnergyMoveAttackAir()
 	ProjCollbordersY = 0.65f;
 	ProjCollbordersYF = 1.5f;
 	
-
+	
 }
  }
+
+void cDynamic_creature_Pantir::comboManager()
+{
+	switch (Combocounter)
+	{
+	case 0:
+		EnergyMoveAttackLow();
+		Combocounter = 1;
+		fAttackcount = 0.0f;
+		break;
+	case 1:
+	//	if (energyAmount > 55)
+	//	{
+
+		EnergyMoveAttackMid();
+		fAttackcount = 0.0f;
+		Combocounter = 2;
+	//	}
+	//	else
+	//	{
+	//		EnergyMoveAttackLow();
+	//		Combocounter = 1;
+	//		fAttackcount = 0.0f;
+	//	}
+		break;
+	case 2:
+		EnergyMoveAttackHigh();
+		fAttackcount = 0.0f;
+		Combocounter = 0;
+		break;
+	}
+
+}
 
 void cDynamic_creature_Pantir::EnergyMoveAttackLow()
 {
@@ -2964,16 +3375,16 @@ void cDynamic_creature_Pantir::EnergyMoveAttackLow()
 	{
 		
 		
-
+		SetVerticalDirection(3); //for escape coflicts with held botton up or down 
 		sparedVx = vx;
 		sparedVy = 1.0f;
 		setFlag(isAttack);
-		clearFlag(IsOnePlay);
+		setFlag(IsOnePlay);
 		setFlag(isprojfollow);    // keep projectile follow at char 
 		clearFlag(Btarget);
 		enumCounter = 4; // <--Easy sinister strike
 		frameIndicator = 0;
-		fAttackcount = 0.5f; // timer for attack easy mode 
+		
 
 		Hittimes = 1;
 
@@ -3011,12 +3422,12 @@ void cDynamic_creature_Pantir::EnergyMoveAttackLow()
 
 
 
-		
+		g_engine->PlaySounds("SwordSwingTwo");
 
 		
 	}
 }
-void cDynamic_creature_Pantir::SetHealth(int setHealth)
+void cDynamic_Creature::SetHealth(int setHealth)
 {
 	if (setHealth>=nHealthMax)
 	{
@@ -3081,12 +3492,12 @@ void cDynamic_creature_Pantir::EnergyMoveAttackMid()
 {
 	if (!bHideMode)
 	{
-
+		SetVerticalDirection(3); //for escape coflicts with held botton up or down 
 		setFlag(isAttack);
-		clearFlag(IsOnePlay);
-		enumCounter = 3; // <-- Mid sinister strike
+		setFlag(IsOnePlay);
 		setFlag(isprojfollow);    // keep projectile follow at char 
 		clearFlag(Btarget);
+		enumCounter = 3; // <-- Mid sinister strike
 		frameIndicator = 0;
 		fAttackcount = 0.5f;
 		sparedVx = vx;
@@ -3100,18 +3511,18 @@ void cDynamic_creature_Pantir::EnergyMoveAttackMid()
 		ProjCollbordersYF = 1.5f;
 		//
 
-		m_nGraphicCounterY = 2;
+		m_nGraphicCounterY = 1;
 		m_nGraphicCounterX = 0;
-		m_nGraphicAmountFrames = 8;
-		attackdirectionX = 0.5f;
-		attackdirectionY = -0.1f;
-		m_nShockTime = 0.15f;    // <--knockbacktime
+		m_nGraphicAmountFrames = 4;
+		attackdirectionX = 0.2f;
+		attackdirectionY = -0.3f;
+		m_nShockTime = 0.1f;
 
 
 
-		rageset = 20;
+		rageset = 15;
 
-		FXFrame = 2;
+		FXFrame = 1;
 		FxColumn = 1;
 
 		
@@ -3129,7 +3540,7 @@ void cDynamic_creature_Pantir::EnergyMoveAttackMid()
 		//	break;
 
 		//}
-
+		g_engine->PlaySounds("SwordSwingTwo");
 	}
 }
 
@@ -3137,11 +3548,12 @@ void cDynamic_creature_Pantir::EnergyMoveAttackHigh()
 {
 	if (!bHideMode)
 	{
+		SetVerticalDirection(3); //for escape coflicts with held botton up or down 
 		setFlag(isAttack);
-		clearFlag(IsOnePlay);
-		enumCounter = 5; // <-- High sinister strike
+		setFlag(IsOnePlay);
 		setFlag(isprojfollow);    // keep projectile follow at char 
 		clearFlag(Btarget);  // <--- Set projectile take target enemy for blink or other
+		enumCounter = 5; // <-- High sinister strike
 		frameIndicator = 0;
 		fAttackcount = 0.5f;
 		sparedVx = vx;
@@ -3156,15 +3568,15 @@ void cDynamic_creature_Pantir::EnergyMoveAttackHigh()
 		//
 
 		m_nGraphicCounterY = 1;
-		m_nGraphicCounterX = 0;
-		m_nGraphicAmountFrames = 14;
-		attackdirectionX = 0.9f;
-		attackdirectionY = -0.2f;
-		m_nShockTime = 0.2f;
+		m_nGraphicCounterX = 5;
+		m_nGraphicAmountFrames = 4;
+		attackdirectionX = 0.2f;
+		attackdirectionY = -0.3f;
+		m_nShockTime = 0.1f;
 
-		FXFrame = 8;
+		FXFrame = 7;
 		FxColumn = 0;
-		rageset = 30;
+		rageset = 15;
 
 		
 
@@ -3181,6 +3593,58 @@ void cDynamic_creature_Pantir::EnergyMoveAttackHigh()
 		//	break;
 
 		//}
+		g_engine->PlaySounds("SwordSwingTwo");
+	}
+}
+
+void cDynamic_creature_Pantir::RageMoveAttck()
+{
+	if (!bHideMode)
+	{
+		SetVerticalDirection(3); //for escape coflicts with held botton up or down 
+		FXFrame =12;
+		sparedVy = 1.0f;
+		setFlag(isAttack);
+		clearFlag(IsOnePlay);
+		setFlag(isprojfollow);    // keep projectile follow at char 
+
+		enumCounter = 26;  //  eviscirate jump down
+	
+		frameIndicator = 0;
+
+	//	vy = -0.5f;
+		if (GetFacingDirection() == 3)
+			vx = 5.0f;		
+		else
+		vx = -5.0f;
+		
+		rageset = 0;
+		Hittimes = 2;
+
+		//ProjSize
+		ProjCollbordersX = 0.2f;
+		ProjCollbordersXF = 1.9f;
+		ProjCollbordersY = 0.75f;
+		ProjCollbordersYF = 1.8f;
+		//
+
+		m_nGraphicCounterY = 1;
+		m_nGraphicCounterX = 9;
+		m_nGraphicAmountFrames = 7;  //  <---Means how long our projectile should work
+		attackdirectionX = 0.1f;
+		attackdirectionY = 1.1f;
+		m_nShockTime = 0.15f;
+
+
+		//ProjOffsetX = 0.0f;
+	 //    // <--Weast
+		//ProjOffsetY = 0.25f;
+
+
+		FxColumn =4;
+
+
+
 
 	}
 }
@@ -3189,6 +3653,7 @@ void cDynamic_creature_Pantir::RageMoveAttackUp()
 {
 	if (!bHideMode)
 	{
+		SetVerticalDirection(3); //for escape coflicts with held botton up or down 
 		sparedVx = vx;
 		sparedVy = 1.0f;
 		setFlag(isAttack);
@@ -3246,6 +3711,7 @@ void cDynamic_creature_Pantir::RageMoveAttackAir()
 {
 	if (!bHideMode)
 	{
+		SetVerticalDirection(3); //for escape coflicts with held botton up or down 
 		sparedVx = vx;
 		sparedVy = 1.0f;
 		setFlag(isAttack);
@@ -3290,6 +3756,7 @@ void cDynamic_creature_Pantir::EnergyMoveAttackBack()
 {
 	if (!bHideMode)
 	{
+		SetVerticalDirection(3); //for escape coflicts with held botton up or down 
 		setFlag(isAttack);
 		clearFlag(IsOnePlay);
 		clearFlag(Btarget); // <--- Set projectile take target enemy for blink or other
@@ -3651,6 +4118,8 @@ bool cDynamic_creature_Pantir::IsLanded()
 		clearFlag(isAttack);
 		clearFlag(IsOnePlay);
 		frameIndicator = 0;
+		Combocounter = 0;
+		fAttackcount = 0.0f;
 		setEnum();
 		return false;
 	}
@@ -3791,36 +4260,17 @@ void cDynamic_creature_Enemy::Behaviour(float fElapsedTime, cDynamic* player)
 {
 	if (checkFlag(bControllable)) // when we control in scripteditor
 	{
-		float Bevpx, Bevpy;
-		float bvhelper = -1;
+	
 
 		float fTargetX = player->px - px ;  // offset for archer 
 		float fTargetY = player->py - py ;
 
-		float ftargetoffset;
 
-	//	std::cout << fTargetX << std::endl;
-
-		if (fTargetX >0)  // means that mob in right  position
-		{
-			bvhelper = -1;
-			Bevpx = CollbordersXF + BeveOffsetpX * bvhelper;
-
-
-		}
-		else
-		{
-			
-			Bevpx = BeveOffsetpX -CollbordersXF ;
-			//Bevpy = BeveOffsetpY;
-
-		}
-	//	std::cout << Bevpx  << std::endl;
-		ftargetoffset = fTargetX + Bevpx;
+	
 
 
 		float fDistance = sqrtf(fTargetX * fTargetX + fTargetY * fTargetY);
-		float fDistanceOffset = sqrtf(ftargetoffset * ftargetoffset + fTargetY * fTargetY);
+	
 		
 
 		m_fStateTick -= fElapsedTime;
@@ -3851,9 +4301,9 @@ void cDynamic_creature_Enemy::Behaviour(float fElapsedTime, cDynamic* player)
 						{
 
 
-							if (fDistanceOffset >0.3f)
+							if (fDistance >0.3f)
 							{
-							vx = (ftargetoffset / fDistanceOffset) *(getEndMovement()/4);
+							vx = (fTargetX / fDistance) *(getEndMovement()/4);    // скорость расстояние делить на время 
 							}
 
 							
@@ -3871,14 +4321,14 @@ void cDynamic_creature_Enemy::Behaviour(float fElapsedTime, cDynamic* player)
 
 							}
 
-							if (fDistanceOffset < fSpecAtckdist && rand() % 5 == 4)  // && rand() % 25 == 5
+							if (fDistance < fSpecAtckdist && rand() % 5 == 4)  // && rand() % 25 == 5
 							{
 
 								SpecAttack(fTargetX, fTargetY,fDistance);
 
 
 							}
-							else if (fDistanceOffset < fAttackDist)
+							else if (fDistance < fAttackDist)
 							{
 								if (rand() % 10 >= 5 && !checkFlag(isAttack))
 								{
@@ -3978,7 +4428,7 @@ void cDynamic_creature_Enemy::Behaviour(float fElapsedTime, cDynamic* player)
 				setFlag(bDead);
 			}
 
-			m_fStateTick += 0.35f;
+			m_fStateTick += 0.3f;
 
 		}
 
@@ -4020,21 +4470,25 @@ cDynamic_creature_BossBandit::cDynamic_creature_BossBandit():  cDynamic_creature
 	//nSheetSizeX = 256.0f;
 //	nSheetSizeY = 256.0f;
 	looptimes = 3;
-
+//	entityScale = 2.0f;
 	//collision borders
-	CollbordersX = 0.75f*2;
-	CollbordersXF = 1.18f*2;
+	CollbordersX =1.0f+0.7f;
+	CollbordersXF = 3.0f-0.7f;
 
 
-	CollbordersY = 0.7f*2;
-	CollbordersYF = 1.5f*2;
+	CollbordersY = 1.0f+0.5f;
+	CollbordersYF = 3.0f;
 	//
 
 	pEquipedWeapon = (cWeapon*)RPG_Assets::get().GetItem("Bandit Boss Sword");
-	hpUpdate = new cDynamic_HpBar(px, py, nHealth, this);
+
+	hpUpdate = new Boss_HpBar(px, py, nHealth, this);
 
 	LvL = 1;
 
+	nSheetSizeX = 128.0f;
+	nSheetSizeY = 128.0f;
+	CenterX = (nSheetSizeX / g_engine->CellSize) / 2;
 
 	setBasicMovement(20);
 	setBasicAgility(7);
@@ -4063,7 +4517,8 @@ void cDynamic_creature_BossBandit::Behaviour(float fElapsedTime, cDynamic* playe
 {
 	if (checkFlag(bControllable)) // when we control in scripteditor
 	{
-		float fTargetX = player->px - px;
+	
+		float fTargetX = (player->px+player->CenterX) - (px+CenterX);
 		float fTargetY = player->py - py;
 		float fDistance = sqrtf(fTargetX * fTargetX + fTargetY * fTargetY);
 
@@ -4074,7 +4529,7 @@ void cDynamic_creature_BossBandit::Behaviour(float fElapsedTime, cDynamic* playe
 		{
 			if (nHealth > 0)
 			{
-				if (fDistance < 9.0f && player->m_layer == Friend) // before target
+				if (fDistance < 9.0f) // before target
 				{
 
 
@@ -4108,37 +4563,50 @@ void cDynamic_creature_BossBandit::Behaviour(float fElapsedTime, cDynamic* playe
 
 							}
 
-						
-							 if (fDistance < 2.2f)
+
+							if (attckCount >= 3)
 							{
-								 int randv = rand() % 12;
-								if (randv >= 7 )
+								Mocking();
+							}
+							else
+							{
+
+
+
+								if (fDistance < 2.2f)
 								{
 
-									
-									//Mocking();
 
-									SpecAttack2(fTargetX, fTargetY, fDistance); // vertushka
+
+
+
+									int randv = rand() % 12;
+									if (randv >= 7)
+									{
+
+
+										//Mocking();
+
+										SpecAttack2(fTargetX, fTargetY, fDistance); // vertushka
+
+									}
+									else if (randv <= 4)
+									{
+
+										AttackTwo();
+									}
+									else
+									{
+										SpecAttack(fTargetX, fTargetY, fDistance); // nunchaki
+
+									}
+
+
 
 								}
-								else if (randv <=4)
-								{
-									
-									AttackTwo();
-								}
-								else if (randv>=5 && randv < 7)
-								{
-								 SpecAttack(fTargetX, fTargetY, fDistance); // nunchaki
 
-								}
-								else
-								{
-									Mocking();
-
-								}
-
-								
-							 }
+							}
+							 
 							
 						}
 
@@ -4196,7 +4664,7 @@ void cDynamic_creature_BossBandit::Behaviour(float fElapsedTime, cDynamic* playe
 				setFlag(bDead);
 			}
 
-			m_fStateTick += 0.3f;
+			m_fStateTick += 0.1f;
 
 		}
 
@@ -4230,12 +4698,14 @@ void cDynamic_creature_BossBandit::Behaviour(float fElapsedTime, cDynamic* playe
 void cDynamic_creature_BossBandit::SpecAttack(float targetX, float targetY, float Distance)
 {
 
+	M_nFacingDirectionVertical = NORTH;
 	setFlag(isAttack);
 	setFlag(isprojfollow);
-	enumCounter = 4;     //  <---Attack Huricane
+	
+	enumCounter = 4;     //  <---Attack twist rope 
 	looptimes = 2;
 	frameIndicator = 0;
-	FxColumn = 8;    //<--  3 column      place eviscirate
+	FxColumn = 2;    //<--  3 column      place eviscirate
 	vx = 0;
 
 	m_nShockTime = 0.3f;
@@ -4263,20 +4733,21 @@ void cDynamic_creature_BossBandit::SpecAttack(float targetX, float targetY, floa
 
 	attackdif = 1;
 
-
+	attckCount++;
 }
 
 
 void cDynamic_creature_BossBandit::SpecAttack2(float targetX, float targetY, float Distance)
 {
-
+	M_nFacingDirectionVertical = NORTH;
 
 	setFlag(isAttack);
 	setFlag(isprojfollow);
+	
 	enumCounter = 4;     //  <---Attack Huricane
 	looptimes = 2;
 	frameIndicator = 0;
-	FxColumn = -1;    //<--  3 column      place eviscirate
+	FxColumn = 0;    //<--  3 column      place eviscirate
 	vx = 0;
 	sparedVx = (targetX / Distance > 0) ? 5 : -5; //vx storrage
 	sparedVy = 1.0f;
@@ -4287,10 +4758,9 @@ void cDynamic_creature_BossBandit::SpecAttack2(float targetX, float targetY, flo
 	//ProjSize
 	ProjCollbordersX = 0.5f;
 	ProjCollbordersXF = 3.36f;
-	ProjCollbordersY = 0.8f;
-	ProjCollbordersYF = 3.25f;
+	ProjCollbordersY = CollbordersY;
+	ProjCollbordersYF = CollbordersYF;
 	//
-	M_nFacingDirectionVertical = NORTH;
 	attackdirectionX = 0.3f;
 	attackdirectionY = -0.5f;
 
@@ -4306,6 +4776,9 @@ void cDynamic_creature_BossBandit::SpecAttack2(float targetX, float targetY, flo
 
 	
 	FXFrame = m_nGraphicCounterX + m_nGraphicAmountFrames -3;
+
+
+	attckCount++;
 }
 
 
@@ -4318,6 +4791,8 @@ void cDynamic_creature_BossBandit::Mocking()
 	vx = 0;
 	setFlag(isDirectionLock);
 	looptimes = 3;
+
+	attckCount = 0;
 
 }
 
@@ -4337,12 +4812,12 @@ void cDynamic_creature_BossBandit::AttackTwo()
 	FXFrame = 9;
 	vx = 0;
 
-	FxColumn = 0;    //<--  3 column      
+	FxColumn = 1;    //<--  3 column      
 	//ProjSize
-	ProjCollbordersX = 0.25f;
-	ProjCollbordersXF = 1.75f;
-	ProjCollbordersY = 1.2f;
-	ProjCollbordersYF = 2.5f;
+	ProjCollbordersX = 1.0f;
+	ProjCollbordersXF = 3.0f;
+	ProjCollbordersY = CollbordersY;
+	ProjCollbordersYF =CollbordersYF;
 	//
 
 	M_nFacingDirectionVertical = NOTLOOKING;
@@ -4352,27 +4827,11 @@ void cDynamic_creature_BossBandit::AttackTwo()
 	m_nShockTime = 0.1f;
 
 	
-	//sparedVx = -vx;
-	//vy = -10.0f;
-	//frameIndicator = 0;
-	//setEnum();
 
-	//switch (GetFacingDirection())
-	//{
-	//case 1:       // <--East
-	//	ProjOffsetX = -0.25f;
-	//	ProjOffsetY = 0.5f;
-	//	break;
-	//case 3:       // <--Weast
-	//	ProjOffsetX = +2.1f;
-	//	ProjOffsetY = 0.5f;
-	//	break;
-
-	//}
-
-
+	attckCount++;
 
 }
+
 
 void cDynamic_creature_BossBandit::IndicateAnim()
 {
@@ -4461,7 +4920,7 @@ void cDynamic_creature_BossBandit::IndicateAnim()
 
 
 		break;
-	case Eviscirate:
+	case EviscirateDown:
 
 		break;
 	case AirEviscirate: 
@@ -4474,6 +4933,15 @@ void cDynamic_creature_BossBandit::IndicateAnim()
 
 
 	}
+}
+
+void cDynamic_creature_BossBandit::ReturnToPool()
+{
+	{
+		this->sName = "BanditBoss";
+		this->nHealth = this->nHealthMax;
+		g_engine->PoolsController(g_engine->getBanditBossPool(), this);
+	};
 }
 
 VfxParticles::VfxParticles(float px, float py)  : cDynamic("Particles")
@@ -4558,31 +5026,6 @@ void VfxLevel::Update(float fElapsedTimeб, cDynamic* player)
 //VfxParticles::VfxParticles(float px, float py) : cDynamic("Particles")
 VfxShot::VfxShot(float px, float py) : VfxParticles(px, py)
 {
-	this->VfxParticle = RPG_Assets::get().GetSprite("SoulShotVfx");
-	bSolidVsMap = true;
-	time = 1.0f;
-	timecount = 0.0f;
-	AlphaColor = 255.0f;
-
-	CollbordersX = 0;
-	CollbordersXF = 0;
-	CollbordersY = 0;
-	CollbordersYF = 0;
-
-	for (int i = 0; i < 18; ++i)
-	{
-		// Randomize starting positions, speeds, and angles for the raindrops
-
-		float speed = static_cast<float>(rand() % 5) + 1; // Random speed between 50 and 150 pixels per second
-		float angle = (i * 10+180) * 3.14159f / 180.0f; // Random angle between 0 and pi radians
-
-		olc::vf2d vSize{ std::cos(angle),std::sin(angle) };
-
-		m_vecVfxLevel.push_back(vSize);
-		m_speed.push_back(speed);
-	}
-
-
 }
 
 void VfxShot::Update(float fElapsedTimeб, cDynamic* player)
@@ -4638,6 +5081,43 @@ void VfxShot::DrawSelf(olc::PixelGameEngine* gfx, float  offsetx, float offsety)
 		gfx->DrawRotatedDecal({ (this->px + (i.x * 0.3f) - offsetx) * g_engine->CellSize ,(this->py + (i.y * 0.3f) - offsety) * g_engine->CellSize }, VfxParticle, angle, { 0,0 }, { 1*g_engine->fscale,1 * g_engine->fscale }, olc::Pixel(255, 255, 255, AlphaColor));
 		//gfx->DrawPartialDecal({ (px+(i.x*10)) ,(py+(i.y*20)) }, VfxParticle, { 0,0 }, { 8,8 }, { 1,1 }, olc::WHITE);   //offset pulling player back into the screen
 	}
+}
+
+void VfxShot::Spawn()
+{
+	this->VfxParticle = RPG_Assets::get().GetSprite("SoulShotVfx");
+	bSolidVsMap = true;
+	time = 1.0f;
+	timecount = 0.0f;
+	AlphaColor = 255.0f;
+
+	CollbordersX = 0;
+	CollbordersXF = 0;
+	CollbordersY = 0;
+	CollbordersYF = 0;
+
+	for (int i = 0; i < 18; ++i)
+	{
+		// Randomize starting positions, speeds, and angles for the raindrops
+
+		float speed = static_cast<float>(rand() % 5) + 1; // Random speed between 50 and 150 pixels per second
+		float angle = (i * 10 + 180) * 3.14159f / 180.0f; // Random angle between 0 and pi radians
+
+		olc::vf2d vSize{ std::cos(angle),std::sin(angle) };
+
+		m_vecVfxLevel.push_back(vSize);
+		m_speed.push_back(speed);
+	}
+
+}
+
+void VfxShot::ReturnToPool()
+{
+	{
+		SetDefault();
+		g_engine->PoolsController(g_engine->getVfxShotPool(), this);
+
+	};
 }
 
 cDynamic_creature_Boar::cDynamic_creature_Boar() : cDynamic_creature_Enemy("ForestBoar", RPG_Assets::get().GetSprite("BoarRight"), RPG_Assets::get().GetSprite("BoarLeft"))
@@ -5137,6 +5617,19 @@ bool cDynamic_creature_Boar::IsLanded()
 	}
 }
 
+void cDynamic_creature_Boar::ReturnToPool()
+{
+	{
+		cDynamic_Creature::ReturnToPool();
+		this->sName = "ForestBoar";
+		this->nHealth = this->nHealthMax;
+		Run = false;
+		BRunready = false;
+		savedFx = 0.0f;
+		g_engine->PoolsController(g_engine->getBoarPool(), this);
+	}
+}
+
 //void cDynamic_creature_Boar::AttackOne()
 //{
 //	
@@ -5173,7 +5666,7 @@ void VfxDeath::Update(float fElapsedTime, cDynamic* player)
 
 	timecount += fElapsedTime;
 
-	if (time-timecount<0.8)
+	if (time-timecount<0.8f)
 	AlphaColor = 255 - (timecount * 100 * 2.55f);
 	
 
@@ -5230,74 +5723,245 @@ void VfxDeath::Update(float fElapsedTime, cDynamic* player)
 void VfxDeath::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)
 {
 
-	float nSheetSizeX = currpicturePos.y*128.0f;
-	float nSheetSizeY = currpicturePos.x*128.0f;
+	float nSheetSizeX = currpicturePos.y*64.0f;
+	float nSheetSizeY = currpicturePos.x*64.0f;
 
-	gfx->DrawPartialDecal({ (px - ox) * g_engine->CellSize,(py - oy) * g_engine->CellSize }, sprite, { nSheetSizeX,nSheetSizeY }, { 128,128 }, { 1 ,1 }, olc::Pixel(255, 255, 255, AlphaColor));   //offset pulling player back into the screen
+	gfx->DrawPartialDecal({ (px - ox) * g_engine->CellSize,(py - oy) * g_engine->CellSize }, sprite, { nSheetSizeX,nSheetSizeY }, { 64,64 }, { 1 ,1 }, olc::Pixel(255, 255, 255, AlphaColor));   //offset pulling player back into the screen
 	
 }
 
-ERaindrop::ERaindrop(float startX, float startY, float startSpeed, float startAngle) :Environment ("RainDrops")
+ERaindrop::ERaindrop(uint16_t index) :Environment("RainDrops")
 {
-	px = startX;
-	py = startY;
-	this->speed = startSpeed;
-	this->angle = startAngle;
-
+	//px = startX;
+	//py = startY;
+	//this->speed = startSpeed;
+	//this->angle = startAngle;
+	arrIndex = index;
 
 	psprite = RPG_Assets::get().GetSprite("RainVfx");
 
-	
+
+	cachedPositions = RPG_Assets::get().GetCache("RainFx");
+	//MakeCahce();
+
 }
 
-void ERaindrop::Update(float fElapsedTime, float screenwidth,float screenheigh)
+void ERaindrop::Update(float fElapsedTime, float fOffsetx,float fOffsety)
 {
 	// Update the position of the raindrop based on its speed and angle
 
 	//px = screenwidth+initpx;
 	//py = screenheigh + initpy;
 
-
-
+	
+	
+	
 	// If raindrop goes off screen, wrap it around to the top
-	if (py > screenheigh+8)
-		py = screenheigh-1;
-	if (py<screenheigh-1)
-		py = screenheigh + 8;
-	if (px > screenwidth+15)
-		px = screenwidth;
-	if (px < screenwidth)
-		px = screenwidth + 15;
+	//if (py > g_engine->ScreenHeight())
+	//	py = 0;
+	//if (py< 0)
+	//	py = g_engine->ScreenHeight();
 
-	float velx = speed * fElapsedTime * angle * 0.01f;
-	float vely = speed * fElapsedTime * 0.03f;   // 0.01 - is snow
+	//if (px > g_engine->ScreenWidth())
+	//	px = 0;
+	//if (px <0)
+	//	px = g_engine->ScreenWidth() ;
 
-	if (g_engine->CheckParticlePosition(this->px + velx, this->py + vely)) // checkPosition on solidblocks  if @true@ means that we can teleport
+	ftargettime += fElapsedTime;
+
+//	float vely = speed * fElapsedTime;   // 0.01 - is snow
+//	float velx = angle * fElapsedTime;   // 0.01 - is snow
+
+	if (ftargettime>=1.0f/90.0f)
 	{
-	px += speed * fElapsedTime *angle*0.01f;
-	py += speed * fElapsedTime*0.03f;   // 0.01 - is snow
+		ftargettime = 0.0f;
 
+	for (int i = 0; i < cachedPositions->size(); i++)  // бежим по всему вектору 
+	{
+	//	for (int ii = 0; ii <counter[i]; ii++)
+	//	{
+		counter[i] = counter[i] % ((*cachedPositions)[i].size()-1); // если каунтер больше чем кадров в ряду, прыгаем на 0 
+
+
+		
+
+		if (i==0)
+		{
+
+		 checkX = (*cachedPositions)[i][counter[i]].x;
+		 checkY = (*cachedPositions)[i][counter[i]].y;
+
+		}
+
+
+
+	float worldPx = (*cachedPositions)[i][counter[i]].x / g_engine->CellSize + fOffsetx;   //переводим в мировые координаты игры 
+	float worldPy = (*cachedPositions)[i][counter[i]].y / g_engine->CellSize + fOffsety;
+
+	if (g_engine->CheckParticlePosition(worldPx, worldPy)) // checkPosition on solidblocks  if @true@ means that we can teleport
+	{
+
+		counter[i]++;  //обнавляем счётчики для всех линий
 
 	}
 	else
 	{
-		py = screenheigh - 1;
+		
+		g_engine->SpawnRainSpray(worldPx, worldPy, i + 100 );
+		counter[i] = 0;
+
+	
+		//	uint16_t test =arrIndex + 100 + i;   // 0-100 + 100+i;
+
+
+	}
+
+	//counter[i]++;  //обнавляем счётчики для всех линий
+
+
+	//	}
+	}
+
 	}
 	
-//
 }
 void ERaindrop::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)
 {
-	// Draw the raindrop using DrawPartialDecal
+	//cachedPositions[]
 
-	olc::vf2d vDecal(px, py); // Destination position (where to draw the raindrop)
+	for (int i = 0; i < cachedPositions->size(); i++)
+	{
+		
+		if (counter[i] >= (*cachedPositions)[i].size()) {
+			std::cout << "Counter[" << i << "] exceeded cache size. Counter: " << counter[i]
+				<< ", Cache Size: " << std::endl;
+		}
 
-	//DrawRotatedDecal({ vDecal }, RPG_Assets::get().GetSprite("RainVfx"),atan2(vDecal.y-(vDecal.y+drop.speed*std::sin(drop.angle)), vDecal.x-(vDecal.x+drop.speed*std::cos(drop.angle))));
-	gfx->DrawPartialDecal({(px-ox)*g_engine->CellSize, (py-oy) * g_engine->CellSize }, psprite, { 0.0f,0.0f }, { 8.0f,8.0f }, { (float)1*g_engine->fscale,(float)1.5 * g_engine->fscale }, olc::WHITE);// Draw raindrop image with transparency
+
+			olc::vf2d vDecal((*cachedPositions)[i][counter[i]].x, (*cachedPositions)[i][counter[i]].y); // Destination position (where to draw the raindrop)
+
+			//DrawRotatedDecal({ vDecal }, RPG_Assets::get().GetSprite("RainVfx"),atan2(vDecal.y-(vDecal.y+drop.speed*std::sin(drop.angle)), vDecal.x-(vDecal.x+drop.speed*std::cos(drop.angle))));
+			gfx->DrawPartialDecal({ vDecal.x, vDecal.y }, psprite, { 0.0f,0.0f }, { 8.0f,8.0f }, { (float)1 * g_engine->fscale,(float)1.5 * g_engine->fscale }, olc::WHITE);// Draw raindrop image with transparency
+	
+	}
+}
+
+void ERaindrop::MakeCahce()
+{
+	// Массив для хранения движений капель (100 капель, каждая имеет, например, 60 позиций)
+	std::vector<std::vector<CachedPosition>> cachedPositions(100, std::vector<CachedPosition>(0));
+
+	std::array < olc::vf2d, 3> vel_ar;   // we use for make dynamic lower 
+//	std::array < float, 3> angle_ar;     // and write it in file
+	std::array < float, 100> speed_ar;
+	std::array<float, 100> XPos_ar;
+
+
+	std::ofstream outFile("cache/fxcache/rainsDrop.txt", std::ios::binary);
+	if (!outFile.is_open())
+	{
+		std::cerr << "Unable to open file for writing: " << "cache/fxcache/rainspray.txt" << std::endl;
+		return;
+	}
+
+	float time = 1.0f;            
+	float cahceframe = 1.0f / 90.0f;
+	//float startcount = 0.0f;
+
+	SetPos(0.0f, 0.0f);
+	
+	py = 0.0f;
+	
+	
+
+	for (int i = 0; i < 100; i++)        //заполняем массив на позиции X 
+	{
+
+	
+		float startX = static_cast<float>(rand() % g_engine->ScreenWidth());
+		bool isDuplicate = false;
+
+		// Проверяем, существует ли уже такая позиция в массиве
+		for (int ii = 0; ii < i; ii++) // Сравниваем только с уже добавленными элементами
+		{
+			if (XPos_ar[ii] == startX)
+			{
+				isDuplicate = true;
+				break;
+			}
+		}
+
+		// Если найдено совпадение, пропускаем текущую итерацию и пытаемся еще раз
+		if (isDuplicate)
+		{
+			i--; // Уменьшаем индекс для повторной попытки
+		}
+		else
+		{
+			XPos_ar[i] = startX; // Если нет совпадений, сохраняем позицию
+		}
+
+	}
+	
+	
+
+	for (int i = 0; i < 100; i++)
+	{
+		py = 0;
+		float speed = static_cast<float>(rand() % 500) + 450; // Random speed between 50 and 150 pixels per second
+		float startX = static_cast<float>(rand() % g_engine->ScreenWidth());
+
+		speed_ar[i] = speed;
+	do
+	{
+	//	startcount += cahceframe;
+
+
+
+
+			float vely = speed_ar[i] * cahceframe;   // 0.01 - is snow
+
+
+			py += vely;
+
+
+			// Закешировать текущую позицию
+			cachedPositions[i].push_back({ XPos_ar[i], py });
+
+		
+
+			 
+
+
+
+
+	} while (py < g_engine->ScreenHeight());    // выполняем пока меньше таргета 
+	}
+
+
+
+
+
+	// Сначала записываем количество объектов (векторов позиций)
+	uint32_t numObjects = cachedPositions.size(); // Получаем количество векторов
+	outFile.write(reinterpret_cast<const char*>(&numObjects), sizeof(numObjects)); // Записываем количество векторов в файл
+
+	// Записываем данные для каждого объекта
+	for (const auto& positions : cachedPositions) // Итерируемся по каждому вектору позиций
+	{
+		uint32_t numPositions = positions.size(); // Получаем количество позиций в текущем векторе
+		outFile.write(reinterpret_cast<const char*>(&numPositions), sizeof(numPositions)); // Записываем количество позиций в файл
+
+		// Записываем каждую позицию (массив) в файл
+		outFile.write(reinterpret_cast<const char*>(positions.data()), numPositions * sizeof(CachedPosition)); // Записываем все позиции текущего вектора
+	}
+
+	outFile.close(); // Закрываем файл после завершения записи
 }
 
 
-Edynamic_Cloud::Edynamic_Cloud(float StartX, float startY, olc::Decal* psprite, float speed) :Environment ("Cloud")
+
+Edynamic_Cloud::Edynamic_Cloud(float StartX, float startY, olc::Decal* psprite, float speed, uint16_t arrindex) :Environment ("Cloud")
 {
 	this->px = StartX;
 	this->py = startY;
@@ -5305,7 +5969,11 @@ Edynamic_Cloud::Edynamic_Cloud(float StartX, float startY, olc::Decal* psprite, 
 	this->psprite = psprite;
 	widthsprite = psprite->sprite->width;
 	heightsprite = psprite->sprite->height;
+	
+	arrIndex = arrindex;
 }
+
+
 
 void Edynamic_Cloud::Update(float fElapsedTime, float screenWidth, float screenHeight)
 {
@@ -5663,6 +6331,14 @@ void cDynamic_creature_WereWolf::Action()
 	CallWolfs();
 }
 
+void cDynamic_creature_WereWolf::DeathWolfs()
+{
+	for (auto it : wolfPack)
+	{
+		it->SetHealth(0);
+	}
+}
+
 void cDynamic_creature_WereWolf::CallWolfs()
 {
 	
@@ -5728,6 +6404,8 @@ void cDynamic_creature_WereWolf::DeathFun()
 	olc::vi2d fallFrame{ 2,15 };    
 	olc::vi2d landingframe{ 3,9 };
 
+	DeathWolfs();
+
 	std::pair<olc::vi2d, olc::vi2d> spritePos{ fallFrame, landingframe };
 
 	if (vx <= 0)
@@ -5739,6 +6417,17 @@ void cDynamic_creature_WereWolf::DeathFun()
 		g_engine->AddParticle(new VfxDeath(this, m_pSpriteLeft, spritePos, 1));
 	}
 
+}
+
+void cDynamic_creature_WereWolf::ReturnToPool()
+{
+	{
+		cDynamic_Creature::ReturnToPool();
+		this->sName = "WereWolf";
+		this->nHealth = this->nHealthMax;
+		wolfPack.clear();
+		g_engine->PoolsController(g_engine->getWereWolfsPool(), this);
+	}
 }
 
 void cDynamic_creature_Pantir::setItemAgil(uint8_t Agil)
@@ -5940,7 +6629,7 @@ cDynamic_creature_Crowd::cDynamic_creature_Crowd(std::string sname, olc::Decal* 
 
 void cDynamic_creature_Crowd::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)
 {
-
+	float nSheetOffsetY, nSheetOffsetX;
 	
 	for (size_t i = 0; i < count; i++)
 	{
@@ -6006,4 +6695,270 @@ void cDynamic_creature_Crowd::DrawSelf(olc::PixelGameEngine* gfx, float ox, floa
 	}
 
 	}
+}
+
+Boss_HpBar::Boss_HpBar(float ox, float oy, int HP, cDynamic_Creature* hpmember): cDynamic_HpBar (g_engine->ScreenWidth()/2,g_engine->ScreenHeight()- (g_engine->ScreenHeight()/4), HP, hpmember)
+{
+}
+
+void Boss_HpBar::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)
+{
+	float hpdiff = charHp / procent;
+	charHp = Hpowner->nHealth;
+
+	if (Hpowner->checkFlag(bDead))
+	{
+		setFlag(bRedundant);  // пометка, что объект мёртв и память нужно освободить
+	}
+
+	float ftrueSX = (soursceSizeX*2.5)/2;
+
+
+	// Отрисовка общей рамки с использованием декали
+	gfx->DrawPartialDecal({ px- ftrueSX, py }, g_engine->D_FullUi,
+		{ (float)soursceposX, (float)soursceposY + soursceSizeY },
+		{ (float)soursceSizeX, (float)soursceSizeY },
+		{ g_engine->fscale*5, g_engine->fscale*3 });
+
+	// Отрисовка полоски здоровья (с учётом оставшегося HP)
+	gfx->DrawPartialDecal({ px- ftrueSX, py }, g_engine->D_FullUi,
+		{ (float)soursceposX, (float)soursceposY },
+		{ hpdiff, (float)soursceSizeY },
+		{ g_engine->fscale*5, g_engine->fscale*3 });
+
+	// Формирование строки с текущим и максимальным здоровьем
+	std::string sTextCurHp = std::to_string(charHp);
+	std::string sTextFullHp = std::to_string(hpMax);
+
+	// Отрисовка текста здоровья
+	g_engine->DrawBigText(sTextCurHp + "/" + sTextFullHp,
+		(px  + 0.36f) * (64.0f * g_engine->fscale) + (28 * g_engine->fscale),
+		(py ) * (64.0f * g_engine->fscale) + (16 * g_engine->fscale),
+		 g_engine->fscale*3,  g_engine->fscale*3, olc::WHITE);
+}
+
+ERainSpray::ERainSpray(float startX, float startY, uint16_t arrayindex): Environment("RainSpray") // Инициализация вектора с 3 элементами
+{
+	px = startX;
+	py = startY;
+	
+	arrIndex = arrayindex;
+
+	psprite = RPG_Assets::get().GetSprite("RainVfx");
+
+	
+	cachedPositions = RPG_Assets::get().GetCache("SprayFx");
+	
+	ScaleCache();
+
+	//MakeCahce();
+
+}
+
+void ERainSpray::Update(float fElapsedTime, float screenwidth, float screenHeight)
+{
+
+
+	counter += fElapsedTime;
+
+	datacounter++;
+
+	datacounter = datacounter % 10;   // cached 10 frames
+
+	for (int i = 0; i < 3; i++)
+	{
+
+		// Проверяем, чтобы индекс не выходил за границы массива cachedPositions[i]
+		if (!cachedPositions[i].empty()) // Если массив не пустой
+		{
+			// Записываем первую позицию из кэша в Pos_ar
+			Pos_ar[i].x += (*cachedPositions)[i][datacounter].x;
+			Pos_ar[i].y += (*cachedPositions)[i][datacounter].y;
+
+		}
+
+	}
+
+	if (counter >0.1f) // life more than one sec
+	{
+		
+		for (int i = 0; i < 3; i++)
+		{
+			counter = 0;
+			datacounter = 0;
+
+
+		}
+
+		redundant = true;
+		
+	}
+}
+
+void ERainSpray::SetPos(float px, float py)
+{
+	for (int i=0; i < 3; i++)
+	{
+		Pos_ar[i] = { px,py };
+	}
+}
+
+void ERainSpray::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)
+{
+	for (int i = 0; i < 3; i++)
+	{
+
+		/*if (i==0)
+		{
+			std::cout << Pos_ar[i].y << std::endl;
+		}*/
+
+	gfx->DrawPartialDecal({ (Pos_ar[i].x-ox ) * g_engine->CellSize, (Pos_ar[i].y - oy) * g_engine->CellSize }, psprite, { 3.0f,4.0f }, { 1.0f,1.0f }, { (float)1 * g_engine->fscale,(float)1.5 * g_engine->fscale }, olc::WHITE);// Draw raindrop image with transparency
+
+	}
+
+}
+
+void ERainSpray::MakeCahce()
+{
+
+	//std::array < olc::vf2d, 3> vel_ar;   // we use for make dynamic lower 
+	//std::array < float, 3> angle_ar;     // and write it in file
+	//std::array < float, 3> speed_ar;
+
+	//std::ofstream outFile("cache/fxcache/rainspray.txt", std::ios::binary);
+	//if (!outFile.is_open())
+	//{
+	//	std::cerr << "Unable to open file for writing: " << "cache/fxcache/rainspray.txt" << std::endl;
+	//	return;
+	//}
+
+
+	//float time = 1.0f;            
+	//float cahceframe = 1.0f / 90.0f;
+	//float startcount = 0.0f;
+
+	//SetPos(0.0f, 0.0f);
+	//
+
+	//
+	//
+	//for (int i = 0; i < 3; i++)
+	//{
+	//	float speed = static_cast<float>(rand() % 10) + 200; // Random speed between 50 and 150 pixels per second
+	//	float angle = static_cast<float>(rand() % 180) * 3.14159f / 180.0f; // Random angle between 0 and pi radians
+
+	//	speed_ar[i] = speed;
+	//	angle_ar[i] = angle;
+	//}
+
+	//do
+	//{
+	//	startcount += cahceframe;
+
+	//	for (int i = 0; i < 3; i++)
+	//	{
+
+
+	//		vel_ar[i].x = speed_ar[i] * cahceframe * std::cos(angle_ar[i]);
+	//		vel_ar[i].y = -speed_ar[i] * cahceframe * std::sin(angle_ar[i]);   // 0.01 - is snow
+
+
+
+	//		Pos_ar[i].x += vel_ar[i].x * cahceframe;
+	//		Pos_ar[i].y += vel_ar[i].y * cahceframe;
+
+	//		// Закешировать текущую позицию
+	//		cachedPositions[i].push_back({ Pos_ar[i].x, Pos_ar[i].y });
+
+	//	}
+
+
+
+
+
+
+	//} while (startcount <= 0.1f);    // выполняем пока меньше таргета 
+
+
+
+
+
+
+	//// Сначала записываем количество объектов (векторов позиций)
+	//uint32_t numObjects = cachedPositions.size(); // Получаем количество векторов
+	//outFile.write(reinterpret_cast<const char*>(&numObjects), sizeof(numObjects)); // Записываем количество векторов в файл
+
+	//// Записываем данные для каждого объекта
+	//for (const auto& positions : cachedPositions) // Итерируемся по каждому вектору позиций
+	//{
+	//	uint32_t numPositions = positions.size(); // Получаем количество позиций в текущем векторе
+	//	outFile.write(reinterpret_cast<const char*>(&numPositions), sizeof(numPositions)); // Записываем количество позиций в файл
+
+	//	// Записываем каждую позицию (массив) в файл
+	//	outFile.write(reinterpret_cast<const char*>(positions.data()), numPositions * sizeof(CachedPosition)); // Записываем все позиции текущего вектора
+	//}
+
+	//outFile.close(); // Закрываем файл после завершения записи
+
+
+}
+
+void ERainSpray::ScaleCache()
+{
+
+	//float scaleFactor = 1.0f /25.0f;                               //fElapsedTime / (1.0f / 60.0f);
+
+
+	//for (int i = 0; i < 3; i++)
+	//{
+
+	//	for (int counter = 0; counter < 10; counter++)
+	//	{
+
+
+	//	if (!cachedPositions[i].empty()) // Проверяем, чтобы массив не был пуст
+	//	{
+	//		cachedPositions[i][counter].x = cachedPositions[i][counter].x * scaleFactor;
+	//		cachedPositions[i][counter].y = cachedPositions[i][counter].y * scaleFactor;
+	//	}
+	//	}
+	//}
+
+}
+
+std::vector<std::vector<CachedPosition>> ERainSpray::loadCache(const std::string& filename)
+{
+	
+	// Объявляем вектор векторов CachedPosition для хранения загруженных данных
+	std::vector<std::vector<CachedPosition>> cachedPositions;
+
+	// Открываем бинарный файл для чтения
+	std::ifstream inFile(filename, std::ios::binary);
+	if (!inFile.is_open())  // Проверяем, успешно ли открыт файл
+	{
+		std::cerr << "Unable to open file for reading: " << filename << std::endl;  // Выводим сообщение об ошибке
+		return cachedPositions;  // Возвращаем пустой вектор в случае ошибки
+	}
+
+	// Читаем количество объектов (векторов) из файла
+	uint32_t numObjects;
+	inFile.read(reinterpret_cast<char*>(&numObjects), sizeof(numObjects));  // Читаем данные в переменную numObjects
+	cachedPositions.resize(numObjects);  // Устанавливаем размер вектора cachedPositions на основе прочитанного количества объектов
+
+	// Читаем данные для каждого объекта (вектора)
+	for (auto& positions : cachedPositions)  // Итерируем по каждому вектору в cachedPositions
+	{
+		uint32_t numPositions;  // Объявляем переменную для хранения количества позиций в текущем векторе
+		inFile.read(reinterpret_cast<char*>(&numPositions), sizeof(numPositions));  // Читаем количество позиций из файла
+		positions.resize(numPositions);  // Устанавливаем размер текущего вектора на основе прочитанного количества позиций
+
+		// Читаем каждую позицию для текущего вектора
+		inFile.read(reinterpret_cast<char*>(positions.data()), numPositions * sizeof(CachedPosition));  // Считываем данные позиций в текущий вектор
+	}
+
+	// Закрываем файл после завершения чтения
+	inFile.close();
+	// Возвращаем загруженные данные в виде вектора векторов
+	return cachedPositions;
 }

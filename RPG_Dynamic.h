@@ -7,12 +7,21 @@ class Environment;
 class cWeapon;
 class cItem;
 class cEquip;
-
+class ERainSpray;
 class cIndicator;
 class cDynamic_HpBar;
+class Boss_HpBar;
 class cDynamic_EnergyBar;
 class cDynamic_RageBar;
 class cComand;
+
+
+
+struct CachedPosition
+{
+	float x;
+	float y;
+};
 class cDynamic
 {
 public:
@@ -48,7 +57,8 @@ public:
 		isprojfollow = 1 << 15, // 16-й бит
 		Btarget = 1 << 16, // 17-й бит
 		gravity = 1 << 17,  // 18-й бит
-		isDirectionLock = 1 << 18 // 19-й бит
+		isDirectionLock = 1 << 18, // 19-й бит
+		isprojEqualX = 1 <<19, // 20
 		
 	};
 
@@ -91,8 +101,9 @@ public:
 	virtual  int GetHealth() { return 0; };
 	virtual void SetHealth(int setHealth)  { };
 
+	virtual void ReturnToPool() {};
 
-
+	float CenterX;
 	static RPG_Engine* g_engine;
 
 protected :
@@ -107,13 +118,16 @@ class cDynamic_Creature : public cDynamic
 {
 public:
 	cDynamic_Creature(const std::string n, olc::Decal* spriteRight, olc::Decal* spriteLeft);       // <--Sprite
+	
 
 protected:
 	olc::Decal* m_pSpriteRight;
 	olc::Decal* m_pSpriteLeft;
 
 
-	float m_fTimer;
+	
+
+//	float m_fTimer;
 	enum { WEST = 1, EAST = 3 } M_nFacingDirection;
 	enum { SOUTH = 0, NORTH = 1, NOTLOOKING = 3 } M_nFacingDirectionVertical;
 
@@ -132,7 +146,6 @@ protected:
 	float LvlHaste = 0;  // how fast animations flow
 
 
-	unsigned int Lvlattributes = 0;
 
 	void SetLvlAgility(uint8_t agil);
 	void SetLvlStrength(uint8_t str);
@@ -145,12 +158,13 @@ protected:
 
 
 
+	unsigned int Lvlattributes = 0;
 	unsigned int LvlAverageAttack : 8;
 	unsigned int LvlDefence : 8;
 	unsigned int lvlHealthMax =0;
+	unsigned int Endattributes = 0;
 	//
 	
-	unsigned int Endattributes = 0;
 	void SetEndAgility(uint8_t agil);
 	void SetEndStrength(uint8_t str);
 	void SetEndInt(uint8_t Inteleg);
@@ -164,10 +178,10 @@ protected:
 
 	unsigned int EndAverageAttack : 8;   // here keeping calculation with addition from items
 	unsigned int EndDefence : 8;
+	unsigned int BasicAttributes = 0;
 
 	float EndHaste = 0;
 
-	unsigned int BasicAttributes = 0;
 
 
 	void setBasicAgility(uint8_t agil);
@@ -191,13 +205,15 @@ protected:
 		Idle = 0,
 		Walk = 1,
 		Jump = 2,
+
 		Attack = 3,
 		AttackEasy = 4,
 		AttackGreat = 5,
 
 		DoubleJump = 6,
 		AirAttack = 7,
-		Eviscirate = 8,       //  Right Botton
+
+		EviscirateDown = 8,       //  Right Button
 
 		JumpDown = 9,
 		JumpZenit = 10,
@@ -216,12 +232,12 @@ protected:
 		Swirl = 22,
 		Death = 23,
 		IdleTwo = 24,
-		IdleReaction = 25
-
+		IdleReaction = 25,
+		Eviscirate =26
 
 	}  M_nGraphicState;
 
-	float m_fStateTick;  //deplete every frame  check on agro in behaviour
+
 
 	float m_fKnockBackTimer = 0.0f;
 	float m_fKnockBackDX = 0.0f;
@@ -292,7 +308,7 @@ public:
 	int FXFrame;
 
 	///////
-	float nSheetOffsetY, nSheetOffsetX;
+	
 	float nSheetSizeX = 64.0f;
 	float nSheetSizeY = 64.0f;
 	float sparedVx = 0.0f;
@@ -334,7 +350,7 @@ public:
 	void GravityControl(float felapsedtiem);
 	void SetUpDamage();
 
-	
+	void SetHealth(int setHealth) override;
 
 
 	bool IsLanded()  override;
@@ -359,14 +375,22 @@ public:
 	cDynamic_RageBar* RageUpdate = nullptr;
 	
 
-	
+	void ReturnToPool()override 
+	{
+		setFlag(bControllable);
+		clearFlag(binitialized);
+		setFlag(bDraw);
+		clearFlag(bDead);
+		clearFlag(quested);
+	};
 
 	//float ProjOffsetX = 0;
 //	float ProjOffsetY =0;
 protected:
 	bool bKnockBack = true;
+	
 
-
+	float entityScale = 1.0f;
 
 
 	 unsigned int BasicAveAtck : 8;
@@ -401,11 +425,12 @@ public:
 
 	void PerformAttack() override;
 	bool IsLanded()  override;
-
+	void ReturnToPool()override {};
 protected:
 	float fSpecAtckdist = 2.9f;
 	float fAttackDist = 1.6f;
-	float vxBorder = 2.0f;
+	float m_fStateTick;  //deplete every frame  check on agro in behaviour
+	//float vxBorder = 2.0f;
 public:
 	uint32_t getIdleData() override { return 0; };
 	
@@ -438,11 +463,12 @@ public:
 	void IndicateAnim() override;
 
 
-
+	void ReturnToPool()override;
+	
 
 private:
 	unsigned int looptimes : 4;
-	
+	uint8_t attckCount = 0;
 
 	int attackdif = 0;
 
@@ -515,6 +541,11 @@ public:
 		return frameData;
 
 	};
+
+
+	void ReturnToPool()override;
+
+
 };
 
 
@@ -537,7 +568,7 @@ public:
 
 
 	//void DeathFun() override;
-//	void Behaviour(float fElapsedTime, cDynamic* player = nullptr) override;
+	void Behaviour(float fElapsedTime, cDynamic* player = nullptr) override;
 
 public:
 	uint32_t getIdleData() override
@@ -562,6 +593,10 @@ public:
 		return frameData;
 
 	};
+
+
+	void ReturnToPool()override;
+	
 };
 
 
@@ -607,6 +642,9 @@ public:
 
 	};
 
+	void ReturnToPool()override;
+	
+
 };
 
 class  cDynamic_creature_WereWolf : public  cDynamic_creature_Enemy
@@ -624,10 +662,16 @@ public:
 
 	void Action() override;
 
+	void DeathWolfs();
 	void CallWolfs();
 	void DeathFun() override;
 
+
 	bool bTransformed;
+
+
+	void ReturnToPool()override;
+	
 private:
 	std::vector<cDynamic*> wolfPack;
 
@@ -707,7 +751,8 @@ public:
 
 	bool IsLanded()  override;
 
-
+	void ReturnToPool()override;
+	
 private:
 	bool Run =false;
 	
@@ -798,7 +843,9 @@ class cDynamic_creature_Pantir : public cDynamic_Creature    //represent player
 {
 
 public:
-
+	
+	
+	void IndicateAnim() override;
 
 	cEquip* pEquipedChest = nullptr;
 	cEquip* pEquipedHelmet = nullptr;
@@ -819,12 +866,11 @@ public:
 	void PerformAttack() override;
 
 	bool checkFacingDirection(cDynamic* Enemy = nullptr);
-	void IndicateAnim() override;
 	int GetStats(int num);
 
 
 	 int GetHealth() override { return nHealth; };
-	 void SetHealth(int setHealth) override;
+	
 	
 	 int GetEnergy()  { return energyAmount; };
 	 void SetEnergy(int setEnergy) ;
@@ -869,12 +915,17 @@ public:
 
 	void HideStage();
 	void EnergyMoveAttackAir();
+
+	void comboManager();
+
 	void EnergyMoveAttackLow();
 	void EnergyMoveAttackMid();
 	void EnergyMoveAttackHigh();
+
 	void EnergyMoveAttackBack();
 	void EnergyHide(float felapsedTime);
 
+	void RageMoveAttck();
 	void RageMoveAttackUp();
 	void RageMoveAttackAir();
 	void RageMoveAttackJumpUp();
@@ -892,8 +943,6 @@ public:
 	{ m_layer = Friend; };
 
 
-	float energyCount = 0;   // <counter of energe. thanks felapsed time it's gain 1 and than add it in energy amount
-	float fAttackcount = 0;    // <-- Counter for sinister strices;  help count logic when we dragged lef mouse and released 
 	int8_t energyAmount = 100;
 	uint8_t MaxEnergy = 100;
 	uint8_t MaxRage = 100;
@@ -904,6 +953,14 @@ public:
 	bool bHideMode = false;
 
 private:
+
+
+//	static constexpr int NewState2 = cDynamic_Creature::IdleReaction + 2; // = 27
+
+
+	uint8_t Combocounter = 0;
+	float fAttackcount = 0;    // <-- Counter for sinister strices;  help count logic when we dragged lef mouse and released 
+	float energyCount = 0;   // <counter of energe. thanks felapsed time it's gain 1 and than add it in energy amount
 	
 	unsigned int ItemAttributes = 0;
 
@@ -975,6 +1032,7 @@ public:
 	bool bCollected = false;
 
 	
+	void ReturnToPool()override;
 	
 
 
@@ -998,6 +1056,10 @@ public:
 	void SetAgressorData(cDynamic_Creature* Aggresor);
 	void SetAgressorThowData(cDynamic_Creature*Aggresor, uint8_t Time);
 	void SetSprites(olc::Decal* pSpriteRight, olc::Decal* pSpriteLeft);
+
+	void ReturnToPool() override;
+
+	void SetFollowProjPos();
 
 public:
 	olc::Decal* pSpriteRight = nullptr;
@@ -1069,12 +1131,19 @@ public:
 	cDynamic_Creature* Hpowner = nullptr;
 	float procent;
 	
-private:
 	int16_t soursceposX, soursceposY, soursceSizeX, soursceSizeY;
+private:
 
 
 };
+class Boss_HpBar : public cDynamic_HpBar
+{
+public:
+	Boss_HpBar(float ox, float oy, int HP, cDynamic_Creature* hpmember);
+	void Update(float fElapsedTime, cDynamic* player = nullptr)override{}
+	void DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy) override;
 
+};
 
 
 class cDynamic_TextDamage : public cDynamic
@@ -1094,6 +1163,9 @@ public:
 	};
 	void SetDeafult();
 
+
+	void ReturnToPool()override;
+	
 private:
 	
 	std::string DamageText;
@@ -1108,14 +1180,22 @@ public:
 	Environment(std::string sname);
 	~Environment();
 
+	//virtual void ReturnToPool() {};
+
 public:
+
+	uint16_t arrIndex;
 	float px, py;
 	float speed;
 	std::string sname;
 	virtual void DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy) {}
 	virtual void Update(float fElapsedTime, float screenwidth, float screenheight) {}
+	virtual void SetPos(float px, float py) {};
+
 
 	static RPG_Engine* g_engine;
+
+	bool redundant = false;
 private:
 
 };
@@ -1129,21 +1209,71 @@ public:
 	float angle; // Angle of descent for the raindrop
 	
 	olc::Decal* psprite;
-	ERaindrop(float startX, float startY, float startSpeed, float startAngle);
+	ERaindrop(uint16_t index);
 
 	void Update(float fElapsedTime, float screenwidth, float screenheight) override;
 	void DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)override;
 
 
+	void MakeCahce();
+
 private:
 	float initpx,initpy;
+
+	// Пример использования
+	std::vector<std::vector<CachedPosition>>* cachedPositions; // Инициализация
+
+	std::array<int,100> counter;
+
+	float checkX = 0;
+	float checkY = 0;
+	float ftargettime = 0.0f;
+
+
+
+};
+
+class ERainSpray : public Environment
+{
+
+public:
+
+
+	ERainSpray(float startX, float startY, uint16_t arrayindex);
+
+	void Update(float felapsedTime, float screenwidth, float screenHeight) override;
+
+	void SetPos(float px, float py)override;
+
+	void DrawSelf(olc::PixelGameEngine* gfx, float px, float oy)override;
+
+	void MakeCahce();
+
+	std::vector<std::vector<CachedPosition>> loadCache(const std::string& filename);
+
+
+	
+private:
+
+	void ScaleCache();
+
+	// Пример использования
+	std::vector<std::vector<CachedPosition>>* cachedPositions; // Инициализация
+
+
+
+	std::array < olc::vf2d, 3> Pos_ar;
+	float counter = 0.0f;
+	
+	uint8_t datacounter = 0;
+	olc::Decal* psprite;
 };
 
 
 class Edynamic_Cloud : public Environment
 {
 public:
-	Edynamic_Cloud(float px, float py,olc::Decal* psprite, float speed);
+	Edynamic_Cloud(float px, float py,olc::Decal* psprite, float speed,uint16_t arrindex);
 	void Update(float fElapsedTime, float screenwidth, float screenheight)override;
 	void DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)override;
 
@@ -1168,6 +1298,8 @@ public:
 	void DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)override {};
 
 	olc::Decal* VfxParticle = nullptr;
+
+	void ReturnToPool() override {};
 private:
 	
 };
@@ -1212,6 +1344,17 @@ public:
 	void Update(float fElapsedTime, cDynamic* player = nullptr)override;
 	void DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)override;
 
+	void Spawn();
+	void SetDefault()
+	{
+		m_vecVfxLevel.clear();
+		m_vecVfxLevel.clear();
+		AlphaColor = 0;
+		time = 0;
+		timecount = 0;
+	}
+
+	void ReturnToPool() override;
 
 private:
 	float AlphaColor;

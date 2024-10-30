@@ -1991,17 +1991,36 @@ namespace olc
 
 	olc::rcode PixelGameEngine::Construct(int32_t screen_w, int32_t screen_h, int32_t pixel_w, int32_t pixel_h, bool full_screen, bool vsync, bool cohesion)
 	{
+		// Устанавливает флаг, отвечающий за сглаживание (кохезию) пикселей.
 		bPixelCohesion = cohesion;
+
+		// Устанавливает разрешение экрана в виртуальных пикселях (количество виртуальных пикселей по ширине и высоте).
 		vScreenSize = { screen_w, screen_h };
+
+		// Вычисляет инверсию разрешения экрана — используется для преобразования координат в доли относительно экрана.
 		vInvScreenSize = { 1.0f / float(screen_w), 1.0f / float(screen_h) };
+
+		// Устанавливает размер каждого виртуального пикселя в реальных пикселях устройства (ширина и высота пикселя).
 		vPixelSize = { pixel_w, pixel_h };
+
+		// Вычисляет фактический размер окна, умножая количество виртуальных пикселей на размер каждого пикселя.
 		vWindowSize = vScreenSize * vPixelSize;
+
+		// Устанавливает флаг для полноэкранного режима.
 		bFullScreen = full_screen;
+
+		// Устанавливает флаг для вертикальной синхронизации (VSYNC) — синхронизации кадров с частотой обновления экрана.
 		bEnableVSYNC = vsync;
+
+		// Вычисляет значение `vPixel`, представляющее пиксельный шаг для нормализации координат (в диапазоне -1.0 до 1.0).
 		vPixel = 2.0f / vScreenSize;
 
+		// Проверка на корректность введенных размеров экрана и пикселя.
+		// Если размеры некорректны (0 или отрицательные значения), конструктор возвращает ошибку.
 		if (vPixelSize.x <= 0 || vPixelSize.y <= 0 || vScreenSize.x <= 0 || vScreenSize.y <= 0)
 			return olc::FAIL;
+
+		// Если все параметры корректны, возвращает успешный код выполнения.
 		return olc::OK;
 	}
 
@@ -2025,24 +2044,31 @@ namespace olc
 #if !defined(PGE_USE_CUSTOM_START)
 	olc::rcode PixelGameEngine::Start()
 	{
+		// Выполняет начальную настройку платформы. Если она завершилась неудачно, возвращаем код ошибки.
 		if (platform->ApplicationStartUp() != olc::OK) return olc::FAIL;
 
-		// Construct the window
+		// Создаем окно с указанными размерами. Если это не удается, возвращаем ошибку.
 		if (platform->CreateWindowPane({ 30,30 }, vWindowSize, bFullScreen) != olc::OK) return olc::FAIL;
+
+		// Устанавливаем текущий размер окна, вызывая обновление его размера.
 		olc_UpdateWindowSize(vWindowSize.x, vWindowSize.y);
 
-		// Start the thread
+		// Запускаем основной поток движка.
 		bAtomActive = true;
 		std::thread t = std::thread(&PixelGameEngine::EngineThread, this);
 
-		// Some implementations may form an event loop here
+		// У некоторых платформ могут быть особенности по обработке системных событий,
+		// например, управление пользовательским вводом. Это выполняется в основном потоке.
 		platform->StartSystemEventLoop();
 
-		// Wait for thread to be exited
+		// Ожидаем завершения работы основного потока движка. `t.join()` блокирует выполнение,
+		// пока поток не завершится.
 		t.join();
 
+		// Завершаем работу приложения и освобождаем ресурсы. Если очистка завершилась неудачно, возвращаем ошибку.
 		if (platform->ApplicationCleanUp() != olc::OK) return olc::FAIL;
 
+		// Если всё прошло успешно, возвращаем код успешного завершения.
 		return olc::OK;
 	}
 #endif
@@ -3813,11 +3839,11 @@ namespace olc
 		for (auto& ext : vExtensions) ext->OnBeforeUserCreate();
 		if (!OnUserCreate()) bAtomActive = false;
 		for (auto& ext : vExtensions) ext->OnAfterUserCreate();
-
+		
 		while (bAtomActive)
 		{
 			// Run as fast as possible
-			while (bAtomActive) { olc_CoreUpdate(); }
+			while (bAtomActive) { olc_CoreUpdate();  }
 
 			// Allow the user to free resources if they have overrided the destroy function
 			if (!OnUserDestroy())
@@ -3826,6 +3852,7 @@ namespace olc
 				bAtomActive = true;
 			}
 		}
+		
 
 		platform->ThreadCleanUp();
 	}
@@ -3851,20 +3878,33 @@ namespace olc
 
 	void PixelGameEngine::olc_CoreUpdate()
 	{
+		auto Start = std::chrono::steady_clock::now();
+
+
+
+
 		// Handle Timing
-		m_tp2 = std::chrono::system_clock::now();
-		std::chrono::duration<float> elapsedTime = m_tp2 - m_tp1;
-		m_tp1 = m_tp2;
+		m_tp2 = std::chrono::system_clock::now(); //m_tp2 = std::chrono::system_clock::now();: Здесь мы фиксируем текущее время в переменной m_tp2 с помощью system_clock,
+												  //который предоставляет информацию о реальном времени.
 
-		// Our time per frame coefficient
-		float fElapsedTime = elapsedTime.count();
-		fLastElapsed = fElapsedTime;
 
-		if (bConsoleSuspendTime)
+		std::chrono::duration<float> elapsedTime = m_tp2 - m_tp1; //представляет собой временной интервал, выраженный в секундах (тип float).
+
+
+		m_tp1 = m_tp2; //Обновляем m_tp1, чтобы на следующий кадр m_tp1 указывал на текущее время.
+
+		float fElapsedTime = elapsedTime.count(); // Переводим в секунды для использования в логике
+
+		fLastElapsed = fElapsedTime;  //Сохраняем значение последнего времени кадра для последующего использования.
+
+		if (bConsoleSuspendTime) //Если есть признак приостановки консоли, мы устанавливаем fElapsedTime в 0, чтобы не учитывать время кадра при обновлениях.
 			fElapsedTime = 0.0f;
 
 		// Some platforms will need to check for events
-		platform->HandleSystemEvent();
+		platform->HandleSystemEvent();  //Здесь вызывается метод для обработки системных событий (например, события ввода), которые могут возникнуть на платформе.
+
+	
+
 
 		// Compare hardware input states from previous frame
 		auto ScanHardware = [&](HWButton* pKeys, bool* pStateOld, bool* pStateNew, uint32_t nKeyCount)
@@ -3890,7 +3930,8 @@ namespace olc
 			}
 		};
 
-		ScanHardware(pKeyboardState, pKeyOldState, pKeyNewState, 256);
+		ScanHardware(pKeyboardState, pKeyOldState, pKeyNewState, 256);  //Вызов функции ScanHardware для обновления состояния клавиатуры и мыши. 
+																		//Эта функция обновляет флаги нажатия (bPressed), отпускания (bReleased) и удержания (bHeld) для каждого из кнопок.
 		ScanHardware(pMouseState, pMouseOldState, pMouseNewState, nMouseButtons);
 
 		// Cache mouse coordinates so they remain consistent during frame
@@ -3902,13 +3943,16 @@ namespace olc
 		vDroppedFilesPoint = vDroppedFilesPointCache;
 		vDroppedFilesCache.clear();
 
-		if (bTextEntryEnable)
+		if (bTextEntryEnable)  //Если разрешено текстовое ввода, вызывается метод для его обновления.
 		{
 			UpdateTextEntry();
 		}
 
 		// Handle Frame Update
-		bool bExtensionBlockFrame = false;		
+		bool bExtensionBlockFrame = false;		  //Вызываются расширения (если они есть) перед и после обновления пользовательской логики. 
+												  //Флаг bExtensionBlockFrame используется для проверки, должны ли мы продолжать обновление кадра.
+
+		
 		for (auto& ext : vExtensions) bExtensionBlockFrame |= ext->OnBeforeUserUpdate(fElapsedTime);
 		if (!bExtensionBlockFrame)
 		{
@@ -3926,7 +3970,7 @@ namespace olc
 		
 
 		// Display Frame
-		renderer->UpdateViewport(vViewPos, vViewSize);
+		renderer->UpdateViewport(vViewPos, vViewSize);    //Обновляется область отображения, очищается буфер перед рисованием следующего кадра.
 		renderer->ClearBuffer(olc::BLACK, true);
 
 		// Layer 0 must always exist
@@ -3935,8 +3979,8 @@ namespace olc
 		SetDecalMode(DecalMode::NORMAL);
 		renderer->PrepareDrawing();
 
-		for (auto layer = vLayers.rbegin(); layer != vLayers.rend(); ++layer)
-		{
+		for (auto layer = vLayers.rbegin(); layer != vLayers.rend(); ++layer)  // Здесь происходит отрисовка всех слоев в порядке от заднего плана к переднему, с обработкой декалей.
+		{ 
 			if (layer->bShow)
 			{
 				if (layer->funcHook == nullptr)
@@ -3966,12 +4010,12 @@ namespace olc
 		
 
 		// Present Graphics to screen
-		renderer->DisplayFrame();
+		renderer->DisplayFrame();   //Обновляет экран, отображая текущий кадр, подготовленный в предыдущих шагах.
 
 		// Update Title Bar
 		fFrameTimer += fElapsedTime;
 		nFrameCount++;
-		if (fFrameTimer >= 1.0f)
+		if (fFrameTimer >= 1.0f)  //Увеличивается таймер кадров, и если он превысил 1 секунду, обновляется заголовок окна с текущим FPS, сбрасывается счетчик кадров.
 		{
 			nLastFPS = nFrameCount;
 			fFrameTimer -= 1.0f;
@@ -3979,6 +4023,8 @@ namespace olc
 			platform->SetWindowTitle(sTitle);
 			nFrameCount = 0;
 		}
+
+
 	}
 
 	void PixelGameEngine::olc_ConstructFontSheet()
@@ -5445,71 +5491,77 @@ namespace olc
 
 		virtual olc::rcode CreateWindowPane(const olc::vi2d& vWindowPos, olc::vi2d& vWindowSize, bool bFullScreen) override
 		{
+			// Настраиваем параметры класса окна
 			WNDCLASS wc;
-			wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-			wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-			wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-			wc.hInstance = GetModuleHandle(nullptr);
-			wc.lpfnWndProc = olc_WindowEvent;
+			wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);   // Иконка окна
+			wc.hCursor = LoadCursor(NULL, IDC_ARROW);     // Курсор по умолчанию
+			wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC; // Стили окна для перерисовки при изменении размеров
+			wc.hInstance = GetModuleHandle(nullptr);      // Получаем идентификатор текущего модуля
+			wc.lpfnWndProc = olc_WindowEvent;             // Функция для обработки событий окна
 			wc.cbClsExtra = 0;
 			wc.cbWndExtra = 0;
 			wc.lpszMenuName = nullptr;
 			wc.hbrBackground = nullptr;
-			wc.lpszClassName = olcT("OLC_PIXEL_GAME_ENGINE");
-			RegisterClass(&wc);
+			wc.lpszClassName = olcT("OLC_PIXEL_GAME_ENGINE"); // Название класса окна
+			RegisterClass(&wc); // Регистрируем класс окна
 
-			// Define window furniture
-			DWORD dwExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
-			DWORD dwStyle = WS_CAPTION | WS_SYSMENU | WS_VISIBLE | WS_THICKFRAME;
+			// Устанавливаем стиль и расширенный стиль окна
+			DWORD dwExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE; // Расширенный стиль окна
+			DWORD dwStyle = WS_CAPTION | WS_SYSMENU | WS_VISIBLE | WS_THICKFRAME; // Основной стиль окна
 
-			olc::vi2d vTopLeft = vWindowPos;
+			olc::vi2d vTopLeft = vWindowPos; // Позиция верхнего левого угла окна
 
-			// Handle Fullscreen
+			// Если окно полноэкранное, меняем стили и размер
 			if (bFullScreen)
 			{
-				dwExStyle = 0;
-				dwStyle = WS_VISIBLE | WS_POPUP;
-				HMONITOR hmon = MonitorFromWindow(olc_hWnd, MONITOR_DEFAULTTONEAREST);
+				dwExStyle = 0; // Убираем расширенные стили
+				dwStyle = WS_VISIBLE | WS_POPUP; // Полноэкранный стиль без рамок
+				HMONITOR hmon = MonitorFromWindow(olc_hWnd, MONITOR_DEFAULTTONEAREST); // Получаем ближайший монитор
 				MONITORINFO mi = { sizeof(mi) };
-				if (!GetMonitorInfo(hmon, &mi)) return olc::rcode::FAIL;
-				vWindowSize = { mi.rcMonitor.right, mi.rcMonitor.bottom };
+				if (!GetMonitorInfo(hmon, &mi)) return olc::rcode::FAIL; // Получаем размер экрана монитора
+				vWindowSize = { mi.rcMonitor.right, mi.rcMonitor.bottom }; // Устанавливаем размеры окна на весь экран
 				vTopLeft.x = 0;
-				vTopLeft.y = 0;
+				vTopLeft.y = 0; // Ставим окно в верхний левый угол экрана
 			}
 
-			// Keep client size as requested
+			// Настраиваем размеры окна с учетом клиентской области
 			RECT rWndRect = { 0, 0, vWindowSize.x, vWindowSize.y };
-			AdjustWindowRectEx(&rWndRect, dwStyle, FALSE, dwExStyle);
+			AdjustWindowRectEx(&rWndRect, dwStyle, FALSE, dwExStyle); // Рассчитываем общие размеры окна
 			int width = rWndRect.right - rWndRect.left;
 			int height = rWndRect.bottom - rWndRect.top;
 
+			// Создаем само окно
 			olc_hWnd = CreateWindowEx(dwExStyle, olcT("OLC_PIXEL_GAME_ENGINE"), olcT(""), dwStyle,
 				vTopLeft.x, vTopLeft.y, width, height, NULL, NULL, GetModuleHandle(nullptr), this);
 
+			// Разрешаем перетаскивание файлов в окно
 			DragAcceptFiles(olc_hWnd, true);
 
-			// Create Keyboard Mapping
-			mapKeys[0x00] = Key::NONE;
+			// Создаем маппинг клавиш для обработки пользовательского ввода
+			mapKeys[0x00] = Key::NONE; // Инициализация клавиш с кодом 0
 			mapKeys[0x41] = Key::A; mapKeys[0x42] = Key::B; mapKeys[0x43] = Key::C; mapKeys[0x44] = Key::D; mapKeys[0x45] = Key::E;
 			mapKeys[0x46] = Key::F; mapKeys[0x47] = Key::G; mapKeys[0x48] = Key::H; mapKeys[0x49] = Key::I; mapKeys[0x4A] = Key::J;
 			mapKeys[0x4B] = Key::K; mapKeys[0x4C] = Key::L; mapKeys[0x4D] = Key::M; mapKeys[0x4E] = Key::N; mapKeys[0x4F] = Key::O;
 			mapKeys[0x50] = Key::P; mapKeys[0x51] = Key::Q; mapKeys[0x52] = Key::R; mapKeys[0x53] = Key::S; mapKeys[0x54] = Key::T;
 			mapKeys[0x55] = Key::U; mapKeys[0x56] = Key::V; mapKeys[0x57] = Key::W; mapKeys[0x58] = Key::X; mapKeys[0x59] = Key::Y;
-			mapKeys[0x5A] = Key::Z;
+			mapKeys[0x5A] = Key::Z; // Задаем коды клавиш от A до Z
 
+			// Задаем коды клавиш для функциональных кнопок F1-F12
 			mapKeys[VK_F1] = Key::F1; mapKeys[VK_F2] = Key::F2; mapKeys[VK_F3] = Key::F3; mapKeys[VK_F4] = Key::F4;
 			mapKeys[VK_F5] = Key::F5; mapKeys[VK_F6] = Key::F6; mapKeys[VK_F7] = Key::F7; mapKeys[VK_F8] = Key::F8;
 			mapKeys[VK_F9] = Key::F9; mapKeys[VK_F10] = Key::F10; mapKeys[VK_F11] = Key::F11; mapKeys[VK_F12] = Key::F12;
 
+			// Задаем направления клавиш и несколько стандартных команд
 			mapKeys[VK_DOWN] = Key::DOWN; mapKeys[VK_LEFT] = Key::LEFT; mapKeys[VK_RIGHT] = Key::RIGHT; mapKeys[VK_UP] = Key::UP;
-			//mapKeys[VK_RETURN] = Key::ENTER;// mapKeys[VK_RETURN] = Key::RETURN;
-			
+
+			// Добавляем маппинг для специальных клавиш и клавиш управления
 			mapKeys[VK_BACK] = Key::BACK; mapKeys[VK_ESCAPE] = Key::ESCAPE; mapKeys[VK_RETURN] = Key::ENTER; mapKeys[VK_PAUSE] = Key::PAUSE;
 			mapKeys[VK_SCROLL] = Key::SCROLL; mapKeys[VK_TAB] = Key::TAB; mapKeys[VK_DELETE] = Key::DEL; mapKeys[VK_HOME] = Key::HOME;
 			mapKeys[VK_END] = Key::END; mapKeys[VK_PRIOR] = Key::PGUP; mapKeys[VK_NEXT] = Key::PGDN; mapKeys[VK_INSERT] = Key::INS;
 			mapKeys[VK_SHIFT] = Key::SHIFT; mapKeys[VK_CONTROL] = Key::CTRL;
 			mapKeys[VK_SPACE] = Key::SPACE;
 
+			// Маппинг для числовых клавиш (от 0 до 9) и клавиатуры NumPad
 			mapKeys[0x30] = Key::K0; mapKeys[0x31] = Key::K1; mapKeys[0x32] = Key::K2; mapKeys[0x33] = Key::K3; mapKeys[0x34] = Key::K4;
 			mapKeys[0x35] = Key::K5; mapKeys[0x36] = Key::K6; mapKeys[0x37] = Key::K7; mapKeys[0x38] = Key::K8; mapKeys[0x39] = Key::K9;
 
@@ -5517,10 +5569,10 @@ namespace olc
 			mapKeys[VK_NUMPAD5] = Key::NP5; mapKeys[VK_NUMPAD6] = Key::NP6; mapKeys[VK_NUMPAD7] = Key::NP7; mapKeys[VK_NUMPAD8] = Key::NP8; mapKeys[VK_NUMPAD9] = Key::NP9;
 			mapKeys[VK_MULTIPLY] = Key::NP_MUL; mapKeys[VK_ADD] = Key::NP_ADD; mapKeys[VK_DIVIDE] = Key::NP_DIV; mapKeys[VK_SUBTRACT] = Key::NP_SUB; mapKeys[VK_DECIMAL] = Key::NP_DECIMAL;
 
-			// Thanks scripticuk
-			mapKeys[VK_OEM_1] = Key::OEM_1;			// On US and UK keyboards this is the ';:' key
-			mapKeys[VK_OEM_2] = Key::OEM_2;			// On US and UK keyboards this is the '/?' key
-			mapKeys[VK_OEM_3] = Key::OEM_3;			// On US keyboard this is the '~' key
+			// Маппинг для клавиш с другими символами и раскладками
+			mapKeys[VK_OEM_1] = Key::OEM_1;         // ';:' для US/UK
+			mapKeys[VK_OEM_2] = Key::OEM_2;         // '/?' для US/UK
+			mapKeys[VK_OEM_3] = Key::OEM_3;         // '~' для US
 			mapKeys[VK_OEM_4] = Key::OEM_4;			// On US and UK keyboards this is the '[{' key
 			mapKeys[VK_OEM_5] = Key::OEM_5;			// On US keyboard this is '\|' key.
 			mapKeys[VK_OEM_6] = Key::OEM_6;			// On US and UK keyboards this is the ']}' key

@@ -51,7 +51,7 @@
     <ClCompile Include="FFmpeg.cpp">
       <Filter>Файлы ресурсов</Filter>
     </ClCompile>
-    <ClCompile Include="ParallaxManager.cpp">
+    <ClCompile Include="PerlinNoise.cpp">
       <Filter>Файлы ресурсов</Filter>
     </ClCompile>
   </ItemGroup>
@@ -89,10 +89,10 @@
     <ClInclude Include="FFmpeg.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="ParallaxManager.h">
+    <ClInclude Include="stb_image.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="stb_image.h">
+    <ClInclude Include="PerlinNoise.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>
@@ -100,5 +100,13 @@
     <None Include="assets\config.lua">
       <Filter>Исходные файлы</Filter>
     </None>
+    <None Include="fragment_shader.glsl">
+      <Filter>Файлы заголовков</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="vertex_shader.glsl">
+      <Filter>Файлы заголовков</Filter>
+    </Text>
   </ItemGroup>
 </Project>

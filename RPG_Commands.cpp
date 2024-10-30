@@ -194,10 +194,13 @@ cComand_CheatDeath::cComand_CheatDeath(cDynamic* object )
 	
 
 	
-
-
-	m_pObject =object;
-
+	m_pObject = (cDynamic_Creature*)object;
+	m_pObject->clearFlag(m_pObject->bDead);
+	m_pObject->setFlag(m_pObject->bDraw);
+	m_pObject->setFlag(m_pObject->quested);
+	m_pObject->SetHealth(1);
+	m_pObject->sName = "Fake";
+	m_pObject->clearFlag(m_pObject->bControllable);
 	//cDynamic_creature_WereWolf* fake = new cDynamic_creature_WereWolf();
 
 	//vecDyn->push_back(m_pObject);
@@ -208,62 +211,15 @@ void cComand_CheatDeath::Start()
 {
 
 
-	if (cDynamic_creature_WereWolf* derivedobj = dynamic_cast<cDynamic_creature_WereWolf*>(m_pObject))
-	{
-		cDynamic* fake = new cDynamic_creature_WereWolf();
-
-		fake->SetHealth(1);
-		fake->sName = "Fake";
-		fake->clearFlag(fake->bControllable);
-		fake->px = m_pObject->px;
-		fake->py = m_pObject->py;
-
-		g_engine->AddVecDynamic(fake);
-
-	}
-
-	if (cDynamic_creature_DireWolf* derivedobj = dynamic_cast<cDynamic_creature_DireWolf*>(m_pObject))
-	{
-		cDynamic* fake = new cDynamic_creature_DireWolf();
-
-		fake->sName = "Fake";
-		fake->clearFlag(fake->bControllable);
-		fake->px = m_pObject->px;
-		fake->py = m_pObject->py;
-		fake->SetHealth(1);
-		//vecDyn->push_back(fake);
-		g_engine->AddVecDynamic(fake);
-
-	}
-
-	if (cDynamic_creature_Bandit* derivedobj2 = dynamic_cast<cDynamic_creature_Bandit*>(m_pObject))
-	{
-		cDynamic* fake = new cDynamic_creature_Bandit();
-
-		fake->sName = "Fake";
-		fake->clearFlag(fake->bControllable);
-		fake->px = m_pObject->px;
-		fake->py = m_pObject->py;
-		fake->SetHealth(1);
-		g_engine->AddVecDynamic(fake);
 
 
+	
+//	m_pObject->px = m_pObject->px;
+//	m_pObject->py = m_pObject->py;
 
-	}
-
-	if (cDynamic_creature_Boar* deruvedobj3 = dynamic_cast<cDynamic_creature_Boar*>(m_pObject))
-	{
-		cDynamic* fake = new cDynamic_creature_Boar();
+		//g_engine->AddVecDynamic(fake);
 
 
-		fake->sName = "Fake";
-		fake->clearFlag(fake->bControllable);
-		fake->px = m_pObject->px;
-		fake->py = m_pObject->py;
-		fake->SetHealth(1);
-		g_engine->AddVecDynamic(fake);
-
-	}
 	
 	bCompleted = true;
 }
@@ -704,4 +660,12 @@ void cComand_moveCrowdTo::Update(float fElapsedTime)
 
 	
 	
+}
+
+void cComand_SaverFunction::Start()
+{
+	{
+		g_engine->SaveFunction();
+		bCompleted = true;
+	}
 }

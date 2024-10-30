@@ -8,7 +8,7 @@ class cItem;
 class cUI;
 class cQuest;
 class cDynamic;
-
+class CachedPosition;
 struct spriteData
 {
 
@@ -78,7 +78,10 @@ public:
 	{
 		return soundBuffers[name];
 	}
-
+	std::vector<std::vector<CachedPosition>>* GetCache(const std::string& name)
+	{
+		return  m_mapCacheFx[name];
+	}
 
 	
 
@@ -88,25 +91,36 @@ public:
 	void LoadUiElements();
 	void LoadQuests();
 	void LoadMusc();
+	void LoadAllCache();
 	void playMusic(const std::string& filename, bool loop = true);
 	void SetMusicVolume(float number);
 	void UpdateSounds();
-
 	
-
+	void ScaleCache(std::vector<std::vector<CachedPosition>>& Cache, float size, int frames);
+	
 
 private:
 	RPG_Assets();
 	~RPG_Assets();
 
 	void loadSound(const std::string& name, const std::string& filename);
+
+
+	std::vector<std::vector<CachedPosition>>* loadCache(const std::string& filename);
+
+
+
+	// Пример использования
+	std::vector<std::vector<CachedPosition>>* cachedPositions; // Инициализация
+
 	
 	sf::Sound soundcurr;
 	sf::Music music;  // Фоновая музыка
 	
-
 	std::map<std::string, sf::SoundBuffer*> soundBuffers;  // Буферы для звуков
 	std::map<std::string, olc::Decal*> m_mapSprites;
+	std::map<std::string, std::vector<std::vector<CachedPosition>>*> m_mapCacheFx;
+
 
 	std::map<std::string, spriteData*> compressMap;
 

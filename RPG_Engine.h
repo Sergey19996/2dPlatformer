@@ -1,4 +1,5 @@
 #pragma once
+
 #include "olcPixelGameEngine.h"
 //#include "olcPGEX_Sound.h"
 
@@ -14,10 +15,13 @@
 #include "cGameSettings.h"
 #include <cstdio>
 #include <windows.h> // Include the Windows header for RECT and GetWindowRect
-
+#include "PerlinNoise.h"
 #include <mutex>
+#include <unordered_map>
 //#include "stb_image.h"
 //#include "ParallaxManager.h"
+
+
 
 struct TileInfo {
 	olc::vf2d position;
@@ -31,13 +35,13 @@ struct InventaryItem
 {
 	cItem* Item = nullptr;
 
-	
+
 	uint8_t Uiindex = 0;
 	uint8_t index = 0;  // Index in inventory
 
 
 	// Переменная для хранения всех флагов
-	unsigned int InventaryFlags = 0;
+	
 	// Объявляем флаги через enum
 	enum InventaryFlagsEnum {
 		Breserved = 1 << 0,  // 1-й бит
@@ -47,7 +51,7 @@ struct InventaryItem
 		binWarehouse = 1 << 4,  // 5-й бит
 		bEquiped = 1 << 5,  // 6-й бит
 		Objectselected = 1 << 6,
-		
+
 	};
 
 	// Методы для установки и проверки флагов
@@ -70,6 +74,8 @@ struct InventaryItem
 	}
 	uint8_t currStacks = 1;
 	uint8_t Gold = 0;
+private:
+unsigned int InventaryFlags = 0;
 
 };
 
@@ -80,11 +86,6 @@ public:
 	RPG_Engine();
 
 
-
-	// Переменные для мультипоточности
-	std::thread physicsThread;
-	std::mutex gameMutex;
-	bool running = true;  // Для контроля потока физики
 
 
 	float fCameraPosX = 0.0f;
@@ -111,16 +112,17 @@ public:
 		m_vecFightText.push_back(Text);
 	}
 
-	olc::Decal* D_Ui = nullptr;   // full ui 
+	olc::Decal* D_FullUi = nullptr;   // full ui 
 
 private:
 
-	
-	
 
 	
 	std::vector<sf::Sound*> m_vecSoundsPool;  // Контейнер для пула
-	std::vector<Environment*> EnvironmentPool;
+	std::array<Environment*,205> EnvironmentPool;  // |0-100 rain|101-400 rainSpray|400++ Other|
+
+	
+
 	//std::vector<cDynamic*> wolfPool;
 
 	int bOpenTravelAsk : 1; // Map Logic
@@ -128,6 +130,12 @@ private:
 
 	int SelectedTeleport = 0;
 	//
+
+
+
+	
+
+
 
 
 
@@ -147,21 +155,17 @@ private:
 	bool bshowZero = false;
 
 
-	
-
-	float ScrollingbeforeX = 0.0f;
-	float scrollingbetweenX = 0.0f;
-	float ScrollingCurrX = 0.0f;
-	float ScrollingAfterX = 0.0f;
-	float ScrollingBackX = 0;
-	float ScrollingY = 0.0f;
+	float fOldOffset = 0.0f;
+	float fFarPrlxX = 0.0;
+	float fMidPrlxX = 0.0;
+	float fClosePrlxX = 0.0;
 
 
 	float fCameraVx = 0.0f;
 	float fCameraVy = 0.0f;
 
 
-	uint8_t lvl =1;
+	int lvl =1;
 	int ExpRequred = 0;     //Amount
 	int currExp =0;     
 	uint16_t  Money = 0;
@@ -176,38 +180,22 @@ private:
 
 
 
-
-	//Test
-	int point1X =247;
-	int point1Y =256;
-
-	int point2X = 743;
-	int point2Y = 128;
-
-	float targetpointX =point1X;
-	float targetpointY = point1Y;
-
-	float targetpointVx = 0.0f;
-	float targetpointVy = 0.0f;
-
-	//float speed = 6000;
-
 	//
 
 	//bool bFinishLoading = false;
 	int bUibackstub : 1;
 	int PressF : 1;
-	uint32_t layer = 0;
-	uint32_t layerOne = 1;
-	uint32_t layerTwo = 2;
+//	uint32_t layer = 0;
+//	uint32_t layerOne = 1;
+//	uint32_t layerTwo = 2;
 	cMap* m_pCurrentMap = nullptr;
 	olc::Decal* m_sprFont = nullptr;
-	olc::Decal* m_Items = nullptr;
 
 	//olc::Decal* m_sprPressF = nullptr;
 
-
-	olc::Decal* Inventoryback = nullptr;
+	olc::Decal* D_Map = nullptr;
+	olc::Decal* D_Items = nullptr;
+	olc::Decal* D_Inventory = nullptr;
 	olc::Sprite* spMask = nullptr;
 	//olc::Decal* testDecal = nullptr;
 	
@@ -217,7 +205,12 @@ private:
 	float maskanim = 0.0f;
 
 
-	std::vector<TileInfo > batchZeroCharsLayer; // (position, source rectangle) pairs // bool represent static or dynamic layer
+	std::vector<Tile > batchZeroCharsLayer; // (position, source rectangle) pairs // bool represent static or dynamic layer
+	std::vector<Tile > batchFirstCharsLayer;
+	std::vector<Tile > batchDynamicCharsLayer;
+	std::vector<Tile > batchSecondCharsLayer;
+	std::vector<Tile > batchThirdCharsLayer;
+
 
 	std::vector<cDynamic*> m_vecVisibleDynamics;  // vector that keep only that dyn object that in our screen
 
@@ -229,17 +222,19 @@ private:
 	std::vector<cDynamic*> m_vecDynamics;    // Fixed
 
 	
-	std::vector<cDynamic*> BanditsPool;
-	std::vector<cDynamic*> BanditsArcherPool;
-	std::vector<cDynamic*> DireWolfsPool;
-	std::vector<cDynamic*> BoarPool;
-	std::vector<cDynamic*> WereWolfsPool;
-	std::vector<cDynamic*> ItemPool;
-	std::vector<cDynamic*> TextPool;
-	std::vector<cDynamic*> ProjectilePool;
-
+	std::array<cDynamic*, 30> BanditsPool;
+	std::array<cDynamic*, 30> BanditsArcherPool;
+	std::array<cDynamic*, 30> BanditBossPool;
+	std::array<cDynamic*, 30> DireWolfsPool;
+	std::array<cDynamic*, 30> BoarPool;
+	std::array<cDynamic*, 30> WereWolfsPool;
+	std::array<cDynamic*, 30> ItemPool;
+	std::array<cDynamic*, 30> TextPool;
+	std::array<cDynamic*, 30> ProjectilePool;
+	std::array<cDynamic*, 30> VfxShotPool;
 
 	std::vector<Environment*>m_vecCloseWeather; // Vector to store raindrops and clouds
+	std::vector<Environment*>m_vecCloseWeather_2; // Vector to store raindrops and clouds
 	std::vector<Environment*>m_vecFarWeather; // Vector to store raindrops and clouds
 	std::vector<cDynamic*> m_vecProjectiles;  //Transient
 
@@ -283,19 +278,179 @@ private:
 
 
 private:
+
+
+	std::array<olc::vi2d, 9> TalentPositions =
+	{
+	olc::vi2d{192, 512}, // Mid
+	olc::vi2d{64, 512},  // High
+	olc::vi2d{64, 640},  // Backstab
+	olc::vi2d{64, 384},  // ShadowStep
+	olc::vi2d{64, 192},  // Swirl
+	olc::vi2d{192, 384}, // Vanish
+	olc::vi2d{320, 512}, // RightAir
+	olc::vi2d{320, 256}, // RightFLIGHTUP
+	olc::vi2d{320, 64}   // RightATTACK LANDING
+	};
+
+	std::array<uint8_t, 9> TalentSavePoints =
+	{
+
+		2,  // <-- Mid
+		3,  // <-- High
+		4,  // <-- Backstab
+		5,  // <-- ShadowStep
+		6,  // <-- Swirl
+		7,  // <-- Vanish
+		12, // <-- RightAir
+		13, // <-- RightFLIGHTUP
+		14  // <-- RightATTACK LANDING
+
+
+	};
+
+	enum class DataStruct {
+		CharFull,
+		Required,
+		StoreLogo,
+		WarehouseLogo,
+		inventarySockets,
+		UiPlatform,
+		Map,
+		MapLock,
+		MapForest,
+		MapIce,
+		MapFire,
+		MapMonastery,
+		MapBridge,
+
+
+	};
+
+	struct InventoryData
+	{
+		olc::vi2d Pos;
+		olc::vi2d Size;
+
+		InventoryData(olc::vi2d Pos, olc::vi2d Size) : Pos(Pos), Size(Size) {}
+		// Конструктор по умолчанию
+		InventoryData() : Pos{ 0, 0 }, Size{ 0, 0 } {}
+
+	};
+
+	
+	// Объявляем unordered_map
+	std::unordered_map<DataStruct, InventoryData> SpritesData_map = {
+		{DataStruct::CharFull, InventoryData{olc::vi2d{0, 0}, olc::vi2d{512, 523}}},       // Character stat+sockets+name 
+		{DataStruct::Required, InventoryData{olc::vi2d{513, 0}, olc::vi2d{213, 224}}},     // Required 
+		{DataStruct::StoreLogo, InventoryData{olc::vi2d{724, 0}, olc::vi2d{274, 75}}},      // Store
+		{DataStruct::WarehouseLogo, InventoryData{olc::vi2d{723, 75}, olc::vi2d{275, 77}}}, // Warehouse
+		{DataStruct::inventarySockets, InventoryData{olc::vi2d{0, 256}, olc::vi2d{512, 192}}}, // InventorySockets
+		{DataStruct::UiPlatform, InventoryData{olc::vi2d{832, 0}, olc::vi2d{334, 144}}},    // UiPlatform
+		{DataStruct::Map, InventoryData{olc::vi2d{259,0},olc::vi2d{479,523}}},
+		{DataStruct::MapLock, InventoryData{olc::vi2d{0,230},olc::vi2d{62,103}}},
+		{DataStruct::MapForest, InventoryData{olc::vi2d{117,118},olc::vi2d{140,119}}},
+		{DataStruct::MapIce, InventoryData{olc::vi2d{0,118},olc::vi2d{117,112}}},
+		{DataStruct::MapFire, InventoryData{olc::vi2d{0,0},olc::vi2d{177,118}}},
+		{DataStruct::MapMonastery, InventoryData{olc::vi2d{177,0},olc::vi2d{71,87}}},
+		{DataStruct::MapBridge, InventoryData{olc::vi2d{62,237},olc::vi2d{82,94}}},
+
+	};
+	std::array<olc::vi2d, 5> MapPosAr =
+	{
+		olc::vi2d{56,229},      //Forest destination on map
+		olc::vi2d{196,164},      //Ice  destination on map
+		olc::vi2d{136,335},      //Fire  destination on map
+		olc::vi2d{350,205},      //Bridge  destination on map
+		olc::vi2d{347,333},      //Map Monastery  destination on map
+	};
+
+
+	std::array<DataStruct, 5> MapSpritesIndexes =
+	{
+		DataStruct::MapForest,   //0
+		DataStruct::MapIce,      //1
+  		DataStruct::MapFire,     //2
+		DataStruct::MapBridge,   //3
+		DataStruct::MapMonastery, //4
+	};
+
+
+	const InventoryData& GetSpriteData(DataStruct ds)
+	{
+		return SpritesData_map[ds] ; // Используем at() для безопасного доступа
+	}
+
+
+
+	void DrawElement(DataStruct ds, olc::vf2d position, float scale, olc::Decal* Decal);
+
+
+
 	HWND hWnd; // Store the window handle internally
-
-
-
-
 	float fAccumulatedTime = 0.0f;
 
 	 int nFrames = 0;
 
 	 void Drawcursor(olc::vi2d mouse);
-
 public:
-	
+	// Геттеры, возвращающие ссылки на массивы
+	std::array<cDynamic*, 30>& getBanditsPool() {
+		return BanditsPool;
+	}
+
+	std::array<cDynamic*, 30>& getBanditsArcherPool() {
+		return BanditsArcherPool;
+	}
+
+	std::array<cDynamic*, 30>& getBanditBossPool() {
+		return BanditBossPool;
+	}
+
+	std::array<cDynamic*, 30>& getDireWolfsPool() {
+		return DireWolfsPool;
+	}
+
+	std::array<cDynamic*, 30>& getBoarPool() {
+		return BoarPool;
+	}
+
+	std::array<cDynamic*, 30>& getWereWolfsPool() {
+		return WereWolfsPool;
+	}
+
+	std::array<cDynamic*, 30>& getItemPool() {
+		return ItemPool;
+	}
+
+	std::array<cDynamic*, 30>& getTextPool() {
+		return TextPool;
+	}
+
+	std::array<cDynamic*, 30>& getProjectilePool() {
+		return ProjectilePool;
+	}
+	std::array<cDynamic*, 30>& getVfxShotPool() {
+		return VfxShotPool;
+	}
+
+	bool getScriptActive() { return m_script.bUserControlEnabled; }
+
+     template<std::size_t N>
+	 bool PoolsController(std::array<cDynamic*, N>& name, cDynamic* obj)
+	 {
+		 {
+			 for (auto it = name.begin(); it != name.end(); it++)
+			 {
+				 cDynamic* entity = *it;
+				 if (entity == nullptr) {
+					 *it = obj;
+					 return true;
+				 }
+			 }
+			 return false;
+		 }
+	 };
 	void LoadBaseUiSettings();
 
 	bool OnUserCreate() override;
@@ -323,8 +478,8 @@ public:
 	bool UpdateInventory(float fElapsedTIme);
 	void DrawInventory(float offestX,float offsetY, olc::vi2d mouse, InventaryItem*& highlighted);
 	void DrawInventory(float offestX, float offsetY, olc::vi2d mouse, olc::vi2d mouseFixed,  InventaryItem*& highlighted, InventaryItem*& Grabitem);
-	void moveteItems(olc::vi2d mouse, float x, float y, InventaryItem*& grabitem, std::vector<InventaryItem*>& vector);
-	void moveteItems(olc::vi2d mouse, float x, float y,float eqX, float eqy, InventaryItem*& grabitem, std::vector<InventaryItem*>& vector, std::vector<InventaryItem*>& eqVector);
+	void moveIItems(olc::vi2d mouse, float x, float y, InventaryItem*& grabitem, std::vector<InventaryItem*>& vector);
+	void moveIItems(olc::vi2d mouse, float x, float y,float eqX, float eqy, InventaryItem*& grabitem, std::vector<InventaryItem*>& vector, std::vector<InventaryItem*>& eqVector);
 
 	bool AttachEq(std::vector<InventaryItem*>& EqVector,int currindex);
 
@@ -460,13 +615,15 @@ public:
 
 
 
-	void DrawParallaxLayer(float x, olc::Decal* decal);
-	void WrapCoordinates(float ix, float& ox);
+	
+	void WrapCoordinates( float& ox);
 
 
 
 	bool CheckPosition(int pxX, int pxXF, int pyY, int pyYf);
 	bool CheckParticlePosition(float pxX, float pyYf);
+	
+
 	bool CheckPosition(int pxX, int pyYf);
 
 	void drawPlayer(bool bdraw);
@@ -474,20 +631,25 @@ public:
 	void LoadenemyInstances();
 
 
-	void ReturnToPool(cDynamic* bandit);
-	void ReturnProjectileToPool(cDynamic* Projectile);
-	void ReturnEnvironmentToPool(Environment* entity);
-	void ReturnTextToPool(cDynamic* Text);
 	
+	void ReturnEnvironmentToPool(Environment* entity);
+
+
+
 	cDynamic* SpawnItem(const olc::vf2d position, cItem* item);
 	cDynamic* SpawnBattleText(const olc::vf2d position, std::string Text, olc::Pixel COlor =olc::WHITE);
 	cDynamic* SpawnBandit(const olc::vf2d position);
 	cDynamic* SpawnBanditArcher(const olc::vf2d position);
 	cDynamic* SpawnWerewolf(const olc::vf2d position);
 	cDynamic* SpawnBoar(const olc::vf2d position);
+	cDynamic* SpawnBossBandt (const olc::vf2d position);
 	cDynamic* SpawnProjectile(const olc::vf2d position);
-	void SpawnRainDrops();
-	void SpawnClouds();
+	cDynamic* SpawnVfxShot(const olc::vf2d position);
+
+	void SpawnRainDrops(const uint16_t Index);
+	void SpawnRainSpray(float px, float py, const uint16_t Index);
+
+	void SpawnClouds(const uint16_t Index);
 
 
 

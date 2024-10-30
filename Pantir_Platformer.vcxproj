@@ -146,7 +146,7 @@
     <ClInclude Include="cGameSettings.h" />
     <ClInclude Include="FFmpeg.h" />
     <ClInclude Include="olcPixelGameEngine.h" />
-    <ClInclude Include="ParallaxManager.h" />
+    <ClInclude Include="PerlinNoise.h" />
     <ClInclude Include="RPG_Assets.h" />
     <ClInclude Include="RPG_Commands.h" />
     <ClInclude Include="RPG_Dynamic.h" />
@@ -162,7 +162,7 @@
     <ClCompile Include="FFmpeg.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="olcPixelGameEngine.cpp" />
-    <ClCompile Include="ParallaxManager.cpp" />
+    <ClCompile Include="PerlinNoise.cpp" />
     <ClCompile Include="RPG_Assets.cpp" />
     <ClCompile Include="RPG_Commands.cpp" />
     <ClCompile Include="RPG_Dynamic.cpp" />
@@ -174,6 +174,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\config.lua" />
+    <None Include="fragment_shader.glsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="vertex_shader.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -27,6 +27,88 @@ void RPG_Assets::loadSound(const std::string& name, const std::string& filename)
 	}
 }
 
+std::vector<std::vector<CachedPosition>>* RPG_Assets::loadCache(const std::string& filename)
+{
+
+	
+
+
+	// Объявляем вектор векторов CachedPosition для хранения загруженных данных
+	std::vector<std::vector<CachedPosition>>* cachedPositions = new std::vector<std::vector<CachedPosition>>;
+
+	// Открываем бинарный файл для чтения
+	std::ifstream inFile(filename, std::ios::binary);
+	if (!inFile.is_open())  // Проверяем, успешно ли открыт файл
+	{
+		std::cerr << "Unable to open file for reading: " << filename << std::endl;  // Выводим сообщение об ошибке
+		return cachedPositions;  // Возвращаем пустой вектор в случае ошибки
+	}
+
+	// Читаем количество объектов (векторов) из файла
+	uint32_t numObjects;
+	inFile.read(reinterpret_cast<char*>(&numObjects), sizeof(numObjects));  // Читаем данные в переменную numObjects
+	cachedPositions->resize(numObjects);  // Устанавливаем размер вектора cachedPositions на основе прочитанного количества объектов
+
+	// Читаем данные для каждого объекта (вектора)
+	for (auto& positions : *cachedPositions)  // Итерируем по каждому вектору в cachedPositions
+	{
+		uint32_t numPositions;  // Объявляем переменную для хранения количества позиций в текущем векторе
+		inFile.read(reinterpret_cast<char*>(&numPositions), sizeof(numPositions));  // Читаем количество позиций из файла
+		positions.resize(numPositions);  // Устанавливаем размер текущего вектора на основе прочитанного количества позиций
+
+		// Читаем каждую позицию для текущего вектора
+		inFile.read(reinterpret_cast<char*>(positions.data()), numPositions * sizeof(CachedPosition));  // Считываем данные позиций в текущий вектор
+	}
+
+	// Закрываем файл после завершения чтения
+	inFile.close();
+	// Возвращаем загруженные данные в виде вектора векторов
+	return cachedPositions;
+}
+
+void RPG_Assets::LoadAllCache()
+{
+
+	auto load = [&](std::string sName, std::string sFileName)
+	{
+
+		//olc::Sprite* s = new olc::Sprite(sFileName);
+		//olc::Decal* d = new olc::Decal(s);
+		std::vector<std::vector<CachedPosition>>* d = loadCache(sFileName);
+
+		m_mapCacheFx[sName] = d;     //map array <key,value>
+
+
+	};
+
+
+	load("SprayFx", "cache/fxcache/rainspray.txt");   
+	load("RainFx", "cache/fxcache/rainsDrop.txt");
+
+}
+
+void RPG_Assets::ScaleCache(std::vector<std::vector<CachedPosition>>& Cache, float scaleSize, int frames)
+{
+
+	float scaleFactor = scaleSize;                               //fElapsedTime / (1.0f / 60.0f);
+
+
+	for (int i = 0; i < 3; i++)   //amount particles 
+	{
+
+		for (int counter = 0; counter < frames; counter++)   // amount framse
+		{
+			// Проверяем, чтобы массив не был пуст и индекс не выходил за границы
+			if (!Cache[i].empty() && counter < Cache[i].size())
+			{
+				Cache[i][counter].x *= scaleFactor;
+				Cache[i][counter].y *= scaleFactor;
+			}
+		}
+	}
+
+}
+
 
 void RPG_Assets::playMusic(const std::string& filename, bool loop)
 {
@@ -72,6 +154,9 @@ void RPG_Assets::LoadSprites()
 	
 	};
 
+
+	load("ChainTest", "graphs/ChainTest.png");
+
 	
 	//Font
 	load("font", "graphs/UI/Font/font_1.png");
@@ -92,6 +177,11 @@ void RPG_Assets::LoadSprites()
 	load("Bandit SwordRightFx", "graphs/PantirFX/BanditFXRight.png");
 
 	load("Bandit ThrowDaggerFx", "graphs/PantirFX/BanditFXRightTest.png");
+
+
+	//Bandit  Boss Sword
+	load("Bandit Boss SwordLeftFx", "graphs/PantirFX/BanditBossFXLeft.png");
+	load("Bandit Boss SwordRightFx", "graphs/PantirFX/BanditBossFXRight.png");
 
 	//inventory
 
@@ -202,28 +292,6 @@ void RPG_Assets::LoadSprites()
 	load("LevelVfx", "graphs/Fvx/LevelParticleFx.png");
 	load("SoulShotVfx", "graphs/Fvx/SoulShotFx.png");
 
-	//MapDesert
-	load("DesertValeScetch", "graphs/UI/Map/DesertValeScetch.png");
-	load("DesertValePaint", "graphs/UI/Map/DesertValePaint.png");
-	//MapGateofHorseman
-	load("HorseManGateScetch", "graphs/UI/Map/HorseManGateScetch.png");
-	load("HorseManGatePaint", "graphs/UI/Map/HorseManGatePaint.png");
-
-	//MapMountains
-	load("MountainsScetch", "graphs/UI/Map/MountainsScetch.png");
-	load("MountainsPaint", "graphs/UI/Map/MountainsPaint.png");
-
-	//MapMonastery
-	load("MonasteryScetch", "graphs/UI/Map/MonasteryScetch.png");
-	load("MonasteryPaint", "graphs/UI/Map/MonasteryPaint.png");
-
-
-
-	//MapLock
-	load("Lock", "graphs/UI/Map/Lock.png");
-	load("SkullCaveScetch", "graphs/UI/Map/SkullCaveScetch.png");
-	load("ElvishGraveyardScetch", "graphs/UI/Map/ElvishGraveyardScetch.png");
-	load("SwampOfWitchScetch", "graphs/UI/Map/SwampOfWitchScetch.png");
 
 
 
@@ -273,7 +341,7 @@ void RPG_Assets::LoadItems()
 	load(new cWeapon("Pantir's Dagger", RPG_Assets::get().GetSprite("Items"), RPG_Assets::get().GetSprite("Pantir's DaggerLeftFx"), RPG_Assets::get().GetSprite("Pantir's DaggerRightFx"), "+5 Dmg        \n", 5, 0, 0, 0, 0, 64, 3,1));
 	load(new cWeapon("Broken Sword", RPG_Assets::get().GetSprite("Items"), RPG_Assets::get().GetSprite("Pantir's DaggerLeftFx"), RPG_Assets::get().GetSprite("Pantir's DaggerRightFx"), "it seems the sword was\nbroken quite a long time\nago\n", 10, 0, 0, 0, 0, 67, 3,1));
 	load(new cWeapon("Bandit Sword", RPG_Assets::get().GetSprite("Items"), RPG_Assets::get().GetSprite("Bandit SwordLeftFx"), RPG_Assets::get().GetSprite("Bandit SwordRightFx"), "usually these kind of swords\nare used by bandits", 8, 0, 0, 0, 0,67,3,1));
-	load(new cWeapon("Bandit Boss Sword", RPG_Assets::get().GetSprite("Items"), RPG_Assets::get().GetSprite("Bandit SwordLeftFx"), RPG_Assets::get().GetSprite("Bandit SwordRightFx"), "usually these kind of swords \nare used by bandits\n", 10, 0, 0, 0, 0,67,3,3));
+	load(new cWeapon("Bandit Boss Sword", RPG_Assets::get().GetSprite("Items"), RPG_Assets::get().GetSprite("Bandit Boss SwordLeftFx"), RPG_Assets::get().GetSprite("Bandit Boss SwordRightFx"), "usually these kind of swords \nare used by bandits\n", 10, 0, 0, 0, 0,67,3,3));
 
 //	load(new  cWeapon_BrokenSword());  // <--Quest broken sword
 //	load(new cWeapon_BanditSword());
@@ -286,6 +354,12 @@ void RPG_Assets::LoadItems()
 	load(new cEnergyElixir());
 	load(new cHealthElixir());
 	load(new cRageElixir());
+	load(new PieceOfLeather());
+	load(new WhiteNuggets());
+	load(new RedSample());
+	load(new copper());
+
+
 
 }
 

@@ -49,6 +49,14 @@ private:
 };
 
 
+class cComand_SaverFunction : public cComand
+{
+public:
+	cComand_SaverFunction() {};
+	void Start()override;
+	
+};
+
 class cComand_moveTo : public cComand
 {
 public:
@@ -258,7 +266,7 @@ public:
 	cComand_CheatDeath(cDynamic* object);
 	void Start() override;
 private:
-	cDynamic* m_pObject;
+	cDynamic_Creature* m_pObject;
 	//std::vector<cDynamic*>* vecDyn;
 	olc::Decal* RightTex;
 	olc::Decal* LeftTex;

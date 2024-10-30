@@ -279,6 +279,25 @@ cMap_Forest::cMap_Forest()
 bool cMap_Forest::PopulateDynamics(std::vector<cDynamic*>& vecDyns)
 {
 
+	// Initialize the raindrops
+	//for (uint16_t i = 0; i < 100; ++i)  // they have indexcies from 0 to 100
+//	{
+
+		g_engine->SpawnRainDrops(0);
+//	}
+
+
+	for (uint16_t i = 200; i < 205; ++i)
+	{
+		g_engine->SpawnClouds(i);
+	}
+
+
+
+
+
+
+
 	RPG_Assets::get().playMusic("Sounds/ForestMusic.wav");
 
 	int Mqphase = g_engine->GetQuest("MainQuest")->GetPhase();
@@ -561,24 +580,24 @@ bool cMap_VillageInFire::PopulateDynamics(std::vector<cDynamic*>& vecDyns)
 {
 
 	RPG_Assets::get().playMusic("Sounds/VillageInFireMusic.wav");
-	RPG_Assets::get().SetMusicVolume(50);
+	RPG_Assets::get().SetMusicVolume(1);
 
 
-	for (int i = 0; i < BanditsPositions.size(); )
-	{
+	//for (int i = 0; i < BanditsPositions.size(); )
+	//{
 
 		//g1->px = 128;
 		//g1->py = 1;
-		g_engine->SpawnBandit(BanditsPositions[i]);
+	//	g_engine->SpawnBandit(BanditsPositions[i]);
 
-		i++;
+	//	i++;
 
-	}
+//	}
 		
 		
 			cDynamic* g1 = new cDynamic_creature_BossBandit();
 			g1->sName = "BossBandit";
-			g1->px = 100/2;
+			g1->px = 50;
 			g1->py = 12;
 			vecDyns.push_back(g1);
 			
@@ -682,10 +701,11 @@ bool cMap_Village::PopulateDynamics(std::vector<cDynamic*>& vecDyns)
 
 
 	g_engine->GiveBlackSmithItem("SmallWallet");
+	g_engine->GiveBlackSmithItem("Basic Helment");
+	g_engine->GiveBlackSmithItem("Basic Chest");
+	g_engine->GiveBlackSmithItem("Basic Neck");
 
-
-
-
+	
 	return false;
 }
 

@@ -50,7 +50,7 @@ public:
 	bool OnInteract(cDynamic* object) override;
 	bool OnUse(cDynamic* object) override;
 	bool OnBuy()  override { return false; };
-	bool OnCraft(bool click)  override { return false; };
+	bool OnCraft(bool click)  override;
 
 
 	//int nDamage = 0;
@@ -60,6 +60,13 @@ public:
 	
 
 private:
+
+
+	//CraftZone
+	std::string FirstItem;
+	std::string SecondItem;
+	std::string ThirdItem;
+	std::string FourItem;
 
 };
 
@@ -78,10 +85,18 @@ public:
 private:
 	olc::Decal* ProjectileLeft;
 	olc::Decal* ProjectileRight;
-
-
+	
 
 };
+
+class cWeaponBanditBoss : public cWeapon
+{
+public:
+	cWeaponBanditBoss();
+
+};
+
+
 
 
 class cGold : public cItem    //store is amount of damage  that particular weapon does
@@ -188,6 +203,50 @@ public:
 private:
 
 	
+
+};
+class PieceOfLeather : public cItem
+{
+public:
+	PieceOfLeather();
+
+//	bool OnUse(cDynamic* object, std::vector<InventaryItem*>& m_listItems, InventaryItem* socket = nullptr) override;
+private:
+
+
+
+};
+class WhiteNuggets : public cItem
+{
+public:
+	WhiteNuggets();
+
+	//	bool OnUse(cDynamic* object, std::vector<InventaryItem*>& m_listItems, InventaryItem* socket = nullptr) override;
+private:
+
+
+
+};
+class RedSample : public cItem
+{
+public:
+	RedSample();
+
+	//	bool OnUse(cDynamic* object, std::vector<InventaryItem*>& m_listItems, InventaryItem* socket = nullptr) override;
+private:
+
+
+
+};
+class copper : public cItem
+{
+public:
+	copper();
+
+	//	bool OnUse(cDynamic* object, std::vector<InventaryItem*>& m_listItems, InventaryItem* socket = nullptr) override;
+private:
+
+
 
 };
 
