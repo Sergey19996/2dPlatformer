@@ -1,6 +1,6 @@
 #include "RPG_Engine.h"
 
-//#define DEBUG_MODE  // ¬ключить режим отладки
+#define DEBUG_MODE  // ¬ключить режим отладки
 
 
 RPG_Engine::RPG_Engine()
@@ -1520,10 +1520,9 @@ if (IsFocused())
 						}
 
 
+
 						for (auto& dyn : m_vecVisibleDynamics)
 						{
-							if (dyn != object)  //for except cheking himself
-							{
 
 
 
@@ -1595,7 +1594,7 @@ if (IsFocused())
 													break;
 
 											//Then check is it is map related
-											m_pCurrentMap->OnInteraction(m_vecDynamics, dyn, cMap::WALK);  //mapInteraction keeps teleport
+											m_pCurrentMap->OnInteraction(m_vecVisibleDynamics, dyn, cMap::WALK);  //mapInteraction keeps teleport
 
 
 
@@ -1612,6 +1611,9 @@ if (IsFocused())
 									if (fDynamicObjectPosX + object->CollbordersX  < (dyn->px + dyn->CollbordersXF) && (fDynamicObjectPosX + object->CollbordersXF) > dyn->px + dyn->CollbordersX &&
 										fDynamicObjectPosY + object->CollbordersY  < (dyn->py + dyn->CollbordersYF) && (fDynamicObjectPosY + object->CollbordersYF) > dyn->py + dyn->CollbordersY)
 									{
+
+									
+
 										//Here  means       not equal layers       //m_Layer 2 - means NEUTRAL(for skip projectile)
 										if (dyn->m_layer != object->m_layer && dyn->m_layer != 2 && object->m_layer != 2)
 										{
@@ -1623,13 +1625,27 @@ if (IsFocused())
 												Damage((cDynamic_Projectile*)object, (cDynamic_Creature*)dyn);
 
 											}
+											
+											//if (dyn->checkFlag(dyn->BisProjectile) == object->checkFlag(object->BisProjectile) && dyn != object)   // for reflect throw attacks 
+											//{
+											//	if (dyn->checkFlag(dyn->IsThrow) && !dyn->checkFlag(dyn->isReflected))  // here mean that dyn is flying projectile
+											//	{
+											//		dyn->vy = -dyn->vy* -dyn->vy;
+											//		dyn->vx = -dyn->vx*-dyn->vx;
+											//		dyn->setFlag(dyn->isReflected);
+											//		dyn->reflectLayer();
+											//	}
+
+											//}
+											
 										}
+										
 
 
 									}
 
 								}
-							}
+							
 						}
 					}
 
@@ -2027,7 +2043,7 @@ if (IsFocused())
 						}
 						}
 
-
+				m_vecVisibleDynamics[0]->DrawSelf(this, fOffsetX, fOffsetY);
 
 
 				if (m_pCurrentMap->sName == "Forest")

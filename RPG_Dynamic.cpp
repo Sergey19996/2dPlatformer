@@ -342,7 +342,7 @@ void cDynamic_Creature::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)
 				//clearFlag(isAttack);
 			}
 
-			if (frameIndicator >= m_nGraphicCounterX + m_nGraphicAmountFrames)
+			if (frameIndicator > m_nGraphicCounterX + m_nGraphicAmountFrames)
 			{
 				clearFlag(IsOnePlay);
 				clearFlag(isAttack);
@@ -358,17 +358,17 @@ void cDynamic_Creature::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)
 		animspr =0;
 
 	}
-	else if (frameIndicator >= m_nGraphicCounterX + m_nGraphicAmountFrames || frameIndicator <= m_nGraphicCounterX)   // <==
+	if (frameIndicator > m_nGraphicCounterX + m_nGraphicAmountFrames || frameIndicator <= m_nGraphicCounterX)   // <==
 	{
 
 		frameIndicator = m_nGraphicCounterX;
 		setEnum();
 	}
 
-
+	int NextRow = frameIndicator / spriteWidth;
 	                   //m_nGraphicCounterY offset for column     @frameIndicator /(int(m_pSpriteRight->sprite->width / nSheetSizeX@ lock in sprite width
-	nSheetOffsetX = (frameIndicator % spriteWidth)*nSheetSizeY;
-	nSheetOffsetY = (m_nGraphicCounterY + (frameIndicator / spriteWidth))*nSheetSizeX;
+	nSheetOffsetX = (frameIndicator % spriteWidth)*nSheetSizeX;
+	nSheetOffsetY = (m_nGraphicCounterY+NextRow) *nSheetSizeX;
 
 
 	//std::cout << nSheetOffsetY/ nSheetSizeY <<'\t'<< nSheetOffsetX / nSheetSizeY << std::endl;
@@ -842,8 +842,15 @@ cDynamic_creature_DireWolf::cDynamic_creature_DireWolf() : cDynamic_creature_Ene
 
 
 
-cDynamic_creature_NPCBandit::cDynamic_creature_NPCBandit(std::string sname) : cDynamic_Creature("Npc", RPG_Assets::get().GetSprite("BanditRight"), RPG_Assets::get().GetSprite("BanditLeft"))
+cDynamic_creature_NPC::cDynamic_creature_NPC(std::string sname, uint8_t version) : cDynamic_Creature("Npc", RPG_Assets::get().GetSprite("NPC"), RPG_Assets::get().GetSprite("NPC"))
 {
+
+	if (version <0)
+	{
+		clearFlag(bDraw);
+	}
+	
+	m_nGraphicCounterY = static_cast<int>(version);
 	//Bandit constructor
 	m_layer = Neutral;
 
@@ -916,16 +923,16 @@ bool cDynamic_creature_Enemy::IsLanded()
 
 
 
-void cDynamic_creature_NPCBandit::IndicateAnim()
+void cDynamic_creature_NPC::IndicateAnim()
 {
 	switch (M_nGraphicState)
 	{
 	case Idle:
 		enumCounter = 0;
-		m_nGraphicCounterY = 0;
+	//	m_nGraphicCounterY = 0;
 		m_nGraphicCounterX = 0;
-		m_nGraphicAmountFrames = 8;
-		
+		m_nGraphicAmountFrames = 5;
+		//std::cout << frameIndicator << std::endl;
 		break;
 	}
 }
@@ -1479,6 +1486,8 @@ cDynamic_creature_Pantir::cDynamic_creature_Pantir() : cDynamic_Creature("Pantir
 
 void cDynamic_creature_Pantir::IndicateAnim()
 {
+
+	
 
 	switch (M_nGraphicState)
 	{
@@ -2901,6 +2910,7 @@ void cDynamic_Projectile::SetDeafult()
 	clearFlag(gravity);
 	clearFlag(IsThrow); // help switch draw method in this class
 	clearFlag(isprojfollow);
+	clearFlag(isReflected);
 	this->m_GraphicState = 0;
 	SetTimer(0);
 	knockbacktime = 0;
@@ -4702,7 +4712,7 @@ void cDynamic_creature_BossBandit::SpecAttack(float targetX, float targetY, floa
 	setFlag(isAttack);
 	setFlag(isprojfollow);
 	
-	enumCounter = 4;     //  <---Attack twist rope 
+	enumCounter = 4;     //  <---Attack nuncnahki
 	looptimes = 2;
 	frameIndicator = 0;
 	FxColumn = 2;    //<--  3 column      place eviscirate
@@ -4725,13 +4735,13 @@ void cDynamic_creature_BossBandit::SpecAttack(float targetX, float targetY, floa
 
 	m_nGraphicCounterY = 3;
 	m_nGraphicCounterX = 0;
-	m_nGraphicAmountFrames = 12;
+	m_nGraphicAmountFrames = 11;
 
 //	ProjOffsetX = 0.0f;
 //	ProjOffsetY = 0.0f;
 
 
-	attackdif = 1;
+	
 
 	attckCount++;
 }
@@ -4744,7 +4754,7 @@ void cDynamic_creature_BossBandit::SpecAttack2(float targetX, float targetY, flo
 	setFlag(isAttack);
 	setFlag(isprojfollow);
 	
-	enumCounter = 4;     //  <---Attack Huricane
+	enumCounter = 5;     //  <---Attack Huricane
 	looptimes = 2;
 	frameIndicator = 0;
 	FxColumn = 0;    //<--  3 column      place eviscirate
@@ -4764,15 +4774,15 @@ void cDynamic_creature_BossBandit::SpecAttack2(float targetX, float targetY, flo
 	attackdirectionX = 0.3f;
 	attackdirectionY = -0.5f;
 
-	m_nGraphicCounterY = 5;
-	m_nGraphicCounterX = 5;
-	m_nGraphicAmountFrames = 12;
+	m_nGraphicCounterY = 6;
+	m_nGraphicCounterX = 0;
+	m_nGraphicAmountFrames = 8;
 
 //	ProjOffsetX = 0.0f;
 //	ProjOffsetY = 0.0f;
 
 
-	attackdif = 2; // in indicate state for difference from nunchaki stage
+	
 
 	
 	FXFrame = m_nGraphicCounterX + m_nGraphicAmountFrames -3;
@@ -4808,7 +4818,7 @@ void cDynamic_creature_BossBandit::AttackTwo()
 
 	m_nGraphicCounterY = 4;
 	m_nGraphicCounterX = 4;
-	m_nGraphicAmountFrames = 9;
+	m_nGraphicAmountFrames = 8;
 	FXFrame = 9;
 	vx = 0;
 
@@ -4835,14 +4845,14 @@ void cDynamic_creature_BossBandit::AttackTwo()
 
 void cDynamic_creature_BossBandit::IndicateAnim()
 {
-
+	
 	switch (M_nGraphicState)
 	{
 	case Idle:
 		enumCounter = 0;
 		m_nGraphicCounterY = 0;
 		m_nGraphicCounterX = 0;
-		m_nGraphicAmountFrames = 8;
+		m_nGraphicAmountFrames = 7;
 	
 		break;
 
@@ -4862,61 +4872,51 @@ void cDynamic_creature_BossBandit::IndicateAnim()
 		enumCounter = 11;
 		m_nGraphicCounterY = 2;
 		m_nGraphicCounterX = 2;
-		m_nGraphicAmountFrames = 6;
-
+		m_nGraphicAmountFrames = 5;
 
 		
-		if (frameIndicator == m_nGraphicCounterX + m_nGraphicAmountFrames - 1 && looptimes != 0)
+		
+		if (frameIndicator == m_nGraphicCounterX + m_nGraphicAmountFrames  && looptimes != 0)
 		{
-			frameIndicator = 2;
+			frameIndicator = m_nGraphicCounterX;
 			looptimes -= 1;
 		}
 		break;
 	case Attack:        // <-- (Horizontal Attack)
 		enumCounter = 3;
-
+		
 		
 
 
 
 		break;
-	case AttackEasy:// <-- nunchaki and huricane
+	case AttackEasy:// <-- nunchaki
 		enumCounter = 4;
 
+		
 	
-		switch (attackdif)
-		{
-		case 1:
 
-			if (frameIndicator == m_nGraphicCounterX + m_nGraphicAmountFrames - 1 && looptimes != 0)
+			if (frameIndicator == m_nGraphicCounterX + m_nGraphicAmountFrames  && looptimes != 0)
 			{
-				frameIndicator = 6;
+				frameIndicator = m_nGraphicCounterX + m_nGraphicAmountFrames-5;
 				looptimes -= 1;
 			}
 
-			break;
-		case 2:
-
-
-			if (frameIndicator == m_nGraphicCounterX + m_nGraphicAmountFrames - 1 && looptimes != 0)
-			{
-				frameIndicator = m_nGraphicCounterX + m_nGraphicAmountFrames -4;
-				vx = sparedVx;
-				sparedVy = 1.0f;
-				looptimes -= 1;
-			}
-
-
-			break;
-		}
+	
 
 
 
 
 		break;
-	case AttackGreat:
+	case AttackGreat:   // huricane
 
-
+		if (frameIndicator == m_nGraphicCounterX + m_nGraphicAmountFrames && looptimes != 0)
+		{
+			frameIndicator = m_nGraphicCounterX + m_nGraphicAmountFrames - 3;
+			vx = sparedVx;
+			sparedVy = 1.0f;
+			looptimes -= 1;
+		}
 
 
 		break;

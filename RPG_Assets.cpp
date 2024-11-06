@@ -189,7 +189,7 @@ void RPG_Assets::LoadSprites()
 	load("DescriptionPattern", "graphs/inventory/DescriptionPattern.png");
 	load("inventory", "graphs/inventory/InventoryUiBack.png");
 
-	
+	load("NPC", "graphs/NPC/NPC.png");
 
 	//StreGoods
 

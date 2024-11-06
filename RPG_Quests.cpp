@@ -154,12 +154,12 @@ bool cQuset_MainQuest::PopulateDynamics(std::vector<cDynamic*>& vecDyns, std::st
 	
 	if (sMap == "Forest" && m_nPhase > 4)   // <--After killing bandit Boss  we open the way in cave
 	{
-		cDynamic* g3 = new cDynamic_creature_NPCBandit("CaveEntrence");
+		cDynamic* g3 = new cDynamic_creature_NPC("CaveEntrence",-1);
 		g3->px = 180.0f;
 		g3->py = 28.0f;
 		vecDyns.push_back(g3);
 
-		g3 = new cDynamic_creature_NPCBandit("CaveOut");
+		g3 = new cDynamic_creature_NPC("CaveOut",-1);
 		g3->px = 249.0f;
 		g3->py = 55.0f;
 		vecDyns.push_back(g3);

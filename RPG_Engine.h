@@ -21,6 +21,8 @@
 //#include "stb_image.h"
 //#include "ParallaxManager.h"
 
+#define DEBUG_MODE  // ¬ключить режим отладки
+
 
 
 struct TileInfo {
@@ -526,6 +528,15 @@ protected:
 	
 
 	bool charDeath = false;
+
+
+
+#ifdef  DEBUG_MODE
+	int layer ;
+	int layerOne;
+	int layerTwo;
+
+#endif // DEBUG
 
 
 public:

@@ -368,14 +368,14 @@ bool cMap_Forest::PopulateDynamics(std::vector<cDynamic*>& vecDyns)
 	
 	if (Mqphase > 5)
 	{
-		cDynamic* g3 = new cDynamic_creature_NPCBandit("CaveEntrence");
+		cDynamic* g3 = new cDynamic_creature_NPC("CaveEntrence",0);
 		g3->SwitchLayer(4);
 		g3->px = 180.0f;
 		g3->py = 27.5f;
 		
 		vecDyns.push_back(g3);
 
-	g3 = new cDynamic_creature_NPCBandit("CaveOut");
+	g3 = new cDynamic_creature_NPC("CaveOut",0);
 	g3->SwitchLayer(4);
 	g3->px = 249.0f;
 	g3->py = 54.5f;
@@ -660,7 +660,7 @@ bool cMap_Village::PopulateDynamics(std::vector<cDynamic*>& vecDyns)
 
 	g_script->AddCommand((new cComand_AppearScreen(2)));
 
-	cDynamic* g1 = new cDynamic_creature_NPCBandit("BlackSmith");
+	cDynamic* g1 = new cDynamic_creature_NPC("BlackSmith",1);
 	g1->SwitchLayer(4); // Questable layer tag
 	g1->px =53;
 	g1->py = 12;
@@ -670,21 +670,21 @@ bool cMap_Village::PopulateDynamics(std::vector<cDynamic*>& vecDyns)
 	
 
 
-	cDynamic* g3 = new cDynamic_creature_NPCBandit("TavernVillage");
+	cDynamic* g3 = new cDynamic_creature_NPC("TavernVillage",-1);
 	g3->SwitchLayer(4); // Questable layer tag
 	g3->px =80;
 	g3->py = 12;
 	vecDyns.push_back(g3);
 
 
-	cDynamic* g4 = new cDynamic_creature_NPCBandit("Map");
+	cDynamic* g4 = new cDynamic_creature_NPC("Map",3);
 	g4->SwitchLayer(4); // Questable layer tag
 	g4->px = 11;
 	g4->py = 12;
 	vecDyns.push_back(g4);
 
 
-	cDynamic* g5 = new cDynamic_creature_NPCBandit("ProfessionMan");
+	cDynamic* g5 = new cDynamic_creature_NPC("ProfessionMan",2);
 	g5->SwitchLayer(4); // Questable layer tag
 	g5->px = 71;
 	g5->py = 12;
@@ -782,19 +782,19 @@ bool cMap_VillageTavern::PopulateDynamics(std::vector<cDynamic*>& vecDyns)    //
 
 	RPG_Assets::get().playMusic("Sounds/TavernMusic.wav");
 
-	cDynamic* g1 = new cDynamic_creature_NPCBandit("SaveMan");
+	cDynamic* g1 = new cDynamic_creature_NPC("SaveMan",-1);
 	g1->SwitchLayer(4); // Questable layer tag
 	g1->px = 7;
 	g1->py =10;
 	vecDyns.push_back(g1);
 
-	cDynamic* g2 = new cDynamic_creature_NPCBandit("LuxarySeller");
+	cDynamic* g2 = new cDynamic_creature_NPC("LuxarySeller",0);
 	g2->SwitchLayer(4); // Questable layer tag
 	g2->px = 11;
 	g2->py = 10;
 	vecDyns.push_back(g2);
 
-	cDynamic* g3 = new cDynamic_creature_NPCBandit("Warehouse");
+	cDynamic* g3 = new cDynamic_creature_NPC("Warehouse",-1);
 	g3->SwitchLayer(4); // Questable layer tag
 	g3->px = 17;
 	g3->py = 10;

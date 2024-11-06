@@ -59,9 +59,20 @@ public:
 		gravity = 1 << 17,  // 18-й бит
 		isDirectionLock = 1 << 18, // 19-й бит
 		isprojEqualX = 1 <<19, // 20
+		isReflected =1 <<20 // for throw attack for reflection
 		
 	};
-
+	void reflectLayer()
+	{
+		if (m_layer ==0)
+		{
+			m_layer = Enemy;
+		}
+		else
+		{
+			m_layer = Friend;
+		}
+	}
 	
 	// Переменная для хранения всех флагов
 	unsigned int DynamicFlags = 0;
@@ -76,8 +87,10 @@ public:
 	}
 
 	bool checkFlag(DynamicFlagsEnum flag) const {
-		return DynamicFlags & flag;  // Проверяем флаг
+		return DynamicFlags & flag;  // Проверяем флаг  вернет true если там будет 1 и 1 и ноль во всех других вариантах 
 	}
+
+
 
 	std::string sName;
 	unsigned int Jumpcounter :4;
@@ -470,7 +483,7 @@ private:
 	unsigned int looptimes : 4;
 	uint8_t attckCount = 0;
 
-	int attackdif = 0;
+	
 
 public:
 	uint32_t getIdleData() override 
@@ -787,15 +800,17 @@ public:
 };
 
 
-class  cDynamic_creature_NPCBandit : public  cDynamic_Creature
+class  cDynamic_creature_NPC : public  cDynamic_Creature
 {
 
 public:
 
-	cDynamic_creature_NPCBandit(std::string sname);
+	cDynamic_creature_NPC(std::string sname, uint8_t version);
 
 	void IndicateAnim() override;
 
+
+	
 };
 
 

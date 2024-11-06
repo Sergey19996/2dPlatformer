@@ -85,7 +85,7 @@ void PerlinNoise::PerlinNoise2D(int nWidth, int nHeight, float* fSeed, int nOcta
                 int nSampleY1 = (y / nPitch) * nPitch; // Ќаходим верхнюю границу текущей €чейки будет давать ноль пока н не станеть больше питча 
 
 
-                float check2 = nSampleX1 + nPitch;
+               
                 int nSampleX2 = (nSampleX1 + nPitch) % nWidth; // Ќаходим правую границу текущей €чейки, использу€ циклическую обработку
                 int nSampleY2 = (nSampleY1 + nPitch) % nHeight; // Ќаходим нижнюю границу текущей €чейки, использу€ циклическую обработку
 
@@ -97,7 +97,7 @@ void PerlinNoise::PerlinNoise2D(int nWidth, int nHeight, float* fSeed, int nOcta
                 float fBlendX = (float)(x - nSampleX1) / (float)nPitch;
                 float fBlendY = (float)(y - nSampleY1) / (float)nPitch;
 
-                // »нтерполируем значени€ шума дл€ верхней и нижней границ
+                // »нтерполируем значени€ шума дл€ верхней и нижней границ     (1-t) * A+B*t
                 float fSampleT = (1.0f - fBlendX) * fSeed[nSampleY1 * nWidth + nSampleX1] + fBlendX * fSeed[nSampleY1 * nWidth + nSampleX2];
                 float fSampleB = (1.0f - fBlendX) * fSeed[nSampleY2 * nWidth + nSampleX1] + fBlendX * fSeed[nSampleY2 * nWidth + nSampleX2];
 
