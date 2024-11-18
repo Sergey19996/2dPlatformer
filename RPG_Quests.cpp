@@ -44,6 +44,7 @@ bool cQuset_MainQuest::PopulateDynamics(std::vector<cDynamic*>& vecDyns, std::st
 			g1->sName = "FirstBandit";
 			g1->px = 81;
 			g1->py = 26;
+			g1->setFlag(g1->quested);
 			g1->clearFlag(g1->bControllable);
 			//vecDyns.push_back(g1);
 
@@ -53,6 +54,7 @@ bool cQuset_MainQuest::PopulateDynamics(std::vector<cDynamic*>& vecDyns, std::st
 			cDynamic_creature_WereWolf* z1 = (cDynamic_creature_WereWolf *)g_engine->SpawnWerewolf(pos);
 			z1->sName = "werewolf";
 			z1->bTransformed = false;
+			z1->setFlag(z1->quested);
 			//z1->setFlag(z1->quested) ;
 			z1->clearFlag(z1->bControllable);
 			z1->px = 178;
@@ -91,7 +93,7 @@ bool cQuset_MainQuest::PopulateDynamics(std::vector<cDynamic*>& vecDyns, std::st
 		
 			g_script->AddCommand(new cComand_moveTo(vecDyns[0], 6,25.5, 1));
 			g_script->AddCommand(new cComand_ShowDialog({ "StoryTeller:","And our hero ended up in ","the forest" }));
-			g_script->AddCommand(new cComand_SaverFunction());
+		//	g_script->AddCommand(new cComand_SaverFunction());
 
 
 			m_nPhase = 1;
@@ -104,7 +106,7 @@ bool cQuset_MainQuest::PopulateDynamics(std::vector<cDynamic*>& vecDyns, std::st
 
 	if (sMap == "VillageInFire" && m_nPhase <=4)
 	{
-
+	
 
 		cDynamic_ClipTrigger* c3 = new cDynamic_ClipTrigger("MeetScene3");  // meet Boss
 		c3->px = 30;
@@ -116,13 +118,14 @@ bool cQuset_MainQuest::PopulateDynamics(std::vector<cDynamic*>& vecDyns, std::st
 		g_script->AddCommand(new cComand_SaverFunction());
 
 		cDynamic* BossFake = g_engine->SpawnBossBandt({ 3,12 });
+		
 
 		g_script->AddCommand(new cComand_CheatDeath(BossFake));
 		g_script->AddCommand(new cComand_ShowDialog({ "Boss:","C'mon boys","Grab their asses..." }));
 		g_script->AddCommand(new cComand_ShowDialog({ "Boss:","i gonna meet","some pussy"}));
 		g_script->AddCommand(new cComand_moveTo(BossFake, 18, 12, 2));
-		g_script->AddCommand(new cComand_CleanDeath(vecDyns, "Fake"));
-		cDynamic_Creature* entity = (cDynamic_Creature*)vecDyns[1];
+		g_script->AddCommand(new cComand_CleanDeath(vecDyns, BossFake));
+		cDynamic_Creature* entity = (cDynamic_Creature*)vecDyns[1];    // Crowd
 		g_script->AddCommand(new cComand_moveCrowdTo(vecDyns, entity, -23, 13.5,
 																	   18, 13.5,
 																			   8, 50, entity->getWalkData()));
@@ -147,19 +150,22 @@ bool cQuset_MainQuest::PopulateDynamics(std::vector<cDynamic*>& vecDyns, std::st
 	if (sMap == "Village"&& m_nPhase == 4)   // <--After killing bandit Boss
 	{
 			//g_script->AddCommand(new cComand_moveTo(vecDyns[0], 6, vecDyns[0]->py, 3));
+			g_script->AddCommand(new cComand_SaverFunction());
 			g_script->AddCommand(new cComand_ShowDialog({ "StoryTeller:","the village was liberated from enemies","But people need your help" }));
+
 			m_nPhase = 5;	
 			return false;
 	}
 	
 	if (sMap == "Forest" && m_nPhase > 4)   // <--After killing bandit Boss  we open the way in cave
 	{
-		cDynamic* g3 = new cDynamic_creature_NPC("CaveEntrence",-1);
+		
+		cDynamic* g3 = g_engine->GetNpc(RPG_Engine::NpcStruct::CaveEntrance);
 		g3->px = 180.0f;
 		g3->py = 28.0f;
 		vecDyns.push_back(g3);
 
-		g3 = new cDynamic_creature_NPC("CaveOut",-1);
+		g3 = g_engine->GetNpc(RPG_Engine::NpcStruct::CaveOut);
 		g3->px = 249.0f;
 		g3->py = 55.0f;
 		vecDyns.push_back(g3);
@@ -187,10 +193,11 @@ bool cQuset_MainQuest::OnInteraction(std::vector<cDynamic*>& vecDynobs, cDynamic
 			}
 			g_script->AddCommand(new cComand_waiting(Gena));
 
-			g_script->AddCommand(new cComand_ShowDialog({ "Bandit","Hey wait","a little patience" }));
+			g_script->AddCommand(new cComand_ShowDialog({ "Bandit:","Hey wait...","a little patience" }));
 			g_script->AddCommand(new cComand_ShowDialog({ "Bandit:","While i'm"," killing you" }));
 
-			g_script->AddCommand(new cComand_AddQuest(new cQuset_FirstBandit(Gena)));
+			int quest = static_cast<int>(RPG_Engine::QuestStruct::FIRSTBANDIT);
+			g_script->AddCommand(new cComand_AddQuest(RPG_Assets::get().GetActiveQuest(quest)));
 			g_script->AddCommand(new cComand_Unlock(Gena));
 
 			//sDescription = "Kill Bandit";
@@ -232,7 +239,11 @@ bool cQuset_MainQuest::OnInteraction(std::vector<cDynamic*>& vecDynobs, cDynamic
 		g_script->AddCommand(new cComand_moveTo(vecDynobs[0], 171, 27.5, 2));
 		g_script->AddCommand(new cComand_ShowDialog({ "Man:","I won't find peace "," until I kill you all" }));
 
-		g_script->AddCommand(new cComand_AddQuest(new cQuset_KillWerewolf()));
+		//g_engine->GetQuest("KillWerewolf");
+
+		int quest = static_cast<int>(RPG_Engine::QuestStruct::KILLWEREWOLF);
+
+		g_script->AddCommand(new cComand_AddQuest(RPG_Assets::get().GetActiveQuest(quest)));
 		g_script->AddCommand(new cComand_PlayAnimation(Gena,25));
 		g_script->AddCommand(new cComand_ShowDialog({ "Werewolf:","Roooooaaarrrr!!!" }));
 		g_script->AddCommand(new cComand_ShowDialog({ "WereWolf:","you shouldn't have come to these places..." }));
@@ -288,58 +299,120 @@ bool cQuset_MainQuest::OnInteraction(std::vector<cDynamic*>& vecDynobs, cDynamic
 	return false;
 }
 
+void cQuset_MainQuest::makeActual()
+{
+	{
+		switch (m_nPhase)
+		{
+			case 3:
+			sDescription = "Resque Village";
+			break;
+
+			case 4:
+				sDescription = "Visit Key Points in Village";
+			break;
+
+			default :
+				break;
+		}
+
+	};
+
+}
+
+
+
 cQuset_FirstBandit::cQuset_FirstBandit(cDynamic* bob)
 {
 	Bob = bob;
 	banditsCount = 0;
-	sName ="FirstBanditMeeting";
+	sName ="First Bandit Meeting";
 	sDescription = "Kill FirstBandit";
 	SaveSlot = 1;  //  because we have quest when need kill 5 banditos
 }
 
 bool cQuset_FirstBandit::OnInteraction(std::vector<cDynamic*>& vecDynobs, cDynamic* target, NATURE Nature)
 {
-	if (target->sName == "FirstBandit" && Nature == KILL && m_nPhase ==0)   // Talking with first Bandit
+
+	switch (m_nPhase)
 	{
-		
+	case 0:
 
-		
-		g_script->AddCommand(new cComand_CheatDeath(target));
-
-		
-		g_script->AddCommand(new cComand_ShowDialog({ "Bandit:", "Well Done", "But our boss", "he's really strong" }));
-		g_script->AddCommand(new cComand_CleanDeath(vecDynobs, "Fake"));
-		sDescription = "Kill 5 bandits";
-		g_script->AddCommand(new cComand_CreateItem(target, vecDynobs, RPG_Assets::get().GetItem("Broken Sword")));
-
-		m_nPhase = 1;
+		if (target->sName == "FirstBandit" && Nature == KILL)   // Talking with first Bandit
+		{
 
 
-		
 
+			g_script->AddCommand(new cComand_CheatDeath(target));
+
+
+			g_script->AddCommand(new cComand_ShowDialog({ "Bandit:", "Well Done", "But our boss", "he's really strong" }));
+			g_script->AddCommand(new cComand_CleanDeath(vecDynobs, target));
+			sDescription = "Kill 5 bandits";
+			g_script->AddCommand(new cComand_CreateItem(target, vecDynobs, RPG_Assets::get().GetItem("Broken Sword")));
+
+			m_nPhase = 1;
+
+
+
+
+			return true;
+
+		}
+		break;
+	case 1:
+
+		if (target->sName == "Bandit" && Nature == KILL && m_nPhase == 1)   // counting after talking
+		{
+			banditsCount++;
+			sDescription = "Kill 5 bandits  " + std::to_string(banditsCount) + "/5";
+
+			if (banditsCount == 5)
+			{
+				m_nPhase = 2;
+				//bCompleted = true;
+				Bob = g_engine->GetNpc(RPG_Engine::NpcStruct::luxary);
+				sDescription = "Meet the village elder\n in tavern " + Bob->sName;
+			}
+			return true;
+		}
+		break;
+	case 2:
+
+
+		if (target == Bob)
+		{
+			g_script->AddCommand(new cComand_ShowDialog({ "Elder:", "Well Done", "You helped us"}));
+			bCompleted =true;
+			g_engine->AddCompletedQuest(this);
+		}
 		return true;
 
+		break;
 	}
 
 
-	if (target->sName == "Bandit" && Nature == KILL && m_nPhase == 1)   // counting after talking
-	{
-		banditsCount++;
-		sDescription = "Kill 5 bandits: "+std::to_string(banditsCount);
 
-		if (banditsCount ==5 && m_nPhase == 1)
-	    {
-		m_nPhase = 2;
-		//bCompleted = true;
-		sDescription = "Meet the village elder " + std::to_string(banditsCount);
-		}
-
-	}
+	
 	
 
 
 
 	return false;
+}
+
+void cQuset_FirstBandit::makeActual()
+{
+	switch (m_nPhase)
+	{
+	case 1:
+		sDescription = "Kill 5 bandits";
+		break;
+	case 2:
+		Bob = g_engine->GetNpc(RPG_Engine::NpcStruct::luxary);
+		sDescription = "Meet the village elder\n in tavern " + Bob->sName;
+		break;
+	}
 }
 
 cQuset_KillWerewolf::cQuset_KillWerewolf()
@@ -354,7 +427,7 @@ cQuset_KillWerewolf::cQuset_KillWerewolf()
 bool cQuset_KillWerewolf::OnInteraction(std::vector<cDynamic*>& vecDynobs, cDynamic* target, NATURE Nature)
 {
 
-	if (target->sName == "werewolf" && Nature == KILL && m_nPhase == 0)   // Talking with first Bandit
+	if (target->sName == "werewolf" && Nature == KILL && m_nPhase == 0) 
 	{
  		cDynamic* ReturnCamera = nullptr;
 		//cDynamic* FakeWerewolf = nullptr;
@@ -366,33 +439,34 @@ bool cQuset_KillWerewolf::OnInteraction(std::vector<cDynamic*>& vecDynobs, cDyna
 			}
 		
 		cDynamic_creature_WereWolf* Werewolf = (cDynamic_creature_WereWolf*)target;
-		Werewolf->DeathWolfs();
-
+		//Werewolf->DeathWolfs();
+	//	Werewolf->SetHealth(1);
+	//	Werewolf->clearFlag(Werewolf->bDead);
 		g_script->AddCommand(new cComand_CheatDeath(target));   // original died allready,  but we create copy of it for scene
-		g_script->AddCommand(new cComand_ShowDialog({ "Werewolf:", "I..", "Just wont...", "to protect.." }));
+		g_script->AddCommand(new cComand_ShowDialog({ "Werewolf:", "I..", "Just want...", "to protect.." }));
 		g_script->AddCommand(new cComand_ShowDialog({ "Werewolf:", "My Village..." }));
 		
 	
 
-		g_script->AddCommand(new cComand_moveTo(vecDynobs,"Fake", 10, 27.5,2)); //Situation when we want to animating fake object. 10 means. that we add current position 10 or -10
+		g_script->AddCommand(new cComand_moveTo(target, 185, 27.5,2)); //Situation when we want to animating fake object. 10 means. that we add current position 10 or -10
 
-		g_script->AddCommand(new cComand_CleanDeath(vecDynobs, "Fake"));  // <--Cleaning fake death puppet
+		g_script->AddCommand(new cComand_CleanDeath(vecDynobs, target));  // <--Cleaning fake death puppet
 
 		
-
 		g_script->AddCommand(new cComand_moveCamera(ReturnCamera, vecDynobs[0]->px, 27.5, 1));
 		g_script->AddCommand(new cComand_LockCamera);
 		//g_script->AddCommand(new cComand_CreateItem(target, vecDynobs));
 
-		g_script->AddCommand(new cComand_AddQuest(new cQuset_KillBanditBoss()));
+		int quest = static_cast<int>(RPG_Engine::QuestStruct::KILLBANDITBOSS);
+		g_script->AddCommand(new cComand_AddQuest(RPG_Assets::get().GetActiveQuest(quest)));
 
 		
-		g_engine->GetQuest("MainQuest")->SetPhase(3);
-		g_engine->GetQuest("MainQuest")->sDescription = "Resque Village";
+		g_engine->GetActiveQuest("MainQuest")->SetPhase(3);
+		g_engine->GetActiveQuest("MainQuest")->sDescription = "Resque Village";
 		//ReturnCamera->bDead = true;
 
 		bCompleted = true;
-
+		g_engine->AddCompletedQuest(this);
 		return false;
 
 	}
@@ -406,7 +480,7 @@ bool cQuset_KillWerewolf::OnInteraction(std::vector<cDynamic*>& vecDynobs, cDyna
 cQuset_KillBanditBoss::cQuset_KillBanditBoss()
 {
 
-	
+	Bob = g_engine->GetBoss(RPG_Engine::BossStruct::BanditBoss);
 	m_nPhase = 0;
 	sName = "KillBanditBoss";
 	sDescription = "Kill Bandit Boss";
@@ -417,18 +491,27 @@ cQuset_KillBanditBoss::cQuset_KillBanditBoss()
 bool cQuset_KillBanditBoss::OnInteraction(std::vector<cDynamic*>& vecDynobs, cDynamic* target, NATURE Nature)
 {
 
-	if (target->sName == "BossBandit" && Nature == KILL && m_nPhase ==0)   // After Killing Bandit Boss in Village of fire
+	if (target == Bob && Nature == KILL && m_nPhase ==0)   // After Killing Bandit Boss in Village of fire
 	{
 		g_script->AddCommand(new cComand_ShowDialog({ "Bandit Boss:","New God lead us on the way of light..." }));
 		g_script->AddCommand((new cComand_HideScreen(3)));
 		g_script->AddCommand(new cComand_Changemap("Village", vecDynobs[0]->px, vecDynobs[0]->py));
+		g_engine->GetActiveQuest("MainQuest")->SetPhase(4);  //<--When we kill Bandit Boss 4phase for main quest
+		g_engine->GetActiveQuest("MainQuest")->sDescription= "Visit Key Points in Village";
+
 		bCompleted = true;
-		g_engine->GetQuest("MainQuest")->SetPhase(4);  //<--When we kill Bandit Boss 4phase for main quest
-		g_engine->GetQuest("MainQuest")->sDescription= "Visit Key Points in Village";
-		g_script->AddCommand(new cComand_AddQuest(new cQuset_KeyPointsInVillage()));
+		g_engine->AddCompletedQuest(this);
+		int quest = static_cast<int>(RPG_Engine::QuestStruct::KEYPOINTSINVILLAGE);
+		g_script->AddCommand(new cComand_AddQuest(RPG_Assets::get().GetActiveQuest(quest)));
 		return false;
 	}
 	return false;
+}
+
+void cQuset_KillBanditBoss::makeActual()
+{
+	Bob = g_engine->GetBoss(RPG_Engine::BossStruct::BanditBoss);
+
 }
 
 cQuset_KeyPointsInVillage::cQuset_KeyPointsInVillage()
@@ -436,77 +519,86 @@ cQuset_KeyPointsInVillage::cQuset_KeyPointsInVillage()
 	m_nPhase = 0;
 	sName = "KeyPoints";
 	SaveSlot = 4;
-	sVisLux = "Luxary";
-	sVisMap = "Map";
-	sVisSave = "SavePlace";
-	sVisBlackSmith = "BlackSmith";
-	sVisTrainer = "ProfessionTrainer";
-	sVisWerehouse = "Werehouse";
-	sDescription = sVisLux+"\n" + sVisBlackSmith + "\n" + sVisTrainer + "\n" + sVisSave + "\n" + sVisWerehouse + "\n" + sVisMap;
+	sVisLux = g_engine->GetNpc(RPG_Engine::NpcStruct::luxary);
+	sVisMap = g_engine->GetNpc(RPG_Engine::NpcStruct::Map);
+	sVisSave = g_engine->GetNpc(RPG_Engine::NpcStruct::SaveMan);
+	sVisBlackSmith = g_engine->GetNpc(RPG_Engine::NpcStruct::blacksmith);
+	sVisTrainer = g_engine->GetNpc(RPG_Engine::NpcStruct::proffesion);
+	sVisWerehouse = g_engine->GetNpc(RPG_Engine::NpcStruct::Warehouse);
+	updateQuestNaming();
 }
 
 bool cQuset_KeyPointsInVillage::OnInteraction(std::vector<cDynamic*>& vecDynobs, cDynamic* target, NATURE Nature)
 {
-	if (target->sName == "SaveMan" && Nature == TALK && VisitSave ==false)   // After Killing Bandit Boss in Village of fire
+	if (target == sVisSave && Nature == TALK && VisitSave ==false)   // After Killing Bandit Boss in Village of fire
 	{
 		g_script->AddCommand(new cComand_ShowDialog({ "SavePlace:","Here we can Save Our Project..." }));
 
 		VisitSave = true;
-		sVisSave = "-";
-		sDescription = sVisLux + "\n" + sVisBlackSmith + "\n" + sVisTrainer + "\n" + sVisSave + "\n" + sVisWerehouse + "\n" + sVisMap;
+		sVisSave = nullptr;
+		updateQuestNaming();
 	}
 
-	if (target->sName == "Warehouse" && Nature == TALK&& VisitWerehouse ==false)   // After Killing Bandit Boss in Village of fire
+	if (target == sVisWerehouse && Nature == TALK&& VisitWerehouse ==false)   // After Killing Bandit Boss in Village of fire
 	{
 		g_script->AddCommand(new cComand_ShowDialog({ "Warehouse:","Here we can Keep Our Goods..." }));
 		g_script->AddCommand((new cComand_SetNgameMod(2)));
 		g_script->AddCommand((new cComand_SetPause(1)));
 		VisitWerehouse = true;
-		sVisWerehouse = "-";
-		sDescription = sVisLux + "\n" + sVisBlackSmith + "\n" + sVisTrainer + "\n" + sVisSave + "\n" + sVisWerehouse + "\n" + sVisMap;
+		sVisWerehouse = nullptr;
+		updateQuestNaming();
 	}
-	if (target->sName == "LuxarySeller" && Nature == TALK&& VisitiLux ==false)   // After Killing Bandit Boss in Village of fire
+	if (target == sVisLux && Nature == TALK&& VisitiLux ==false)   // After Killing Bandit Boss in Village of fire
 	{
 		g_script->AddCommand(new cComand_ShowDialog({ "Luxary:","Here we can Bye Usefool items..." }));
 		g_script->AddCommand((new cComand_SetNgameMod(4)));
 		g_script->AddCommand((new cComand_SetPause(1)));
 		VisitiLux = true;
-		sVisLux = "-";
-		sDescription = sVisLux + "\n" + sVisBlackSmith + "\n" + sVisTrainer + "\n" + sVisSave + "\n" + sVisWerehouse + "\n" + sVisMap;
+		sVisLux = nullptr;
+		updateQuestNaming();
 	}
-	if (target->sName == "BlackSmith" && Nature == TALK && VisitBlacksmith ==false)   // After Killing Bandit Boss in Village of fire
+	if (target == sVisBlackSmith && Nature == TALK && VisitBlacksmith ==false)   // After Killing Bandit Boss in Village of fire
 	{
 		g_script->AddCommand(new cComand_ShowDialog({ "BlackSmith:","Here we can Craft items..." }));
 		VisitBlacksmith = true;
-		sVisBlackSmith = "-";
-		sDescription = sVisLux + "\n" + sVisBlackSmith + "\n" + sVisTrainer + "\n" + sVisSave + "\n" + sVisWerehouse + "\n" + sVisMap;
+		sVisBlackSmith =nullptr;
+		updateQuestNaming();
 	}
-	if (target->sName == "Map" && Nature == TALK && VisitMap == false)   // After Killing Bandit Boss in Village of fire
+	if (target == sVisMap && Nature == TALK && VisitMap == false)   // After Killing Bandit Boss in Village of fire
 	{
 		g_script->AddCommand(new cComand_ShowDialog({ "Map:","Here we can Travel in other places..." }));
 		g_script->AddCommand(new cComand_ShowDialog({ "Map:","But beware...","Must be strong enough to get in other places"}));
 		g_script->AddCommand((new cComand_SetNgameMod(5)));
 		g_script->AddCommand((new cComand_SetPause(1)));
 		VisitMap = true;
-		sVisMap = "-";
-		sDescription = sVisLux + "\n" + sVisBlackSmith + "\n" + sVisTrainer + "\n" + sVisSave + "\n" + sVisWerehouse + "\n" + sVisMap;
+		sVisMap = nullptr;
+		updateQuestNaming();
 	}
-	if (target->sName == "ProfessionMan" && Nature == TALK && VisitTrainer == false)   // After Killing Bandit Boss in Village of fire
+	if (target== sVisTrainer && Nature == TALK && VisitTrainer == false)   // After Killing Bandit Boss in Village of fire
 	{
 		g_script->AddCommand(new cComand_ShowDialog({ "ProfessionTrainer:","Hello..." }));
 		g_script->AddCommand(new cComand_ShowDialog({ "ProfessionTrainer:","I help you Teach...","New abilities..." }));
 		g_script->AddCommand((new cComand_SetNgameMod(6)));
 		g_script->AddCommand((new cComand_SetPause(1)));
 		VisitTrainer = true;
-		sVisTrainer = "-";
-		sDescription = sVisLux + "\n" + sVisBlackSmith + "\n" + sVisTrainer + "\n" + sVisSave + "\n" + sVisWerehouse + "\n" + sVisMap;
+		sVisTrainer = nullptr;
+		updateQuestNaming();
 	}
 
 	if (VisitMap && VisitBlacksmith && VisitiLux && VisitWerehouse && VisitSave && VisitTrainer)
 	{
 		m_nPhase = 1;
 		sDescription = "Complete";
+		bCompleted = true;
+		g_engine->AddCompletedQuest(this);
 	}
 
 	return false;
+}
+
+void cQuset_KeyPointsInVillage::updateQuestNaming()
+{
+	
+		sDescription = sVisLux->sName + "\n" + sVisBlackSmith->sName + "\n" + sVisTrainer->sName + "\n" + sVisSave->sName + "\n" + sVisWerehouse->sName + "\n" + sVisMap->sName;
+
 }

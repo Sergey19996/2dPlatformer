@@ -79,7 +79,7 @@ int main()
 
     game.fscale = 1.0f / config.nPixelWidth;
 	ShowWindow(GetConsoleWindow(),1);
-	if (game.Construct(config.nScreenWidth, config.nScreenHeight, config.nPixelWidth, config.nPixelHeight, false,true))
+	if (game.Construct(config.nScreenWidth, config.nScreenHeight, config.nPixelWidth, config.nPixelHeight, true,true))
 		game.Start();
   
   

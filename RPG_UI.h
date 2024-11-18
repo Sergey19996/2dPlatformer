@@ -14,7 +14,7 @@ public:
 	virtual void DrawSelf(olc::PixelGameEngine* gfx, float px, float py) {}
 
 	virtual void DrawSelfTalent(olc::PixelGameEngine* gfx, float px, float py) {}
-
+	virtual void Update() {}
 
 	virtual int SaveSlotTalent() { return 0; };
 
@@ -26,8 +26,9 @@ public:
 	
 //	olc::Decal* pSpriteFull;
 	
-
-	uint16_t sourcePosX, sourcePosY, sourceSizeX, sourceSizeY;
+	olc::vi2d sourcePos;
+	olc::vi2d sourceSize;
+//	uint16_t sourcePosX, sourcePosY, sourceSizeX, sourceSizeY;
 
 	int16_t offsetX;
 	int16_t offsetY;
@@ -48,6 +49,7 @@ public:
 
 	int SaveSlotTalent() override;
 
+	void Update()override {};
 
 public:
 
@@ -57,6 +59,8 @@ public:
 
 	int TalentSave = 0;
 
+protected:
+	float IndicatorDiff;
 };
 
 
@@ -70,7 +74,6 @@ public:
 
 public:
 	void DrawSelf(olc::PixelGameEngine* gfx, float px, float py) override;
-
 
 };
 
@@ -86,7 +89,8 @@ public:
 public:
 	void DrawSelf(olc::PixelGameEngine* gfx, float px, float py) override;
 	void DrawSelfTalent(olc::PixelGameEngine* gfx, float px, float py) override;
-	
+	void Update()override {};
+
 	enum
 	{
 		EnergyIndicatorFirst = 0,
@@ -108,6 +112,8 @@ public:
 
 	//int sizeframe = 50;
 	int bhide = 0;
+
+
 };
 
 
@@ -120,6 +126,7 @@ public:
 public:
 	void DrawSelf(olc::PixelGameEngine* gfx, float px, float py) override;
 	void DrawSelfTalent(olc::PixelGameEngine* gfx, float px, float py) override;
+	void Update()override {};
 	enum
 	{
 		RageIndicatorFirst = 0,
@@ -134,7 +141,8 @@ public:
 	} m_Classenum;
 	//olc::Decal* pSpriteReady;
 	int bhide = 0;
-//	int sizeframe = 50;
+private:
+	
 };
 
 
@@ -143,10 +151,11 @@ class  cNewEnergyIndicator : public cEnergyIndicators
 {
 public:
 	cNewEnergyIndicator(int attackvariation, int fOffsetx, int foffsety, std::string nameadd);
-	
+	void Update()override;
 private:
 	
-	
+	int lowCoefficient, highBorder, dampIndicator;
+	//float IndicatorDiff;
 
 };
 
@@ -155,10 +164,11 @@ class  cNewRageIndicator : public cRageIndicators
 {
 public:
 	cNewRageIndicator(int attackvariation, int fOffsetx, int foffsety, std::string nameadd);
-	
+	void Update()override;
 private:
 
-
+	int lowCoefficient, highBorder, dampIndicator;
+	
 
 };
 
@@ -170,7 +180,7 @@ public:
 	cAttackLow();
 
 public:
-	//void DrawSelf(olc::PixelGameEngine* gfx, int px, int py) override;
+	//void DrawSelf(olc::PixelGameEngine* gfx, float px, float py) override;
 
 };
 
@@ -192,7 +202,7 @@ public:
 	cAttackMid();
 
 public:
-//	void DrawSelf(olc::PixelGameEngine* gfx, int px, int py) override;
+//	void DrawSelf(olc::PixelGameEngine* gfx, float px, float py) override;
 
 };
 
@@ -202,7 +212,7 @@ public:
 	cAttackHigh();
 
 public:
-	//void DrawSelf(olc::PixelGameEngine* gfx, int px, int py) override;
+//	void DrawSelf(olc::PixelGameEngine* gfx, float px, float py) override;
 
 };
 class  cAttacBack : public cEnergyIndicators

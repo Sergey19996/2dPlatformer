@@ -69,11 +69,14 @@ public:
 
 		return m_mapUiElements[name];
 	}
-	cQuest* GetQuest(int slot)
+	cQuest* GetActiveQuest(int slot)
 	{
 
 		return  m_mapQuests[slot];
 	}
+	void ResetQuests();
+	void MakeQuestsActual();
+
 	sf::SoundBuffer* findSound(const std::string& name)
 	{
 		return soundBuffers[name];

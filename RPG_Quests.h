@@ -24,7 +24,8 @@ public:
 	virtual bool PopulateDynamics(std::vector<cDynamic*>& vecDyns, std::string sMap);
 	virtual void SetPhase(int phase) { };
 	virtual int GetPhase() { return 0; };
-
+	virtual void reset() {};
+	virtual void makeActual() {};
 
 public:
 	std::string sName;
@@ -34,7 +35,7 @@ public:
 	static RPG_Engine* g_engine;
 	
 	int SaveSlot;
-
+	
 
 	
 };
@@ -49,7 +50,14 @@ public:
 	bool OnInteraction(std::vector<cDynamic*>& vecDynobs, cDynamic* target, NATURE Nature)override;
 	void SetPhase(int phase)override { m_nPhase = phase; };
 	int GetPhase() { return m_nPhase; };
+
+	void reset() override {
+		m_nPhase = 0;
+
+	}
+	void makeActual() override;
 	
+
 private:
 
 	int m_nPhase = 0;
@@ -68,12 +76,20 @@ public:
 	void SetPhase(int phase)override { m_nPhase = phase; };
 	int GetPhase() { return m_nPhase; };
 
+	void reset() override {
+		m_nPhase = 0;
+		Bob = nullptr;
+		banditsCount = 0;
+
+	}
+	void makeActual() override ;
 private:
 
 	cDynamic* Bob = nullptr;
 	int m_nPhase = 0;
 	int banditsCount = 0;
 };
+
 
 class cQuset_KillWerewolf : public cQuest
 {
@@ -84,6 +100,12 @@ public:
 	bool OnInteraction(std::vector<cDynamic*>& vecDynobs, cDynamic* target, NATURE Nature)override;
 	void SetPhase(int phase)override { m_nPhase = phase; };
 	int GetPhase() { return m_nPhase; };
+
+	void reset() override {
+		m_nPhase = 0;
+		Bob = nullptr;
+	
+	}
 
 private:
 
@@ -102,6 +124,14 @@ public:
 	void SetPhase(int phase)override { m_nPhase = phase; };
 	int GetPhase() { return m_nPhase; };
 
+	void reset() override {
+		m_nPhase = 0;
+		Bob = nullptr;
+
+	}
+	void makeActual() override;
+
+
 private:
 
 	cDynamic* Bob = nullptr;
@@ -119,27 +149,40 @@ public:
 	void SetPhase(int phase)override { m_nPhase = phase; };
 	int GetPhase() { return m_nPhase; };
 
+	void updateQuestNaming();
+
+	void reset() override {
+		m_nPhase = 0;
+		Bob = nullptr;
+		VisitiLux = false;
+		VisitWerehouse = false;
+		VisitSave = false;
+		VisitBlacksmith = false;
+		VisitMap = false;
+		VisitTrainer = false;
+	}
+
 private:
 
 	cDynamic* Bob = nullptr;
 	int m_nPhase = 0;
 	bool VisitiLux;
-	std::string sVisLux;
+	cDynamic* sVisLux;
 
 	bool VisitWerehouse;
-	std::string sVisWerehouse;
+	cDynamic* sVisWerehouse;
 
 	bool VisitSave;
-	std::string sVisSave;
+	cDynamic* sVisSave;
 
 	bool VisitBlacksmith;
-	std::string sVisBlackSmith;
+	cDynamic* sVisBlackSmith;
 
 	bool VisitMap;
-	std::string sVisMap;
+	cDynamic* sVisMap;
 
 	bool VisitTrainer;
-	std::string sVisTrainer;
+	cDynamic* sVisTrainer;
 
 
 };

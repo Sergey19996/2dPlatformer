@@ -32,6 +32,8 @@ public:
 	float px, py;
 	float vx, vy;
 	bool bSolidVsMap;
+	float nSheetSizeX = 64.0f;
+	float nSheetSizeY = 64.0f;
 
 	enum LAYER
 	{ Friend = 0, Enemy = 1, Neutral = 2, Particle = 3,Questable =4 } m_layer;
@@ -59,7 +61,8 @@ public:
 		gravity = 1 << 17,  // 18-й бит
 		isDirectionLock = 1 << 18, // 19-й бит
 		isprojEqualX = 1 <<19, // 20
-		isReflected =1 <<20 // for throw attack for reflection
+		isReflected =1 <<20, // for throw attack for reflection
+		DrawBar = 1 << 21, 
 		
 	};
 	void reflectLayer()
@@ -119,7 +122,7 @@ public:
 	float CenterX;
 	static RPG_Engine* g_engine;
 
-protected :
+
 
 };
 
@@ -139,7 +142,18 @@ protected:
 
 
 	
+	enum CreatureEnumerator {
+		Player,
+		DireWolf,
+		Bandit,
+		BanditArcher,
+		BanditTank,
+		Werewolf,
+		Skeleton,
+		Boss,
+		Boar
 
+	} M_CreatureIndexName;
 //	float m_fTimer;
 	enum { WEST = 1, EAST = 3 } M_nFacingDirection;
 	enum { SOUTH = 0, NORTH = 1, NOTLOOKING = 3 } M_nFacingDirectionVertical;
@@ -272,6 +286,9 @@ protected:
 
 public:
 
+
+
+
 	virtual uint32_t getIdleData() { return 0; };
 	virtual uint32_t getWalkData() { return 0; };
 
@@ -289,7 +306,8 @@ public:
 	
 	int nHealthMax;
 
-
+	float accelerationX = 0.0f;
+	float accelerationY = 0.0f;
 	
 	unsigned int enumCounter :8;
 	
@@ -322,8 +340,7 @@ public:
 
 	///////
 	
-	float nSheetSizeX = 64.0f;
-	float nSheetSizeY = 64.0f;
+	
 	float sparedVx = 0.0f;
 	float sparedVy = 0.0f;
 
@@ -374,6 +391,7 @@ public:
 	olc::Decal* GetRightSprite() { return m_pSpriteRight; };
 	int GetFacingDirection() { return M_nFacingDirection; };
 	int GetFacingDirectionVertical() { return M_nFacingDirectionVertical; };
+	int GetNameIndex() { return M_CreatureIndexName; };
 	int calculateDeathExp();
 	int GetAttack() { return  calculatedDamage; };
 	int GetDefence() { return EndDefence; };
@@ -405,7 +423,7 @@ protected:
 
 	float entityScale = 1.0f;
 
-
+	int Framesound = 0;
 	 unsigned int BasicAveAtck : 8;
 };
 
@@ -576,8 +594,8 @@ public:
 
 //	void ReturnBaseLayer()override { m_layer = Enemy; };
 
-	void AttackOne() override;
-	void AttackTwo() override;
+	void AttackOne() override {};
+	void AttackTwo() override {};
 
 
 	//void DeathFun() override;
@@ -875,7 +893,7 @@ public:
 
 	
 	void MergeItemLvl();
-	void  SwirlGrab(cDynamic* dyn);
+
 
 	void Behaviour(float fElapsedTime, cDynamic* player = nullptr);
 	void PerformAttack() override;
@@ -902,12 +920,12 @@ public:
 
 
 	
-		Target = takenTarget;
+		Target = (cDynamic_Creature*)takenTarget;
 		Target->setFlag(Btarget);
 		return true;
 
 		}
-		Target = takenTarget;
+		Target = (cDynamic_Creature*)takenTarget;
 		return false; 
 	};
 	cDynamic* Gettarget()
@@ -929,16 +947,16 @@ public:
 	void SetVerticalDirection(int Var);
 
 	void HideStage();
-	void EnergyMoveAttackAir();
+	void EnergyHide(float felapsedTime);
+
 
 	void comboManager();
-
+	void EnergyMoveAttackAir();
 	void EnergyMoveAttackLow();
 	void EnergyMoveAttackMid();
 	void EnergyMoveAttackHigh();
 
 	void EnergyMoveAttackBack();
-	void EnergyHide(float felapsedTime);
 
 	void RageMoveAttck();
 	void RageMoveAttackUp();
@@ -948,7 +966,12 @@ public:
 	void RageMoveAttackLanding();
 	void BlinkBehind();
 
+	void  SwirlGrab(cDynamic* dyn);
 
+	void RunOver();  // old
+
+
+	
 	void StatsImpact();
 	
 	bool IsLanded()  override;
@@ -967,10 +990,35 @@ public:
 	int8_t rageAmount = 0;
 	bool bHideMode = false;
 
+
+	void AddAcceleration(bool run)
+	{
+
+		if (energyAmount > 25)
+		{
+
+			this->run = run;    // set run 
+
+
+			energyAmount -= 25;
+			accelerationX = (GetFacingDirection() == 1) ? -300 : 300;
+		}
+	};
+	bool getActiveAcceleration()
+	{
+		return run;
+	}
+	bool ReductionAcceleration(float fElapsedTime);
+
+
 private:
 
 
+	void EnergyUIManagment();
+	bool RageUIManagment();
 //	static constexpr int NewState2 = cDynamic_Creature::IdleReaction + 2; // = 27
+
+	bool run = false;
 
 
 	uint8_t Combocounter = 0;
@@ -1010,7 +1058,7 @@ private:
 
 	int Grabedenemy = 0;
 
-	cDynamic* Target = nullptr;
+	cDynamic_Creature* Target = nullptr;
 	float Hidetimer = 2.0f;
 	
 
@@ -1039,7 +1087,7 @@ public:
 
 	~cDynamic_Item()
 	{
-		std::cout << "Hello";
+	
 	};
 
 public:
@@ -1128,6 +1176,31 @@ protected:
 
 protected:
 	
+};
+
+
+class mirror :public cDynamic
+{
+public:
+	mirror(float px,float py, olc::vi2d CoordFrame, int amountframes,int Sizeframe, olc::Decal* Decal);
+
+	void Spawn(olc::vf2d Pos, olc::vi2d CoordFrame, int amountframes, int SizeframeX,int SizeframeY, olc::Decal* Decal);
+	void DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy) override;
+	void Update(float fElapsedTime, cDynamic* player = nullptr) override;
+	void ReturnToPool() override;
+
+	void SetDeafult();
+
+private:
+	olc::vi2d CoordFrames;
+	int FramesAmount;
+	olc::Decal* Decal;
+	int SizeFrameX;
+	int SizeFrameY;
+	int frameIndicator;
+	float animspr=0.0f;
+	int SpriteWirdth = 0;
+
 };
 
 class cDynamic_HpBar :public cDynamic

@@ -22,14 +22,15 @@ cDynamic::cDynamic(const std::string n)
 	clearFlag(bOnGround);
 	clearFlag(quested);
 	setFlag(bDraw);
+	setFlag(DrawBar);
 	Jumpcounter = 0;
 
 
-	CollbordersX = 0.8f;
-	CollbordersXF = 1.1f;
+	CollbordersX = 0.75f;
+	CollbordersXF = CollbordersX + 0.5f;
 
-	CollbordersY = 0.6f;
-	CollbordersYF = 1.5f;
+	CollbordersY = 0.5f;
+	CollbordersYF = CollbordersY+1.0f;
 	
 }
 
@@ -119,7 +120,7 @@ void cDynamic_Creature::Update(float fElapsedTime, cDynamic* player)
 {
 	
 
-	
+	Framesound = 0;
 	
 
 	if (m_fKnockBackTimer > 0.0f)
@@ -214,6 +215,8 @@ void cDynamic_Creature::Update(float fElapsedTime, cDynamic* player)
 		if (gravityofftimer>0)
 		{
 		GravityControl(fElapsedTime);
+
+	
 		}
 
 	}
@@ -326,7 +329,10 @@ void cDynamic_Creature::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)
 	if (animspr >= framespeed-EndHaste)                 //it's speed of frames
 	{
 
-
+		if (frameIndicator == Framesound && Framesound !=0)
+		{
+			g_engine->PlaySounds("Run");
+		}
 
 		frameIndicator++;
 
@@ -362,7 +368,7 @@ void cDynamic_Creature::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)
 	{
 
 		frameIndicator = m_nGraphicCounterX;
-		setEnum();
+	//	setEnum();
 	}
 
 	int NextRow = frameIndicator / spriteWidth;
@@ -387,7 +393,7 @@ void cDynamic_Creature::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)
 	}
 
 
-	if (hpUpdate !=nullptr )
+	if (hpUpdate !=nullptr&& checkFlag(DrawBar) )
 	{
 
 	hpUpdate->DrawSelf(gfx, ox, oy);
@@ -525,8 +531,8 @@ bool cDynamic_Creature::IsLanded()
 		enumCounter = 11;
 		clearFlag(isAttack);
 		clearFlag(IsOnePlay);
-		frameIndicator = 0;
-		setEnum();
+	//	frameIndicator = 0;
+	//	setEnum();
 		return false;
 	}
 	
@@ -760,8 +766,33 @@ void cDynamic_Creature::KnockBack(float dx, float dy, float dist)
 	//frameIndicator = 13;
 	setEnum();
 	}
-
-
+	switch (M_CreatureIndexName)
+	{
+	case cDynamic_Creature::DireWolf:
+		g_engine->PlaySounds("WolfHitSOund");
+		break;
+	case cDynamic_Creature::Bandit:
+		g_engine->PlaySounds("BanditHitSound");
+		break;
+	case cDynamic_Creature::BanditArcher:
+		g_engine->PlaySounds("BanditHitSound");
+		break;
+	case cDynamic_Creature::BanditTank:
+		break;
+	case cDynamic_Creature::Werewolf:
+		g_engine->PlaySounds("WolfHitSOund");
+		break;
+	case cDynamic_Creature::Skeleton:
+		break;
+	case cDynamic_Creature::Boss:
+		break;
+	case cDynamic_Creature::Boar:
+		g_engine->PlaySounds("WolfHitSOund");
+		break;
+	default:
+		break;
+	}
+	//swirchM_CreatureIndexName
 
 
 }
@@ -805,6 +836,8 @@ const uint8_t cDynamic_Creature::getAlpha()
 
 cDynamic_creature_DireWolf::cDynamic_creature_DireWolf() : cDynamic_creature_Enemy("DireWolf", RPG_Assets::get().GetSprite("DireWolfRight"), RPG_Assets::get().GetSprite("DireWolfLeft"))
 {
+	M_CreatureIndexName = DireWolf;
+
 
 	pEquipedWeapon = (cWeapon*)RPG_Assets::get().GetItem("Bandit Sword");
 
@@ -852,7 +885,7 @@ cDynamic_creature_NPC::cDynamic_creature_NPC(std::string sname, uint8_t version)
 	
 	m_nGraphicCounterY = static_cast<int>(version);
 	//Bandit constructor
-	m_layer = Neutral;
+	m_layer = Questable;
 
 	sName = sname;
 
@@ -874,27 +907,6 @@ cDynamic_creature_NPC::cDynamic_creature_NPC(std::string sname, uint8_t version)
 
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 bool cDynamic_creature_Enemy::IsLanded()
 {
 
@@ -914,8 +926,8 @@ bool cDynamic_creature_Enemy::IsLanded()
 		enumCounter = 11;
 		clearFlag(isAttack);
 		setFlag(IsOnePlay);
-		frameIndicator = 0;
-		setEnum();
+	//	frameIndicator = 0;
+	//	setEnum();
 		return false;
 	}
 
@@ -985,7 +997,7 @@ void cDynamic_creature_DireWolf::IndicateAnim()
 		enumCounter = 9;
 		m_nGraphicCounterY = 3;
 		m_nGraphicCounterX = 7;
-		m_nGraphicAmountFrames = 3;
+		m_nGraphicAmountFrames = 2;
 		
 		break;
 	case Attack:        // <-- (Horizontal Attack)
@@ -1038,7 +1050,7 @@ void cDynamic_creature_DireWolf::SpecAttack(float targetX, float targetY, float 
 
 	m_nGraphicCounterY = 4;
 	m_nGraphicCounterX = 3;
-	m_nGraphicAmountFrames = 6;
+	m_nGraphicAmountFrames = 7;
 	
 
 	//ProjSize
@@ -1055,6 +1067,8 @@ void cDynamic_creature_DireWolf::SpecAttack(float targetX, float targetY, float 
 	FXFrame = m_nGraphicCounterX + m_nGraphicAmountFrames - 1;
 
 	M_nFacingDirectionVertical = NORTH;
+
+	g_engine->PlaySounds("WolfSpecAttackSound");
 }
 
 
@@ -1099,7 +1113,7 @@ void cDynamic_creature_DireWolf::AttackOne()
 
 	M_nFacingDirectionVertical = NOTLOOKING;
 	
-
+	g_engine->PlaySounds("WolfAttackSound");
 }
 
 void cDynamic_creature_DireWolf::AttackTwo()
@@ -1125,7 +1139,7 @@ void cDynamic_creature_DireWolf::DeathFun()
 		g_engine->AddParticle(new VfxDeath(this, m_pSpriteLeft, spritePos, 1));
 	}
 
-
+	g_engine->PlaySounds("WolfDeathSound");
 }
 
 void cDynamic_creature_DireWolf::ReturnToPool()
@@ -1275,6 +1289,9 @@ void cDynamic_creature_Bandit::SpecAttack(float targetX, float targetY, float Di
 
 cDynamic_creature_Bandit::cDynamic_creature_Bandit() : cDynamic_creature_Enemy("Bandit", RPG_Assets::get().GetSprite("BanditRight"), RPG_Assets::get().GetSprite("BanditLeft"))
 {
+
+	M_CreatureIndexName = Bandit;
+
 	//collision borders
 	CollbordersX = 0.8f;
 	CollbordersXF = 1.1f;
@@ -1412,8 +1429,8 @@ cDynamic_creature_Pantir::cDynamic_creature_Pantir() : cDynamic_Creature("Pantir
 	pEquipedChest = (cEquip*)RPG_Assets::get().GetItem("Basic Chest");
 	pEquipedNeck = (cEquip*)RPG_Assets::get().GetItem("Basic Neck");
 	pEmptySlot = (cEquip*)RPG_Assets::get().GetItem("Empty");
-
-
+	M_CreatureIndexName = Player;
+	
 	//pEquipedBoots = pEmptySlot;
 	//pEquipedHelmet = pEmptySlot;
 	//pEquipedBack = pEmptySlot;
@@ -1515,6 +1532,17 @@ void cDynamic_creature_Pantir::IndicateAnim()
 		m_nGraphicCounterX = 0;
 		m_nGraphicAmountFrames = 9;
 		FXFrame = 0;
+		
+
+		if (frameIndicator >2)
+		{
+		Framesound = 7;
+		}
+		else
+		{
+
+		Framesound = 2;
+		}
 		
 		//RPG_Assets::get().playSound("Run");
 		break;
@@ -1677,6 +1705,10 @@ void cDynamic_creature_Pantir::IndicateAnim()
 		{
 			clearFlag(bAnimAction);
 			setFlag(bIsAttackable);
+
+			bHideMode = true;
+			m_layer = Neutral;
+
 		}
 
 		break;
@@ -1710,6 +1742,9 @@ void cDynamic_creature_Pantir::IndicateAnim()
 		enumCounter = 21;
 		FXFrame = 0;
 		
+
+		m_nGraphicCounterY = 0;
+		m_nGraphicCounterX = 0;
 		//
 		switch (Grabedenemy)  	//   Here on new spritesheet we must find exactly our target (Bandit, wolf, std)
 		{
@@ -1766,28 +1801,35 @@ void cDynamic_creature_Pantir::IndicateAnim()
 		if (checkFlag(bOnLanded))
 		{
 			//ProjSize
-			ProjCollbordersX = 0.0f;
-			ProjCollbordersXF = 4.0f;
-			ProjCollbordersY = 1.3f;
-			ProjCollbordersYF = 2.7f;
+			ProjCollbordersX =CollbordersX-0.6f;
+			ProjCollbordersXF = CollbordersXF+0.6f;
+			ProjCollbordersY = CollbordersY;
+			ProjCollbordersYF = CollbordersYF;
 			//
+			g_engine->PlaySounds("SwirlLanding");
 
+			std::cout << "Hello in 22 enumirator" << std::endl;
+
+			setFlag(isprojEqualX);
+			setFlag(isprojfollow);
+		
 
 			
-			clearFlag(bAnimAction);
-			setFlag(bIsAttackable);
-
-			setFlag(bDraw);
+			Target->setFlag(Target->bDraw);
 			FxColumn = 8;
 			PerformAttack();
-			this->vy -=8;
+			//this->vy -=8;
 			Jumpcounter++;
-			//if (Target !=nullptr)
-		//	Target = nullptr;
+			if (Target !=nullptr)
+			Target = nullptr;
 			clearFlag(bOnLanded);
 			setFlag(bControllable);
-			enumCounter = 2;
 
+			enumCounter = 19;
+			m_nGraphicCounterY = 7;
+			m_nGraphicCounterX = 5;
+			m_nGraphicAmountFrames = 9;  //  <---Means how long our projectile should work
+			frameIndicator = 0;
 			break;
 		}
 		else
@@ -1890,19 +1932,19 @@ int cDynamic_creature_Pantir::GetStats(int num)
 
 void cDynamic_creature_Pantir::SwirlGrab( cDynamic* dyn)
 {
-
-	Target = dyn;
+	
+	Target = (cDynamic_Creature*)dyn;
 
 	clearFlag(isprojfollow);    // keep projectile follow at char 
 	clearFlag(IsThrow);
 	setFlag(bAnimAction);  // <--blocking other animations while it's working
 	clearFlag(bIsAttackable);
-	
 	clearFlag(bControllable);
 
 	if (Target != nullptr)
 	{
-		if (Target->sName == "Bandit")
+		
+		if (Target->GetNameIndex() == Bandit)
 		{
 			Grabedenemy = 0;
 		}
@@ -1930,7 +1972,9 @@ void cDynamic_creature_Pantir::SwirlGrab( cDynamic* dyn)
 	vy -= 7.0f;
 	Target->vy = this->vy;
 
-	clearFlag(bDraw);
+	Target->clearFlag(Target->bDraw);
+
+	
 
 	enumCounter = 21;
 		
@@ -1960,7 +2004,7 @@ void cDynamic_creature_Pantir::Behaviour(float fElapsedTime, cDynamic* player)
 	//std::cout << checkFlag(isDirectionLock) << "\tisDirectionLock " << std::endl;
 	//std::cout << "//////////" << std::endl;
 	
-
+	//ReductionAcctn(fElapsedTime);  //maybe for future when slope is slippery(скользкий)
 
 	if (checkFlag(bOnGround))
 	{
@@ -1972,11 +2016,9 @@ void cDynamic_creature_Pantir::Behaviour(float fElapsedTime, cDynamic* player)
 			vx = 0.0f;
 		
 			
-				g_engine->WalkSound->stop();
-
-			
 		}
 
+		
 
 
 
@@ -1988,42 +2030,19 @@ void cDynamic_creature_Pantir::Behaviour(float fElapsedTime, cDynamic* player)
 		{
 			vx = 0.0f;
 			
-			g_engine->WalkSound->stop();
+		
 
 		}
 	}
 	
 
-	if (checkFlag(IsOnePlay) || !checkFlag(bOnGround))
-	{
-		g_engine->WalkSound->stop();
-	}
+
 	
 	if (vx !=0)
 	{
 		energyCount += fElapsedTime * (25.0);
 
-		if (checkFlag(bOnGround))
-		{
-			
-			
-
-			if (g_engine->WalkSound->getStatus() == sf::Sound::Playing)
-			{
-
-			}
-			else
-			{
 		
-			g_engine->WalkSound->play();
-
-			//g_engine->PlaySounds(g_engine->WalkSound->);
-		//	g_engine->sounds.push_back(g_engine->WalkSound);
-		//	g_engine->currsound.setLoop(true);
-
-			}
-			
-		}
 
 	}
 	else
@@ -2045,6 +2064,7 @@ void cDynamic_creature_Pantir::Behaviour(float fElapsedTime, cDynamic* player)
 	}
 	if (energyCount >=1)
 	{
+		
 		energyAmount += (int)energyCount;
 		energyCount = 0.0f;		
 	}
@@ -2063,7 +2083,13 @@ void cDynamic_creature_Pantir::Behaviour(float fElapsedTime, cDynamic* player)
 	if (energyAmount <= 0 )
 		energyAmount = 0;	
 	
-	
+	if (!checkFlag(isAttack))
+	{
+
+	EnergyUIManagment();
+	RageUIManagment();
+	}
+
 	if ( rageAmount >= MaxRage)
 		rageAmount = MaxRage;
 
@@ -2089,12 +2115,17 @@ void cDynamic_creature_Pantir::Behaviour(float fElapsedTime, cDynamic* player)
 
 	}
 	
+
+	g_engine->SetBackStab(false);
 }
 
 
 
 cDynamic_creature_BanditArcher::cDynamic_creature_BanditArcher() : cDynamic_creature_Bandit()
 {
+
+	M_CreatureIndexName = BanditArcher;
+
 	 sName = "BanditArcher";
 	 fSpecAtckdist = 5.0f;
 	 fAttackDist = 5.0f;
@@ -2108,86 +2139,6 @@ cDynamic_creature_BanditArcher::cDynamic_creature_BanditArcher() : cDynamic_crea
 }
 
 
-void cDynamic_creature_BanditArcher::AttackOne()
-{
-	//setFlag(isAttack);
-	//setFlag(IsThrow);
-	//clearFlag(isprojfollow);
-
-
-	//setFlag(isDirectionLock);
-
-
-	//sparedVx = (M_nFacingDirection == WEST) ? -10 : 10;
-	//sparedVy = -2.0f;
-
-	//enumCounter = 3;     //  <---Attack
-
-	//frameIndicator = 0;
-
-
-	//ProjCollbordersX = 0.75f;
-	//ProjCollbordersXF = 1.25f;
-	//ProjCollbordersY = 0.95f;
-	//ProjCollbordersYF = 1.25f;
-
-
-	//setFlag(isAttack);
-
-	//vx = 0;
-	//m_nGraphicCounterY = 5;
-	//m_nGraphicCounterX = 0;
-	//m_nGraphicAmountFrames = 9;
-	//attackdirectionX = 0.3f;
-	//attackdirectionY = -0.5f;
-	//m_nShockTime = 0.1f;
-
-	//FxColumn = 0;
-	//FXFrame = 4;
-	//M_nFacingDirectionVertical = NOTLOOKING;
-	//m_nGraphicEndFrame = m_nGraphicCounterX + m_nGraphicAmountFrames;
-}
-
-void cDynamic_creature_BanditArcher::AttackTwo()
-{
-//	setFlag(isAttack);
-//	setFlag(IsThrow);
-//	clearFlag(isprojfollow);
-//
-//
-//	setFlag(isDirectionLock);
-//
-//
-//	sparedVx = (M_nFacingDirection == WEST) ? -2 : 2;
-//	sparedVy = -5.0f;
-////	sparedVy = 1.0f;
-//
-//	enumCounter = 12;     //  <---Attack Vertical
-//
-//	frameIndicator = 0;
-//
-//
-//
-//
-//	ProjCollbordersX = 0.75f;
-//	ProjCollbordersXF = 1.25f;
-//	ProjCollbordersY = 0.95f;
-//	ProjCollbordersYF = 1.25f;
-//
-//
-//	vx = 0;
-//	m_nGraphicCounterY = 4;
-//	m_nGraphicCounterX = 0;
-//	m_nGraphicAmountFrames = 9;
-//	attackdirectionX = 0.3f;
-//	attackdirectionY = -0.5f;
-//	m_nShockTime = 0.1f;
-//	FxColumn = 0;
-//	FXFrame = 4;
-//	M_nFacingDirectionVertical = NOTLOOKING;
-//	m_nGraphicEndFrame = m_nGraphicCounterX + m_nGraphicAmountFrames;
-
-}
 
 void cDynamic_creature_BanditArcher::Behaviour(float fElapsedTime, cDynamic* player)
 {
@@ -2415,6 +2366,9 @@ void cDynamic_creature_BanditArcher::ReturnToPool()
 		this->sName = "BanditArcher";
 		this->nHealth = this->nHealthMax;
 		g_engine->PoolsController(g_engine->getBanditsArcherPool(), this);
+
+
+		g_engine->PlaySounds("BanditDeathSound");
 	}
 }
 
@@ -2431,11 +2385,11 @@ void cDynamic_creature_BanditArcher::SpecAttack(float targetX, float targetY, fl
 	//setFlag(isDirectionLock);
 
 	float time =1.5f;
-	float vxtest = targetX/time ;
+	float vxtest = (targetX+1.25f)/time ;
 
 	sparedVx = vxtest;
 					//дистанци€ по y +половину от гравитации, в нашем случае 5, домножа€ на врем€ 5 в квадрате
-	float vytest = (targetY + 0.5f * 5 * (time * time)) / time;
+	float vytest = (targetY + 0.5f * 5 * time);
 	
 	sparedVy =-vytest;
 
@@ -2575,7 +2529,7 @@ void cDynamic_creature_Pantir::PerformAttack()
 				break;
 			}
 
-			pEquipedWeapon->OnUse(this);
+			pEquipedWeapon->OnUse(this,false);
 }
 
 
@@ -2593,9 +2547,12 @@ void cDynamic_Item::OnInteract(cDynamic* player)
 
 		
 		//Add item to invenotory
-		if (g_engine->GiveItem(item->sName,1)) //< -- if return true means that full	
+		if (g_engine->GiveItem(item->sName, 1)) //< -- if return true means that full	
+		{
 			return;
+		}
 		
+			g_engine->PlaySounds("Inventory");
 
 	}
 	
@@ -2946,10 +2903,10 @@ void cDynamic_Projectile::SetSprites(olc::Decal* IpSpriteRight, olc::Decal* IpSp
 
 void cDynamic_Projectile::ReturnToPool()
 {
-	{
+	
 		SetDeafult();
 		g_engine->PoolsController(g_engine->getProjectilePool(), this);
-	}
+	
 }
 
 void cDynamic_Projectile::SetFollowProjPos()
@@ -3077,10 +3034,6 @@ void cDynamic_HpBar::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)
 
 	
 
-	if (Hpowner->checkFlag(bDead))
-	{
-		setFlag(bRedundant);  // пометка, что объект мЄртв и пам€ть нужно освободить
-	}
 
 	//  оординаты отрисовки с учетом смещени€ и масштаба
 	float drawPosX = (px - ox) * (64.0f * g_engine->fscale) + (28 * g_engine->fscale);
@@ -3122,7 +3075,6 @@ cDynamic_HpBar::cDynamic_HpBar(float ox, float oy,  int hp, cDynamic_Creature* h
 	soursceSizeX = 72;
 	soursceSizeY = 9;
 
-	g_engine->AddIndicators(this);
 }
 
 void cDynamic_HpBar::Update(float fElapsedTime, cDynamic* player)
@@ -3221,7 +3173,7 @@ void cDynamic_TextDamage::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy
 
 
 
-		gfx->DrawPartialDecal({ (float)((this->px - ox) * g_engine->CellSize) + (i * (18* g_engine->fscale)), (float)((this->py - oy) * g_engine->CellSize) + (z * 32) }, RPG_Assets::get().GetSprite("font"), {sx, sy}, {32, 32}, {1 * g_engine->fscale,1*g_engine->fscale}, Color);
+		gfx->DrawPartialDecal({ (float)((this->px - ox) * g_engine->CellSize) + (i * (8* g_engine->fscale)), (float)((this->py - oy) * g_engine->CellSize) + (z * 32) }, RPG_Assets::get().GetSprite("font"), {sx, sy}, {32, 32}, {0.5f * g_engine->fscale,0.5f*g_engine->fscale}, Color);
 		i++;
 	}
 
@@ -3310,7 +3262,7 @@ void cDynamic_creature_Pantir::EnergyMoveAttackAir()
 {
 	if (!bHideMode )
 	{
-
+		g_engine->PlaySounds("SwordSwingTwo");
 		
 		setFlag(isAttack);
 		clearFlag(IsOnePlay);
@@ -3407,7 +3359,7 @@ void cDynamic_creature_Pantir::EnergyMoveAttackLow()
 
 		m_nGraphicCounterY = 0;
 		m_nGraphicCounterX = 10;
-		m_nGraphicAmountFrames = 4;
+		m_nGraphicAmountFrames = 3;
 
 		attackdirectionX = 0.2f;
 		attackdirectionY = -0.3f;
@@ -3479,12 +3431,32 @@ void cDynamic_creature_Pantir::SetRage(int setRage)
 }
 void cDynamic_creature_Pantir::HideStage()
 {
-	if (energyAmount>50 && bHideMode ==false)
+	if (energyAmount>35 && bHideMode ==false)
 	{
-	moveBonus+= 10;
+		if (checkFlag(bOnGround))
+		{
+		vx = (GetFacingDirection() == 3) ? vx += 50 : vx -= 50;
+		}
+		else
+		{
+			vx = (GetFacingDirection() == 3) ? vx += 25 : vx -= 25;
+		}
+	
+
+		if (M_nFacingDirection == EAST)
+		{
+
+			g_engine->SpawnMirrors({ px,py }, { 0,4 }, 6, nSheetSizeX,nSheetSizeY, m_pSpriteRight);
+		}
+		else
+		{
+			g_engine->SpawnMirrors({ px,py }, { 0,4 }, 6, nSheetSizeX, nSheetSizeY, m_pSpriteLeft);
+
+		}
+		g_engine->PlaySounds("Charge");
 	m_layer = Neutral;
-    energyAmount -= 75;
-	bHideMode = true;
+    energyAmount -= 35;
+	bHideMode = true;   // switch in hide 
 	clearFlag(IsOnePlay);
 	clearFlag(isAttack);
 	clearFlag(Btarget);
@@ -3640,7 +3612,7 @@ void cDynamic_creature_Pantir::RageMoveAttck()
 
 		m_nGraphicCounterY = 1;
 		m_nGraphicCounterX = 9;
-		m_nGraphicAmountFrames = 7;  //  <---Means how long our projectile should work
+		m_nGraphicAmountFrames = 6;  //  <---Means how long our projectile should work
 		attackdirectionX = 0.1f;
 		attackdirectionY = 1.1f;
 		m_nShockTime = 0.15f;
@@ -3653,7 +3625,11 @@ void cDynamic_creature_Pantir::RageMoveAttck()
 
 		FxColumn =4;
 
+		if ((g_engine->GetLearnedTalent(5)))
+			setFlag(Btarget);// <--- Set projectile take target enemy for blink or other
 
+
+		targetTime = 0.2f;
 
 
 	}
@@ -3766,6 +3742,9 @@ void cDynamic_creature_Pantir::EnergyMoveAttackBack()
 {
 	if (!bHideMode)
 	{
+
+		g_engine->PlaySounds("BackStab");
+
 		SetVerticalDirection(3); //for escape coflicts with held botton up or down 
 		setFlag(isAttack);
 		clearFlag(IsOnePlay);
@@ -3836,10 +3815,12 @@ void cDynamic_creature_Pantir::EnergyHide(float fElapsedTime)
 {
 	if (bHideMode)
 	{
-		Hidetimer -= fElapsedTime * 2.0f;
+		Hidetimer -= fElapsedTime * 4.0f;
 
 		if (Hidetimer < 0.5f)
 		{
+			if (getRed()!= 255)
+			{
 
 			uint8_t Red = getRed();
 			uint8_t Green = getGreen();
@@ -3853,6 +3834,7 @@ void cDynamic_creature_Pantir::EnergyHide(float fElapsedTime)
 			setRedColor(Red);
 			setBlueColor(blue);
 
+			}
 
 			if (Hidetimer <= 0)
 			{
@@ -3864,7 +3846,6 @@ void cDynamic_creature_Pantir::EnergyHide(float fElapsedTime)
 				//redColor = 255;
 				//greenColor = 255;
 				//blueColor = 255;
-				moveBonus -= 10;
 				bHideMode = false;
 				Hidetimer = 2.0f;
 			}
@@ -3878,26 +3859,28 @@ void cDynamic_creature_Pantir::RageMoveAttackJumpUp()
 	
 
 		setFlag(isAttack);
+		//setFlag(isAttack);
 		clearFlag(IsOnePlay);
 		clearFlag(bAnimAction);
 		clearFlag(Btarget); // <--- Set projectile take target enemy for blink or other
 		enumCounter = 17;  //  eviscirate jump Up
-		clearFlag(isprojfollow);    // keep projectile follow at char 
+		setFlag(isprojfollow);    // keep projectile follow at char 
+		setFlag(isprojEqualX);  // px projectile be on the same position where owner 
 		frameIndicator = 0;
 
-		vy -= 15;
+		vy = -15;
 		rageset = 0;
 		Hittimes = 2;
 
 		//ProjSize
-		ProjCollbordersX = 0.2f;
-		ProjCollbordersXF = 1.9f;
-		ProjCollbordersY = 0.15f;
-		ProjCollbordersYF = 1.8f;
+		ProjCollbordersX = CollbordersX-0.5f;
+		ProjCollbordersXF = CollbordersXF+0.5f;
+		ProjCollbordersY = CollbordersY;
+		ProjCollbordersYF = CollbordersYF;
 		//
 
 		FxColumn = 6;
-
+		g_engine->PlaySounds("RageJumpUp");
 	}
 }
 void cDynamic_creature_Pantir::RageMoveAttackAirDown()
@@ -3916,6 +3899,8 @@ void cDynamic_creature_Pantir::RageMoveAttackAirDown()
 
 		enumCounter = 18;  //  eviscirate jump down
 		setFlag(isprojfollow);    // keep projectile follow at char 
+		setFlag(isprojEqualX);
+
 		frameIndicator = 0;
 
 		vy = 0;
@@ -3923,10 +3908,10 @@ void cDynamic_creature_Pantir::RageMoveAttackAirDown()
 		Hittimes = 2;
 
 		//ProjSize
-		ProjCollbordersX = 0.2f;
-		ProjCollbordersXF = 1.9f;
-		ProjCollbordersY = 0.75f;
-		ProjCollbordersYF = 1.8f;
+		ProjCollbordersX = CollbordersX-0.5f;
+		ProjCollbordersXF = CollbordersXF+0.5f;
+		ProjCollbordersY = ProjCollbordersY;
+		ProjCollbordersYF = ProjCollbordersYF;
 		//
 
 		m_nGraphicCounterY = 7;
@@ -3955,6 +3940,7 @@ void cDynamic_creature_Pantir::RageMoveAttackLanding()
 	FXFrame = 8;
 	setFlag(isprojfollow);    // keep projectile follow at char 
 	clearFlag(IsThrow);
+	setFlag(isprojEqualX);
 	m_nGraphicCounterY = 7;
 	m_nGraphicCounterX = 5;
 	m_nGraphicAmountFrames = 9;  //  <---Means how long our projectile should work
@@ -3967,10 +3953,10 @@ void cDynamic_creature_Pantir::RageMoveAttackLanding()
 	Hittimes = 4;  // <--How many times projectile should hit
 	//ProjSize
 
-	ProjCollbordersX = 0.0f;
-	ProjCollbordersXF = 2.1f;
-	ProjCollbordersY = 0.75f;
-	ProjCollbordersYF = 1.8f;
+	ProjCollbordersX =CollbordersX-0.7f;
+	ProjCollbordersXF = CollbordersXF+0.7f;
+	ProjCollbordersY = ProjCollbordersY;
+	ProjCollbordersYF = ProjCollbordersYF;
 	//
 
 	//ProjOffsetX = 0.0f;
@@ -3992,31 +3978,49 @@ void cDynamic_creature_Pantir::BlinkBehind()
 
 	
 
+	float px, py;
+	
 
 	if (TargetChild->GetFacingDirection() ==1)    // Here we decide which position we should put our char it  ( offset px)
 	{
-		// just for simple reading code
-		float px = TargetChild->px + (TargetChild->CollbordersXF - TargetChild->CollbordersX);  // <-- new position char
-		float py = TargetChild->py;
-		//
+
+		float PantirWideX = CollbordersXF - CollbordersX;
+		float TargetWideX = TargetChild->CollbordersXF - TargetChild->CollbordersX;
+
+		if (PantirWideX > TargetWideX)  // if pantir collision wider than target 
+
+		{
+			// just for simple reading code
+			px = TargetChild->px + PantirWideX;  // <-- new position char   RIGHT
+			py = TargetChild->py;
+			//
+		}
+		else
+		{
+			// just for simple reading code
+			px = TargetChild->px + TargetWideX;  // <-- new position char   RIGHT
+			py = TargetChild->py;
+			//
+		}
+
+		
 
 		if (g_engine->CheckPosition(px + this->CollbordersX, px + this->CollbordersXF, py + this->CollbordersY, py + this->CollbordersYF)) // checkPosition on solidblocks  if @true@ means that we can teleport
 		{
 
 
-			// Create shadow 
-			cDynamic_creature_Pantir* shadow = new cDynamic_creature_Pantir;
-			shadow->m_layer = Neutral;
-			shadow->setFlag(isAttack);
-			shadow->px = this->px;
-			shadow->py = this->py;
-			shadow->enumCounter = 20;
-			shadow->clearFlag(gravity);
-			shadow->framespeed = 0.1f;
-			shadow->SetFacingDirection(this->GetFacingDirection());
-			g_engine->AddVecDynamic(shadow);
 
+			if (M_nFacingDirection == EAST)
+			{
 
+				g_engine->SpawnMirrors({ this->px,this->py }, { 0,4 }, 6, nSheetSizeX, nSheetSizeY, m_pSpriteRight);
+			}
+			else
+			{
+				g_engine->SpawnMirrors({ this->px,this->py }, { 0,4 }, 6, nSheetSizeX, nSheetSizeY, m_pSpriteLeft);
+
+			}
+			g_engine->PlaySounds("Charge");
 
 			this->SetFacingDirection(TargetChild->GetFacingDirection());  // here we grab  a way where looking our target 
 
@@ -4034,6 +4038,7 @@ void cDynamic_creature_Pantir::BlinkBehind()
 			clearFlag(bOnLanded);
 			clearFlag(isprojfollow);
 			clearFlag(Btarget);
+
 			Jumpcounter++;
 			frameIndicator = 0;     // if we change it on 3 - it will be a comboo whith eviscirate but isAttack must be true
 			//Copy from jump
@@ -4050,25 +4055,42 @@ void cDynamic_creature_Pantir::BlinkBehind()
 	}
 	else
 	{
-		//
-		float px = TargetChild->px - (TargetChild->CollbordersXF - TargetChild->CollbordersX);
-		float py = TargetChild->py;
-		//
+
+		float PantirWideX = CollbordersXF - CollbordersX;
+		float TargetWideX = TargetChild->CollbordersXF - TargetChild->CollbordersX;
+
+		if (PantirWideX > TargetWideX)  // if pantir collision wider than target 
+
+		{
+			// just for simple reading code
+			px = TargetChild->px - PantirWideX;  // <-- new position char   RIGHT
+			py = TargetChild->py;
+			//
+		}
+		else
+		{
+			// just for simple reading code
+			px = TargetChild->px - TargetWideX;  // <-- new position char   RIGHT
+			py = TargetChild->py;
+			//
+		}
+	
 		if (g_engine->CheckPosition(px + this->CollbordersX, px + this->CollbordersXF, py + this->CollbordersY, py + this->CollbordersYF)) // checkPosition on solidblocks
 		{
+			
 
 
-			// Create shadow 
-			cDynamic_creature_Pantir* shadow = new cDynamic_creature_Pantir;
-			shadow->m_layer = Neutral;
-			shadow->setFlag(isAttack);
-			shadow->px = this->px;
-			shadow->py = this->py;
-			shadow->enumCounter = 20;
-			shadow->clearFlag(gravity);
-			shadow->framespeed = 0.1f;
-			shadow->SetFacingDirection(this->GetFacingDirection());
-			g_engine->AddVecDynamic(shadow);
+			if (M_nFacingDirection == EAST)
+			{
+
+				g_engine->SpawnMirrors({ this->px,this->py }, { 0,4 }, 6, nSheetSizeX, nSheetSizeY, m_pSpriteRight);
+			}
+			else
+			{
+				g_engine->SpawnMirrors({ this->px,this->py }, { 0,4 }, 6, nSheetSizeX, nSheetSizeY, m_pSpriteLeft);
+
+			}
+			g_engine->PlaySounds("Charge");
 
 
 
@@ -4106,15 +4128,18 @@ void cDynamic_creature_Pantir::BlinkBehind()
 	}
 }
 
+void cDynamic_creature_Pantir::RunOver()
+{
+	run = false;
+	accelerationX = 0.0f;
+
+
+}
+
 bool cDynamic_creature_Pantir::IsLanded()
 {
 
-	if (checkFlag(bOnLanded))
-	{
-		return true;
-	}
-	else
-	{
+	
 		setFlag(bOnLanded);
 		
 		g_engine->PlaySounds("Landed");
@@ -4127,12 +4152,11 @@ bool cDynamic_creature_Pantir::IsLanded()
 		enumCounter = 11;
 		clearFlag(isAttack);
 		clearFlag(IsOnePlay);
-		frameIndicator = 0;
+	//	frameIndicator = 0;
 		Combocounter = 0;
 		fAttackcount = 0.0f;
-		setEnum();
+	//	setEnum();
 		return false;
-	}
 }
 
 void cDynamic_creature_Pantir::DeathFun()
@@ -4153,6 +4177,97 @@ void cDynamic_creature_Pantir::DeathFun()
 	}
 
 
+	
+}
+
+bool cDynamic_creature_Pantir::ReductionAcceleration(float fElapsedTime)
+{
+
+	if (run)
+	{
+
+		float sinX = 2 * sin(3.14 / accelerationX * fElapsedTime);
+		// ”меньшение accelerationX к нулю, независимо от знака
+		accelerationX -= accelerationX * 10.0f * fElapsedTime - sinX;
+
+		// ≈сли значение близко к нулю, обнул€ем его и отключаем "run"
+		if (std::abs(accelerationX) <= 10.0f) {
+			accelerationX = 0.0f;
+			run = false;
+		}
+
+
+	}
+	return run;
+}
+
+void cDynamic_creature_Pantir::EnergyUIManagment()
+{
+	
+
+	if (g_engine->GetBackStab() == 1)
+	{
+		g_engine->setUiCurrSpell(RPG_Engine::DataStruct::SpellEnergyBackstab, 0);
+
+	}else if (energyAmount > 99)
+	{
+		g_engine->setUiCurrSpell(RPG_Engine::DataStruct::SpellEnergyHigh,0);
+
+	}
+	else if (energyAmount >66)
+	{
+		g_engine->setUiCurrSpell(RPG_Engine::DataStruct::SpellEnergyMid, 0);
+	}
+	else if (energyAmount >33)
+	{
+		g_engine->setUiCurrSpell(RPG_Engine::DataStruct::SpellEnergyLow, 0);
+	}else
+	{
+		g_engine->setUiCurrSpell(RPG_Engine::DataStruct::SpellEmpty, 0);
+	}
+
+}
+
+bool cDynamic_creature_Pantir::RageUIManagment()
+{
+	if (rageAmount > 35)
+	{
+
+	//	GetFacingDirectionVertical()
+
+		switch (GetFacingDirectionVertical())
+		{
+		case 1:  // <---Up
+
+
+			g_engine->setUiCurrSpell(RPG_Engine::DataStruct::SpellRageFligh, 1);
+			return true;
+			break;
+
+		case 0:  //<--Down
+			if (checkFlag(bOnGround))
+			{
+				g_engine->setUiCurrSpell(RPG_Engine::DataStruct::SpellRageUp, 1);
+				return true;
+				break;
+			}
+			g_engine->setUiCurrSpell(RPG_Engine::DataStruct::SpellRageFall, 1);
+			return true;
+			break;
+
+		case 3:
+			break;
+		}
+	
+		g_engine->setUiCurrSpell(RPG_Engine::DataStruct::SpellRageDown, 1);
+		return true;
+
+	}
+	else
+	{
+		g_engine->setUiCurrSpell(RPG_Engine::DataStruct::SpellEmpty, 1);
+		return true;
+	}
 	
 }
 
@@ -4472,13 +4587,15 @@ void cDynamic_creature_Enemy::PerformAttack()
 		return;
 
 	SetUpDamage();
-	pEquipedWeapon->OnUse(this);
+	pEquipedWeapon->OnUse(this,true);
 }
 
 cDynamic_creature_BossBandit::cDynamic_creature_BossBandit():  cDynamic_creature_Enemy("BanditBoss", RPG_Assets::get().GetSprite("BanditBossRight"), RPG_Assets::get().GetSprite("BanditBossLeft"))
 {
-	//nSheetSizeX = 256.0f;
-//	nSheetSizeY = 256.0f;
+
+	M_CreatureIndexName = Boss;
+
+
 	looptimes = 3;
 //	entityScale = 2.0f;
 	//collision borders
@@ -4729,7 +4846,6 @@ void cDynamic_creature_BossBandit::SpecAttack(float targetX, float targetY, floa
 	ProjCollbordersY = 0.8f;
 	ProjCollbordersYF = 3.5f;
 	//
-	M_nFacingDirectionVertical = NORTH;
 	attackdirectionX = 0.3f;
 	attackdirectionY = -0.5f;
 
@@ -4785,7 +4901,7 @@ void cDynamic_creature_BossBandit::SpecAttack2(float targetX, float targetY, flo
 	
 
 	
-	FXFrame = m_nGraphicCounterX + m_nGraphicAmountFrames -3;
+	FXFrame = m_nGraphicCounterX + m_nGraphicAmountFrames -2;
 
 
 	attckCount++;
@@ -5122,6 +5238,8 @@ void VfxShot::ReturnToPool()
 
 cDynamic_creature_Boar::cDynamic_creature_Boar() : cDynamic_creature_Enemy("ForestBoar", RPG_Assets::get().GetSprite("BoarRight"), RPG_Assets::get().GetSprite("BoarLeft"))
 {
+
+	M_CreatureIndexName = Boar;
 
 	pEquipedWeapon = (cWeapon*)RPG_Assets::get().GetItem("Bandit Sword");
 	hpUpdate = new cDynamic_HpBar(px, py, nHealth, this);
@@ -5611,8 +5729,8 @@ bool cDynamic_creature_Boar::IsLanded()
 		enumCounter = 11;
 		clearFlag(isAttack);
 		setFlag(IsOnePlay);
-		frameIndicator = 0;
-		setEnum();
+	//	frameIndicator = 0;
+	//	setEnum();
 		return false;
 	}
 }
@@ -5675,22 +5793,23 @@ void VfxDeath::Update(float fElapsedTime, cDynamic* player)
 		setFlag(bRedundant);
 		AlphaColor = 0;
 	}
+	
 
 	this->vx += vxMult * fElapsedTime;
 	this->vy += 32 * fElapsedTime;
 	
+	
 	float fNewObjectPosX = this->px + this->vx * fElapsedTime;
 	float fNewObjectPosY = this->py + this->vy * fElapsedTime;
-	float fResponseX = 0;
-	float fResponseY = 0;
+	
 
 		if (g_engine->CheckParticlePosition(fNewObjectPosX+(CollbordersXF-CollbordersX), fNewObjectPosY+CollbordersYF)) // checkPosition on solidblocks  if @true@ means that we can teleport
 		{
 		//	object->vy += object->mass * fElapsedTime;
 
 			
-			this->px = fNewObjectPosX;
-			this->py = fNewObjectPosY;
+			this->px =fNewObjectPosX;
+			this->py =fNewObjectPosY;
 		
 			currpicturePos = framepositions.first;
 		}
@@ -5712,8 +5831,10 @@ void VfxDeath::Update(float fElapsedTime, cDynamic* player)
 			//this->vy = 0.3*(-2.0f * dot * (fResponseY / fMagResponse) + this->vy);
 			//
 
-			this->vy = 0;
-			this->vx = 0;
+			//setFlag(bOnGround);
+
+			this->vy -= vxMult * fElapsedTime;
+			this->vx -= 32 * fElapsedTime;
 			currpicturePos = framepositions.second;
 		}
 	
@@ -5738,7 +5859,7 @@ ERaindrop::ERaindrop(uint16_t index) :Environment("RainDrops")
 	//this->angle = startAngle;
 	arrIndex = index;
 
-	psprite = RPG_Assets::get().GetSprite("RainVfx");
+	psprite = RPG_Assets::get().GetSprite("VFX");
 
 
 	cachedPositions = RPG_Assets::get().GetCache("RainFx");
@@ -5748,29 +5869,10 @@ ERaindrop::ERaindrop(uint16_t index) :Environment("RainDrops")
 
 void ERaindrop::Update(float fElapsedTime, float fOffsetx,float fOffsety)
 {
-	// Update the position of the raindrop based on its speed and angle
 
-	//px = screenwidth+initpx;
-	//py = screenheigh + initpy;
-
-	
-	
-	
-	// If raindrop goes off screen, wrap it around to the top
-	//if (py > g_engine->ScreenHeight())
-	//	py = 0;
-	//if (py< 0)
-	//	py = g_engine->ScreenHeight();
-
-	//if (px > g_engine->ScreenWidth())
-	//	px = 0;
-	//if (px <0)
-	//	px = g_engine->ScreenWidth() ;
 
 	ftargettime += fElapsedTime;
 
-//	float vely = speed * fElapsedTime;   // 0.01 - is snow
-//	float velx = angle * fElapsedTime;   // 0.01 - is snow
 
 	if (ftargettime>=1.0f/90.0f)
 	{
@@ -5778,8 +5880,7 @@ void ERaindrop::Update(float fElapsedTime, float fOffsetx,float fOffsety)
 
 	for (int i = 0; i < cachedPositions->size(); i++)  // бежим по всему вектору 
 	{
-	//	for (int ii = 0; ii <counter[i]; ii++)
-	//	{
+	
 		counter[i] = counter[i] % ((*cachedPositions)[i].size()-1); // если каунтер больше чем кадров в р€ду, прыгаем на 0 
 
 
@@ -5807,7 +5908,7 @@ void ERaindrop::Update(float fElapsedTime, float fOffsetx,float fOffsety)
 	else
 	{
 		
-		g_engine->SpawnRainSpray(worldPx, worldPy, i + 100 );
+		g_engine->SpawnRainSpray(worldPx, worldPy, i  );
 		counter[i] = 0;
 
 	
@@ -5841,7 +5942,7 @@ void ERaindrop::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)
 			olc::vf2d vDecal((*cachedPositions)[i][counter[i]].x, (*cachedPositions)[i][counter[i]].y); // Destination position (where to draw the raindrop)
 
 			//DrawRotatedDecal({ vDecal }, RPG_Assets::get().GetSprite("RainVfx"),atan2(vDecal.y-(vDecal.y+drop.speed*std::sin(drop.angle)), vDecal.x-(vDecal.x+drop.speed*std::cos(drop.angle))));
-			gfx->DrawPartialDecal({ vDecal.x, vDecal.y }, psprite, { 0.0f,0.0f }, { 8.0f,8.0f }, { (float)1 * g_engine->fscale,(float)1.5 * g_engine->fscale }, olc::WHITE);// Draw raindrop image with transparency
+			gfx->DrawPartialDecal({ vDecal.x, vDecal.y }, psprite, { 307,10 }, {1,8 }, { (float)1 * g_engine->fscale,(float)1.5 * g_engine->fscale }, olc::WHITE);// Draw raindrop image with transparency
 	
 	}
 }
@@ -6149,6 +6250,9 @@ void cDynamic_creature_Rider::Behaviour(float fElapsedTime, cDynamic* player)
 
 cDynamic_creature_WereWolf::cDynamic_creature_WereWolf() : cDynamic_creature_Enemy("WereWolf", RPG_Assets::get().GetSprite("WereWolfRight"), RPG_Assets::get().GetSprite("WereWolfLeft"))
 {
+
+	M_CreatureIndexName = Werewolf;
+
 	pEquipedWeapon = (cWeapon*)RPG_Assets::get().GetItem("Bandit Sword");
 	hpUpdate = new cDynamic_HpBar(px, py, nHealth, this);
 	 bTransformed = true;
@@ -6365,34 +6469,35 @@ void cDynamic_creature_WereWolf::CallWolfs()
 			x += 2;
 		}
 	}
-	else {
-		
-	
 
-	for (auto it = wolfPack.begin(); it != wolfPack.end(); ++it) {
-		cDynamic* entity = *it;
+	g_engine->PlaySounds("WerewolfSpawnSound");
+	//else {
+	//	
+	//
 
-
-		if (this->px-entity->px > 15 && this->px-entity->px<15)
-		{
-			wolfPack.erase(it); // Remove the Bandit entity from the pool
-			delete entity;
-			break;
-		}
+	//for (auto it = wolfPack.begin(); it != wolfPack.end(); ++it) {
+	//	cDynamic* entity = *it;
 
 
-		if (entity->binitialized == false)
-		{	
-		
-			wolfPack.erase(it); // Remove the Bandit entity from the pool
-			delete entity;
-			break;
-		}
-	
-	}
+	//	if (this->px-entity->px > 15 && this->px-entity->px<15)
+	//	{
+	//		wolfPack.erase(it); // Remove the Bandit entity from the pool
+	//		
+	//		break;
+	//	}
 
-	
-	}
+
+	//	if (entity->binitialized == false)
+	//	{	
+	//	
+	//		wolfPack.erase(it); // Remove the Bandit entity from the pool
+	//		break;
+	//	}
+	//
+	//}
+
+	//
+	//}
 }
 	
 
@@ -6744,7 +6849,7 @@ ERainSpray::ERainSpray(float startX, float startY, uint16_t arrayindex): Environ
 	
 	arrIndex = arrayindex;
 
-	psprite = RPG_Assets::get().GetSprite("RainVfx");
+	psprite = RPG_Assets::get().GetSprite("VFX");
 
 	
 	cachedPositions = RPG_Assets::get().GetCache("SprayFx");
@@ -6813,7 +6918,7 @@ void ERainSpray::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)
 			std::cout << Pos_ar[i].y << std::endl;
 		}*/
 
-	gfx->DrawPartialDecal({ (Pos_ar[i].x-ox ) * g_engine->CellSize, (Pos_ar[i].y - oy) * g_engine->CellSize }, psprite, { 3.0f,4.0f }, { 1.0f,1.0f }, { (float)1 * g_engine->fscale,(float)1.5 * g_engine->fscale }, olc::WHITE);// Draw raindrop image with transparency
+	gfx->DrawPartialDecal({ (Pos_ar[i].x-ox ) * g_engine->CellSize, (Pos_ar[i].y - oy) * g_engine->CellSize }, psprite, { 307,13.0f }, { 1.0f,1.0f }, { (float)1 * g_engine->fscale,(float)1.5 * g_engine->fscale }, olc::WHITE);// Draw raindrop image with transparency
 
 	}
 
@@ -6962,3 +7067,98 @@ std::vector<std::vector<CachedPosition>> ERainSpray::loadCache(const std::string
 	// ¬озвращаем загруженные данные в виде вектора векторов
 	return cachedPositions;
 }
+
+mirror::mirror(float px, float py,olc::vi2d CoordFrame, int amountframes,int sizeFrame, olc::Decal* Decal) :cDynamic("Mirror")
+{
+	this->px = px;
+	this->py = py;
+
+	FramesAmount = amountframes;
+	this->Decal = Decal;
+
+	SizeFrameX = sizeFrame;
+
+	CoordFrames = CoordFrame*SizeFrameX;
+}
+
+void mirror::Spawn(olc::vf2d Pos, olc::vi2d CoordFrame, int amountframes, int Sizeframex,int SizeFrameY, olc::Decal* Decal)
+{
+	this->px = Pos.x;
+	this->py = Pos.y;
+
+	FramesAmount = amountframes;
+	this->Decal = Decal;
+
+	SizeFrameX = Sizeframex;
+	this->SizeFrameY = SizeFrameY;
+
+	CoordFrames = CoordFrame;
+	frameIndicator = 0;
+	animspr = 0.0f;
+
+
+	SpriteWirdth = Decal->sprite->width / Sizeframex;
+}
+
+void mirror::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)
+{
+	if (!checkFlag(bRedundant))
+	{
+
+
+	int NextRow = frameIndicator / SpriteWirdth;
+	
+
+
+	int nSheetOffsetX = (frameIndicator % SpriteWirdth+ CoordFrames.x) * SizeFrameX;
+	int nSheetOffetY = (CoordFrames.y + NextRow) * SizeFrameY;
+
+	gfx->DrawPartialDecal({ (px - ox) * g_engine->CellSize, (py - oy) * g_engine->CellSize }, Decal, { static_cast<float>(nSheetOffsetX),static_cast<float>(nSheetOffetY) }, { (float)SizeFrameX,(float)SizeFrameY });
+
+	}
+}
+
+void mirror::Update(float fElapsedTime, cDynamic* player)
+{
+
+	animspr += fElapsedTime;
+
+
+	if (animspr >= 0.12f)                 //it's speed of frames
+	{
+		frameIndicator++;
+		animspr = 0.0f;
+	}
+
+	if (frameIndicator>FramesAmount)
+	{
+		//ReturnToPool();
+		setFlag(bRedundant);
+	}
+	
+}
+
+void mirror::ReturnToPool()
+{
+
+	SetDeafult();
+	g_engine->PoolsController(g_engine->getMirrorsPool(), this);
+}
+
+void mirror::SetDeafult()
+{
+	clearFlag(bRedundant);
+	clearFlag(binitialized);
+
+	px = 0;
+	py = 0;
+
+	CoordFrames.x = 0;
+	CoordFrames.y = 0;
+	FramesAmount = 0;
+	SizeFrameX = 0;
+	Decal = nullptr;
+	frameIndicator = 0;
+}
+
+

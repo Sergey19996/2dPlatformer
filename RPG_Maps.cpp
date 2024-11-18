@@ -287,7 +287,7 @@ bool cMap_Forest::PopulateDynamics(std::vector<cDynamic*>& vecDyns)
 //	}
 
 
-	for (uint16_t i = 200; i < 205; ++i)
+	for (uint16_t i = 101; i <106; ++i)
 	{
 		g_engine->SpawnClouds(i);
 	}
@@ -300,21 +300,12 @@ bool cMap_Forest::PopulateDynamics(std::vector<cDynamic*>& vecDyns)
 
 	RPG_Assets::get().playMusic("Sounds/ForestMusic.wav");
 
-	int Mqphase = g_engine->GetQuest("MainQuest")->GetPhase();
-	//SetupParallax(RPG_Assets::get().GetSprite("ParralaxForestClose"), RPG_Assets::get().GetSprite("ParralaxForestMid"), RPG_Assets::get().GetSprite("ParralaxForestFar"));
-
-
-	//olc::vf2d test = { 8.0f,25.5 };
-	//g_engine->SpawnBanditArcher(&test);
+	int Mqphase = g_engine->GetActiveQuest("MainQuest")->GetPhase();
+	
 
 	for (int i = 0; i < BanditsPositions.size(); )
 	{
-		
-		//g1->px = 128;
-		//g1->py = 1;
-	//	g_engine->SpawnBandit(*&(BanditsPositions[i]));
-		
-	//	i++;
+	
 		g_engine->SpawnBanditArcher(BanditsPositions[i]);
 		i++;
 		g_engine->SpawnBandit(BanditsPositions[i]);
@@ -356,10 +347,7 @@ bool cMap_Forest::PopulateDynamics(std::vector<cDynamic*>& vecDyns)
 
 	}
 	
-	//cDynamic* s1 = new cDynamic_creature_BossBandit();
-	//s1->px = 5;
-	//s1->py = 22;
-	//vecDyns.push_back(s1);
+
 
 	//Add Teleporters
 	vecDyns.push_back(new cDynamic_Teleport(226.0f, 29.0f, "Village", 6.0f, 12.0f)); //<--- Teleport From Village in Forest Left side (Day)
@@ -368,15 +356,14 @@ bool cMap_Forest::PopulateDynamics(std::vector<cDynamic*>& vecDyns)
 	
 	if (Mqphase > 5)
 	{
-		cDynamic* g3 = new cDynamic_creature_NPC("CaveEntrence",0);
-		g3->SwitchLayer(4);
+		
+		cDynamic* g3 = g_engine->GetNpc(RPG_Engine::NpcStruct::CaveEntrance);
 		g3->px = 180.0f;
 		g3->py = 27.5f;
 		
 		vecDyns.push_back(g3);
 
-	g3 = new cDynamic_creature_NPC("CaveOut",0);
-	g3->SwitchLayer(4);
+	g3 = g_engine->GetNpc(RPG_Engine::NpcStruct::CaveOut);
 	g3->px = 249.0f;
 	g3->py = 54.5f;
 	vecDyns.push_back(g3);
@@ -583,23 +570,23 @@ bool cMap_VillageInFire::PopulateDynamics(std::vector<cDynamic*>& vecDyns)
 	RPG_Assets::get().SetMusicVolume(1);
 
 
-	//for (int i = 0; i < BanditsPositions.size(); )
-	//{
+	/*for (int i = 0; i < BanditsPositions.size(); )
+	{
 
-		//g1->px = 128;
-		//g1->py = 1;
-	//	g_engine->SpawnBandit(BanditsPositions[i]);
-
-	//	i++;
-
-//	}
 		
-		
-			cDynamic* g1 = new cDynamic_creature_BossBandit();
-			g1->sName = "BossBandit";
+		g_engine->SpawnBandit(BanditsPositions[i]);
+
+		i++;
+
+	}*/
+	
+	
+			cDynamic* g1 = g_engine->SpawnBoss(RPG_Engine::BossStruct::BanditBoss);
 			g1->px = 50;
 			g1->py = 12;
-			vecDyns.push_back(g1);
+				//g_engine->SpawnBossBandt({ 50,12 });
+
+	
 			
 		
 			g_script->AddCommand((new cComand_AppearScreen(2)));
@@ -656,12 +643,12 @@ cMap_Village::cMap_Village()
 bool cMap_Village::PopulateDynamics(std::vector<cDynamic*>& vecDyns)
 {
 
-	RPG_Assets::get().playMusic("Sounds / VillgaeMusic.wav");
+	RPG_Assets::get().playMusic("Sounds/VillageMusic.wav");
 
 	g_script->AddCommand((new cComand_AppearScreen(2)));
 
-	cDynamic* g1 = new cDynamic_creature_NPC("BlackSmith",1);
-	g1->SwitchLayer(4); // Questable layer tag
+	//g_engine->GetNpc(RPG_Engine::NpcStruct::blacksmith)
+	cDynamic* g1 = g_engine->GetNpc(RPG_Engine::NpcStruct::blacksmith);
 	g1->px =53;
 	g1->py = 12;
 	vecDyns.push_back(g1);
@@ -669,23 +656,20 @@ bool cMap_Village::PopulateDynamics(std::vector<cDynamic*>& vecDyns)
 
 	
 
-
-	cDynamic* g3 = new cDynamic_creature_NPC("TavernVillage",-1);
-	g3->SwitchLayer(4); // Questable layer tag
+	
+	cDynamic* g3 = g_engine->GetNpc(RPG_Engine::NpcStruct::TavernVillageEntrance);
 	g3->px =80;
 	g3->py = 12;
 	vecDyns.push_back(g3);
 
 
-	cDynamic* g4 = new cDynamic_creature_NPC("Map",3);
-	g4->SwitchLayer(4); // Questable layer tag
+	cDynamic* g4 = g_engine->GetNpc(RPG_Engine::NpcStruct::Map);
 	g4->px = 11;
 	g4->py = 12;
 	vecDyns.push_back(g4);
 
 
-	cDynamic* g5 = new cDynamic_creature_NPC("ProfessionMan",2);
-	g5->SwitchLayer(4); // Questable layer tag
+	cDynamic* g5 = g_engine->GetNpc(RPG_Engine::NpcStruct::proffesion);
 	g5->px = 71;
 	g5->py = 12;
 	vecDyns.push_back(g5);
@@ -730,20 +714,20 @@ bool cMap_Village::OnInteraction(std::vector<cDynamic*>& vecDynobs, cDynamic* ta
 	if (target->sName == "Map" && nature == TALK)   //  <-------------------Map NPC First Village
 	{
 		g_script->AddCommand((new cComand_SetNgameMod(5)));
-		g_script->AddCommand((new cComand_SetPause(1)));
+		//g_script->AddCommand((new cComand_SetPause(1)));
 		
 	}
 
 	if (target->sName == "ProfessionMan" && nature == TALK)   //  <-------------------Profession NPC First Village
 	{
 		g_script->AddCommand((new cComand_SetNgameMod(6)));
-		g_script->AddCommand((new cComand_SetPause(1)));
+	//	g_script->AddCommand((new cComand_SetPause(1)));
 
 	}
 	if (target->sName == "BlackSmith" && nature == TALK)   //  <-------------------BlacksmithNPC First Village
 	{
 		g_script->AddCommand((new cComand_SetNgameMod(7)));
-		g_script->AddCommand((new cComand_SetPause(1)));
+//		g_script->AddCommand((new cComand_SetPause(1)));
 
 	}
 
@@ -782,20 +766,17 @@ bool cMap_VillageTavern::PopulateDynamics(std::vector<cDynamic*>& vecDyns)    //
 
 	RPG_Assets::get().playMusic("Sounds/TavernMusic.wav");
 
-	cDynamic* g1 = new cDynamic_creature_NPC("SaveMan",-1);
-	g1->SwitchLayer(4); // Questable layer tag
+	cDynamic* g1 = g_engine->GetNpc(RPG_Engine::NpcStruct::SaveMan);;
 	g1->px = 7;
 	g1->py =10;
 	vecDyns.push_back(g1);
 
-	cDynamic* g2 = new cDynamic_creature_NPC("LuxarySeller",0);
-	g2->SwitchLayer(4); // Questable layer tag
+	cDynamic* g2 = g_engine->GetNpc(RPG_Engine::NpcStruct::luxary);
 	g2->px = 11;
 	g2->py = 10;
 	vecDyns.push_back(g2);
 
-	cDynamic* g3 = new cDynamic_creature_NPC("Warehouse",-1);
-	g3->SwitchLayer(4); // Questable layer tag
+	cDynamic* g3 = g_engine->GetNpc(RPG_Engine::NpcStruct::Warehouse);
 	g3->px = 17;
 	g3->py = 10;
 	vecDyns.push_back(g3);
@@ -803,7 +784,15 @@ bool cMap_VillageTavern::PopulateDynamics(std::vector<cDynamic*>& vecDyns)    //
 
 
 	g_engine->GiveStoreItem("SmallWallet");
+	g_engine->GiveStoreItem("Basic Boots");
+	g_engine->GiveStoreItem("Basic Back");
+	g_engine->GiveStoreItem("White Nuggets");
+	g_engine->GiveStoreItem("Red Sample");
+	g_engine->GiveStoreItem("Cooper");
 
+	g_engine->GiveStoreItem("Health Elixir");
+	g_engine->GiveStoreItem("Energy Elixir");
+	g_engine->GiveStoreItem("Rage Elixir");
 
 	vecDyns.push_back(new cDynamic_Teleport(6.0f, 10.5f, "Village", 92.0f, 13.0f)); //<--- Teleport From Tavern in Village Left side (Day)
 
@@ -836,13 +825,13 @@ bool cMap_VillageTavern::OnInteraction(std::vector<cDynamic*>& vecDynobs, cDynam
 	if (target->sName == "Warehouse" && nature == TALK)
 	{
 		g_script->AddCommand((new cComand_SetNgameMod(2)));
-		g_script->AddCommand((new cComand_SetPause(1)));
+//		g_script->AddCommand((new cComand_SetPause(1)));
 	}
 
-	if (target->sName == "LuxarySeller" && nature == TALK)
+	if (target->sName == "LuxurySeller" && nature == TALK)
 	{
 		g_script->AddCommand((new cComand_SetNgameMod(4)));
-		g_script->AddCommand((new cComand_SetPause(1)));
+	//	g_script->AddCommand((new cComand_SetPause(1)));
 	}
 
 
@@ -879,11 +868,9 @@ bool cMap_ForestPartTwo::PopulateDynamics(std::vector<cDynamic*>& vecDyns)
 	for (int i = 0; i < BoarsPositions.size(); )
 	{
 
+	
 
-
-		cDynamic* g1 = new cDynamic_creature_Boar();
-		g1->px = BoarsPositions[i].x;
-		g1->py = BoarsPositions[i].y;
+		cDynamic* g1 = g_engine->SpawnBoar(BoarsPositions[i]);
 		vecDyns.push_back(g1);
 		i++;
 

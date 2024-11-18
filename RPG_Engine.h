@@ -103,8 +103,9 @@ public:
 	uint8_t goldcount = 0;
 
 	
-	sf::Sound* currsound;
-	sf::Sound* WalkSound = new sf::Sound();
+	
+	//sf::Sound* currsound;
+//	sf::Sound* WalkSound = new sf::Sound();
 	std::vector<sf::Sound*> sounds;  // Контейнер для проигрываемых звуков
 	
 	void AddText(float px, float py, std::string text) {
@@ -116,12 +117,91 @@ public:
 
 	olc::Decal* D_FullUi = nullptr;   // full ui 
 
+	enum class DataStruct {
+		CharFull,
+		Required,
+		StoreLogo,
+		WarehouseLogo,
+		inventarySockets,
+		UiPlatform,
+		Map,
+		MapLock,
+		MapForest,
+		MapIce,
+		MapFire,
+		MapMonastery,
+		MapBridge,
+		ProfessionBack,
+		UIMainBox,
+		UiQuestsButton,
+		UiInventoryButton,
+		UiTalentButton,
+		UiEnergy,
+		UiRage,
+
+		SpellEnergyLow,
+		SpellEnergyMid,
+		SpellEnergyHigh,
+		SpellEnergyBackstab,
+		SpellEnergySwirl,
+
+		SpellRageDown,
+		SpellRageUp,
+		SpellRageFligh,
+		SpellRageFall,
+
+
+		SpellEmpty,
+
+
+		FxDust,
+		FXDeflect,
+		FxTalentButton,
+
+		QuestBook,
+
+	};
+
+	enum class QuestStruct {
+
+		MAINQUEST =0,
+		FIRSTBANDIT =1,
+		KILLWEREWOLF =2,
+		KILLBANDITBOSS =3,
+		KEYPOINTSINVILLAGE=4,
+		BANDITCAMP =5,
+		KILLSKELETON =6,
+		KILLSPIDER = 7,
+
+
+	};
+
+	enum class NpcStruct {
+
+		Map,
+		blacksmith,
+		luxary,
+		proffesion,
+		Warehouse,
+		SaveMan,
+		TavernVillageEntrance,    //<--Entrence in tavern
+		CaveEntrance,
+		CaveOut
+
+	};
+
+	enum class BossStruct
+	{
+		BanditBoss
+	};
+
+
 private:
 
 
 	
 	std::vector<sf::Sound*> m_vecSoundsPool;  // Контейнер для пула
-	std::array<Environment*,205> EnvironmentPool;  // |0-100 rain|101-400 rainSpray|400++ Other|
+	std::array<Environment*,106> EnvironmentPool;  // |0-100 rain|101-400 rainSpray|400++ Other|
 
 	
 
@@ -132,10 +212,6 @@ private:
 
 	int SelectedTeleport = 0;
 	//
-
-
-
-	
 
 
 
@@ -167,9 +243,8 @@ private:
 	float fCameraVy = 0.0f;
 
 
-	int lvl =1;
-	int ExpRequred = 0;     //Amount
-	int currExp =0;     
+	
+	int TalentPoint = 0;
 	uint16_t  Money = 0;
 
 
@@ -199,6 +274,7 @@ private:
 	olc::Decal* D_Items = nullptr;
 	olc::Decal* D_Inventory = nullptr;
 	olc::Sprite* spMask = nullptr;
+	olc::Decal* D_FX = nullptr;
 	//olc::Decal* testDecal = nullptr;
 	
 	std::vector<float> angles;
@@ -234,13 +310,16 @@ private:
 	std::array<cDynamic*, 30> TextPool;
 	std::array<cDynamic*, 30> ProjectilePool;
 	std::array<cDynamic*, 30> VfxShotPool;
+	std::array<cDynamic*, 30> MirrorsFx;
+
+	
 
 	std::vector<Environment*>m_vecCloseWeather; // Vector to store raindrops and clouds
 	std::vector<Environment*>m_vecCloseWeather_2; // Vector to store raindrops and clouds
 	std::vector<Environment*>m_vecFarWeather; // Vector to store raindrops and clouds
 	std::vector<cDynamic*> m_vecProjectiles;  //Transient
 
-	std::vector<cDynamic*> m_vecIndicators;  //Hp Rage Energy and text
+//	std::vector<cDynamic*> m_vecIndicators;  //Hp Rage Energy and text
 
 	std::vector<cDynamic*> m_vecParticles;
 
@@ -260,7 +339,8 @@ private:
 	std::vector<InventaryItem*> m_listWarehouseItems;
 
 	std::list<cQuest*> m_listQusets;
-
+	std::list<cQuest*> m_CompletedQuest;
+	uint8_t DescrqstIndex = 0;
 
 	enum
 	{
@@ -271,7 +351,9 @@ private:
 		MODE_SHOP,
 		MODE_MAP,
 		MODE_PROFESSION,
-		MODE_BLACKSMITH
+		MODE_BLACKSMITH,
+		MODE_QUESTLOG,
+
 
 
 
@@ -280,6 +362,18 @@ private:
 
 
 private:
+
+	int lvl = 1;
+	int ExpRequred = 0;     //Amount
+	int currExp = 0;
+
+
+	float textCounter = 0.0f;
+	int chartIndex = 0;
+	int rowIndex = 0;
+
+	std::vector<std::string> vecdisplayText;
+	 std::string currentLine;  // Временная строка для текущей строки текста
 
 
 	std::array<olc::vi2d, 9> TalentPositions =
@@ -294,6 +388,22 @@ private:
 	olc::vi2d{320, 256}, // RightFLIGHTUP
 	olc::vi2d{320, 64}   // RightATTACK LANDING
 	};
+	std::array<olc::vi2d, 5> MapPosAr =    // all these coordinates from main background of map 
+	{
+		olc::vi2d{56,229},      //Forest destination on map
+		olc::vi2d{196,164},      //Ice  destination on map
+		olc::vi2d{136,335},      //Fire  destination on map
+		olc::vi2d{350,205},      //Bridge  destination on map
+		olc::vi2d{347,333},      //Map Monastery  destination on map
+	};
+
+	std::array<olc::vi2d, 10> UIPosOnScreenAr;   // ui describe equal screensize, onusercreate 
+
+
+	std::array< cDynamic_creature_NPC*, 8> NPC_Ar;
+
+
+	std::array<cDynamic*, 1>BossAr;
 
 	std::array<uint8_t, 9> TalentSavePoints =
 	{
@@ -311,60 +421,78 @@ private:
 
 	};
 
-	enum class DataStruct {
-		CharFull,
-		Required,
-		StoreLogo,
-		WarehouseLogo,
-		inventarySockets,
-		UiPlatform,
-		Map,
-		MapLock,
-		MapForest,
-		MapIce,
-		MapFire,
-		MapMonastery,
-		MapBridge,
+	
 
-
-	};
-
-	struct InventoryData
+	struct SpriteData
 	{
 		olc::vi2d Pos;
 		olc::vi2d Size;
 
-		InventoryData(olc::vi2d Pos, olc::vi2d Size) : Pos(Pos), Size(Size) {}
+		SpriteData(olc::vi2d Pos, olc::vi2d Size) : Pos(Pos), Size(Size) {}
 		// Конструктор по умолчанию
-		InventoryData() : Pos{ 0, 0 }, Size{ 0, 0 } {}
+		SpriteData() : Pos{ 0, 0 }, Size{ 0, 0 } {}
 
 	};
 
 	
 	// Объявляем unordered_map
-	std::unordered_map<DataStruct, InventoryData> SpritesData_map = {
-		{DataStruct::CharFull, InventoryData{olc::vi2d{0, 0}, olc::vi2d{512, 523}}},       // Character stat+sockets+name 
-		{DataStruct::Required, InventoryData{olc::vi2d{513, 0}, olc::vi2d{213, 224}}},     // Required 
-		{DataStruct::StoreLogo, InventoryData{olc::vi2d{724, 0}, olc::vi2d{274, 75}}},      // Store
-		{DataStruct::WarehouseLogo, InventoryData{olc::vi2d{723, 75}, olc::vi2d{275, 77}}}, // Warehouse
-		{DataStruct::inventarySockets, InventoryData{olc::vi2d{0, 256}, olc::vi2d{512, 192}}}, // InventorySockets
-		{DataStruct::UiPlatform, InventoryData{olc::vi2d{832, 0}, olc::vi2d{334, 144}}},    // UiPlatform
-		{DataStruct::Map, InventoryData{olc::vi2d{259,0},olc::vi2d{479,523}}},
-		{DataStruct::MapLock, InventoryData{olc::vi2d{0,230},olc::vi2d{62,103}}},
-		{DataStruct::MapForest, InventoryData{olc::vi2d{117,118},olc::vi2d{140,119}}},
-		{DataStruct::MapIce, InventoryData{olc::vi2d{0,118},olc::vi2d{117,112}}},
-		{DataStruct::MapFire, InventoryData{olc::vi2d{0,0},olc::vi2d{177,118}}},
-		{DataStruct::MapMonastery, InventoryData{olc::vi2d{177,0},olc::vi2d{71,87}}},
-		{DataStruct::MapBridge, InventoryData{olc::vi2d{62,237},olc::vi2d{82,94}}},
+	std::unordered_map<DataStruct, SpriteData> SpritesData_map = {
+		//Decal inventory
+		{DataStruct::CharFull, SpriteData{olc::vi2d{0, 0}, olc::vi2d{512, 523}}},       // Character stat+sockets+name 
+		{DataStruct::Required, SpriteData{olc::vi2d{513, 0}, olc::vi2d{213, 224}}},     // Required 
+		{DataStruct::StoreLogo, SpriteData{olc::vi2d{724, 0}, olc::vi2d{274, 75}}},      // Store
+		{DataStruct::WarehouseLogo, SpriteData{olc::vi2d{723, 75}, olc::vi2d{275, 77}}}, // Warehouse
+		{DataStruct::inventarySockets, SpriteData{olc::vi2d{0, 256}, olc::vi2d{512, 192}}}, // InventorySockets
+		//
 
-	};
-	std::array<olc::vi2d, 5> MapPosAr =
-	{
-		olc::vi2d{56,229},      //Forest destination on map
-		olc::vi2d{196,164},      //Ice  destination on map
-		olc::vi2d{136,335},      //Fire  destination on map
-		olc::vi2d{350,205},      //Bridge  destination on map
-		olc::vi2d{347,333},      //Map Monastery  destination on map
+		{DataStruct::UiPlatform, SpriteData{olc::vi2d{832, 0}, olc::vi2d{334, 144}}},    // UiPlatform
+
+		//Decal Mao
+		{DataStruct::Map, SpriteData{olc::vi2d{259,0},olc::vi2d{479,523}}},
+		{DataStruct::MapLock, SpriteData{olc::vi2d{0,230},olc::vi2d{62,103}}},
+		{DataStruct::MapForest, SpriteData{olc::vi2d{117,118},olc::vi2d{140,119}}},
+		{DataStruct::MapIce, SpriteData{olc::vi2d{0,118},olc::vi2d{117,112}}},
+		{DataStruct::MapFire, SpriteData{olc::vi2d{0,0},olc::vi2d{177,118}}},
+		{DataStruct::MapMonastery, SpriteData{olc::vi2d{177,0},olc::vi2d{71,87}}},
+		{DataStruct::MapBridge, SpriteData{olc::vi2d{62,237},olc::vi2d{82,94}}},
+		//
+		{DataStruct::UIMainBox, SpriteData{olc::vi2d{448,128},olc::vi2d{167,65}}},
+		{DataStruct::UiQuestsButton, SpriteData{olc::vi2d{704,0},olc::vi2d{65,16}}},
+		{DataStruct::UiInventoryButton, SpriteData{olc::vi2d{704,18},olc::vi2d{82,16}}},
+		{DataStruct::UiTalentButton, SpriteData{olc::vi2d{704,36},olc::vi2d{67,18}}},
+		{DataStruct::ProfessionBack, SpriteData{olc::vi2d{0,142},olc::vi2d{449,768}}},
+		{DataStruct::UiEnergy, SpriteData{olc::vi2d{449,194},olc::vi2d{15,30}}},
+		{DataStruct::UiRage, SpriteData{olc::vi2d{464,193},olc::vi2d{13,31}}},
+
+		{DataStruct::UIMainBox, SpriteData{olc::vi2d{448,128},olc::vi2d{167,65}}},
+		{DataStruct::UiQuestsButton, SpriteData{olc::vi2d{704,0},olc::vi2d{65,16}}},
+		{DataStruct::UiInventoryButton, SpriteData{olc::vi2d{704,18},olc::vi2d{82,16}}},
+		{DataStruct::UiTalentButton, SpriteData{olc::vi2d{704,36},olc::vi2d{67,18}}},
+		{DataStruct::ProfessionBack, SpriteData{olc::vi2d{0,142},olc::vi2d{449,768}}},
+		{DataStruct::UiEnergy, SpriteData{olc::vi2d{449,194},olc::vi2d{15,30}}},
+		{DataStruct::UiRage, SpriteData{olc::vi2d{464,193},olc::vi2d{13,31}}},
+
+		//spells
+		{DataStruct::SpellEnergyLow, SpriteData{olc::vi2d{0,64},olc::vi2d{64,64}}},
+		{DataStruct::SpellEnergyMid, SpriteData{olc::vi2d{64,64},olc::vi2d{64,64}}},
+		{DataStruct::SpellEnergyHigh, SpriteData{olc::vi2d{128,64},olc::vi2d{64,64}}},
+		{DataStruct::SpellEnergyBackstab, SpriteData{olc::vi2d{192,64},olc::vi2d{64,64}}},
+		{DataStruct::SpellEnergySwirl, SpriteData{olc::vi2d{64*8,64},olc::vi2d{64,64}}},
+		{DataStruct::SpellRageDown, SpriteData{olc::vi2d{64*4,64},olc::vi2d{64,64}}},
+		{DataStruct::SpellRageUp, SpriteData{olc::vi2d{64*7,64},olc::vi2d{64,64}}},
+		{DataStruct::SpellRageFligh, SpriteData{olc::vi2d{64*6,64},olc::vi2d{64,64}}},
+		{DataStruct::SpellRageFall, SpriteData{olc::vi2d{64*5,64},olc::vi2d{64,64}}},
+
+		{ DataStruct::SpellEmpty, SpriteData{olc::vi2d{0,0},olc::vi2d{0,0}} },
+
+
+		//FX
+		{ DataStruct::FxDust, SpriteData{olc::vi2d{0,0},olc::vi2d{52,10}} },
+		{ DataStruct::FXDeflect, SpriteData{olc::vi2d{50,25},olc::vi2d{25,25}} },
+		{ DataStruct::FxTalentButton, SpriteData{olc::vi2d{486,204},olc::vi2d{18,17}} },
+
+		{ DataStruct::QuestBook, SpriteData{olc::vi2d{449,224},olc::vi2d{300,200}} },
+
 	};
 
 
@@ -378,7 +506,24 @@ private:
 	};
 
 
-	const InventoryData& GetSpriteData(DataStruct ds)
+	SpriteData energyRageEmpty{ olc::vi2d{0, 0}, olc::vi2d{0, 0} };
+
+	const SpriteData* CurrEnergy = &GetSpriteData(DataStruct::SpellEmpty);
+	const SpriteData* CurrRage = &GetSpriteData(DataStruct::SpellEmpty);
+
+
+	std::array<const SpriteData*, 2>SpellsUiAr =   // describe current available spells
+	{
+		CurrEnergy,
+		CurrRage
+	};
+	 
+
+
+
+
+	
+	const SpriteData& GetSpriteData(DataStruct ds)
 	{
 		return SpritesData_map[ds] ; // Используем at() для безопасного доступа
 	}
@@ -396,6 +541,13 @@ private:
 
 	 void Drawcursor(olc::vi2d mouse);
 public:
+
+	cDynamic* SpawnBoss(BossStruct name);
+	cDynamic* GetBoss(BossStruct name);
+
+
+	void setUiCurrSpell(DataStruct Name, bool toogle);  // for present current spell in ui window
+
 	// Геттеры, возвращающие ссылки на массивы
 	std::array<cDynamic*, 30>& getBanditsPool() {
 		return BanditsPool;
@@ -435,8 +587,13 @@ public:
 	std::array<cDynamic*, 30>& getVfxShotPool() {
 		return VfxShotPool;
 	}
+	std::array<cDynamic*, 30>& getMirrorsPool() {
+		return MirrorsFx;
+	}
 
 	bool getScriptActive() { return m_script.bUserControlEnabled; }
+	void ClearDisplayText() { vecdisplayText.clear(); currentLine.clear(); rowIndex = 0; chartIndex = 0; textCounter = 0.0f; };
+
 
      template<std::size_t N>
 	 bool PoolsController(std::array<cDynamic*, N>& name, cDynamic* obj)
@@ -469,15 +626,25 @@ public:
 
 	void SetPause(int set) { bPause = set; };
 
+	void UpdateAnimationFrame(float felapsedTime);
+
+
 	bool UpdateTitleScreen(float fElapsedTime);
 	bool UpdateLocalMap(float fElapsedTime);
-	bool UpdateWarehouse(float fElapsedTime);
+	bool UpdateWarehouse(float fElapsedTime,olc::vi2d& mouse);
+	bool UpdateInventory(float fElapsedTIme, olc::vi2d& mouse);
+	bool UpdateShop(float fElapsedTime, olc::vi2d& mouse);
+	bool UpdateProfession(float fElapsedTime, olc::vi2d& mouse);
+	bool UpdateMap(float FelapsedTime, olc::vi2d& mouse);
+	bool UpdateBlackSmith(float FelapsedTime,olc::vi2d& Mouse);
+	void uiCellUpdate(olc::vi2d& mouse);
+	void UpdateQuestLog(float fElapsedTime, olc::vi2d& Mouse);
+
+	bool SetMouseTarget(olc::vi2d& mouse);
+
+
 	void DrawWarehouse(const float squex, const float squeYm, olc::vf2d mouse, olc::vf2d mousefix, InventaryItem*& highlighted, InventaryItem*& Grabitem,int moneyamount);
-
-	bool SetMouseTarget(olc::vi2d mouse);
-
-	void uiCellUpdate(olc::vi2d mouse);
-	bool UpdateInventory(float fElapsedTIme);
+	void DrawInventoryFastCells(olc::vi2d mouse,uint8_t Selobjectsize, olc::vi2d mousefix);
 	void DrawInventory(float offestX,float offsetY, olc::vi2d mouse, InventaryItem*& highlighted);
 	void DrawInventory(float offestX, float offsetY, olc::vi2d mouse, olc::vi2d mouseFixed,  InventaryItem*& highlighted, InventaryItem*& Grabitem);
 	void moveIItems(olc::vi2d mouse, float x, float y, InventaryItem*& grabitem, std::vector<InventaryItem*>& vector);
@@ -488,13 +655,12 @@ public:
 	void FillBatch(int TileLayer, int layer, int x, int y,std::vector<TileInfo>& Before, std::vector<TileInfo>& After);
 	
 
+	bool DrawPause(olc::vi2d mouse);
+
+
 	void ClearAbsorbedSlots(std::vector<InventaryItem*>& m_listItems);  // find absorbed objects in sockets and change them on empty sockets
-	bool UpdateShop(float fElapsedTime);
 	bool SaleItem(int Price,InventaryItem* Sale);
 	void DrawStoreInventory(float sX, float sY, olc::vi2d mousefix, InventaryItem*& highlighted);
-	bool UpdateProfession(float fElapsedTime);
-	bool UpdateMap(float FelapsedTime);
-	bool UpdateBlackSmith(float FelapsedTime);
 
 	void DrawBlacksmithInentory(float offestX, float offsetY, olc::vi2d mouse, InventaryItem*& Selected, InventaryItem*& Highlighted);
 	void DrawCraftedRequires(float offestX, float offsetY, olc::vi2d mouse, InventaryItem*& Selectedm, InventaryItem*& Highlighted);
@@ -541,18 +707,19 @@ protected:
 
 public:
 
-	
+	 cDynamic_creature_NPC* GetNpc(NpcStruct name);
 
 	float getOffsetX() { return fOffsetX; };
 	float getOffsetY() { return fOffsetY; };
 	bool LoadFunction();
 	bool SaveFunction();
-	void AddQuest(cQuest* quest);
+	void AddActiveQuest(cQuest* quest);
+	void AddCompletedQuest(cQuest* quest);
 	void QuestListClear()
 	{
 		m_listQusets.clear();
 	};
-	cQuest* GetQuest(std::string name);
+	cQuest* GetActiveQuest(std::string name);
 
 
 	cMap* GetCurrentMap();
@@ -561,7 +728,7 @@ public:
 
 	void defineFacingDirection(float& fTestX, float& fTestT);
 
-	bool GiveItem(std::string Name,uint8_t count);
+	bool GiveItem(std::string Name, uint8_t count, bool offstack = true);
 	//bool FillList(cItem* item, int number);
 	bool ByeItem(InventaryItem* item);
 	bool GiveWarehouseItem(cItem* item);
@@ -574,7 +741,7 @@ public:
 	std::vector<InventaryItem*> GetListWarehouseItem() { return  m_listWarehouseItems; };  // Get invntory
 	int GetFreespaceInventory();
 	std::list<cQuest*> GetListQuest() {return  m_listQusets;};
-	std::vector<int> GetLearnedTalentVector() { return m_vecSaveTalents; };
+	std::vector<int>& GetLearnedTalentVector() { return m_vecSaveTalents; };    // indexes of learned talent 
 	std::vector<InventaryItem*> GetListStoreItem() { return  m_listStoreItems; };  // Get invntory
 	std::vector<InventaryItem*> GetListBlackSmithItem() { return  m_listBlackSmithItems; };  // Get invntory
 
@@ -589,20 +756,27 @@ public:
 	void AddVecDynamic(cDynamic* proj);
 	
 	void AddEnvironment(Environment* env);
-	void AddIndicators(cDynamic* Ind);
+	
 
 	void AddUi(cUI* Ui);
 	void AddTalentUi(cUI* Ui);
 
 	int GetLvl();
-	int GetCurrExp();
-	int GetRequredExp();
+	void SetLvl(int lvl);
 
+	int GetCurrExp();
+	void SetCurrExp(int currexp);
+
+
+	int GetRequredExp();
+	void SetRequredExp(int reqexp);
 	
 	int GetRage();
-	uint8_t GetEnergy();
+	int8_t GetEnergy();
 
 	bool GetBackStab();
+	void SetBackStab(bool toggle);
+
 	bool GetTarget();
 	bool GetbOnGraund();
 
@@ -656,6 +830,8 @@ public:
 	cDynamic* SpawnBossBandt (const olc::vf2d position);
 	cDynamic* SpawnProjectile(const olc::vf2d position);
 	cDynamic* SpawnVfxShot(const olc::vf2d position);
+	cDynamic* SpawnMirrors(const olc::vf2d position, olc::vi2d framePos, int sizex,int sizey, int amountframes, olc::Decal* Decal);
+
 
 	void SpawnRainDrops(const uint16_t Index);
 	void SpawnRainSpray(float px, float py, const uint16_t Index);
@@ -710,3 +886,4 @@ void CombineAdjacentTiles(std::vector<Tile>& batchLayer, int layer);
 
 float Lerp(float a, float b, float t);
 bool CheckZeroDivide(float check, float& variable);
+int sign(float x);

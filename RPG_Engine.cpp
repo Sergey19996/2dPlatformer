@@ -8,6 +8,72 @@ RPG_Engine::RPG_Engine()
     sAppName = "Pantrir platformer";
 }
 
+cDynamic* RPG_Engine::SpawnBoss(BossStruct name)
+{
+
+	BossAr[static_cast<int>(name)]->setFlag(BossAr[static_cast<int>(name)]->binitialized);    // устанавилваем флаг
+	m_vecDynamics.push_back(BossAr[static_cast<int>(name)]);     // добавляем в сцену 
+
+
+
+	switch (name)
+	{
+	case RPG_Engine::BossStruct::BanditBoss:
+	{
+		for (auto i = BanditBossPool.begin(); i != BanditBossPool.end(); ++i)    //удаляем его с пула *когда босс умрет, должен вернуться в массив 
+		{
+			cDynamic* it = *i;
+			if (it == BossAr[static_cast<int>(name)])
+			{
+				*i = nullptr;                  // Удаляем заспаунинного бандита из пула
+				break;
+			}
+		}
+	}
+		break;
+	default:
+		break;
+	}
+
+	return BossAr[static_cast<int>(name)];  //возвращаем указатель 
+}
+
+cDynamic* RPG_Engine::GetBoss(BossStruct name)
+{
+		return BossAr[static_cast<int>(name)];
+}
+
+void RPG_Engine::setUiCurrSpell(DataStruct Name, bool toggle)
+{
+
+
+	const SpriteData& data = GetSpriteData(Name);
+
+
+	switch (toggle)
+	{
+	case 0:
+		SpellsUiAr[0] = &data; // get data from CurrEnergy
+
+
+		break;
+		
+	case 1:
+		SpellsUiAr[1] = &data; // get data from CurrEnergy
+		break;
+
+	
+	};
+
+	
+	//SpellsUiAr[1]
+};
+
+
+ cDynamic_creature_NPC* RPG_Engine::GetNpc(NpcStruct name)
+{
+	return NPC_Ar[static_cast<int>(name)];
+}
 
 void RPG_Engine::DrawElement(DataStruct ds, olc::vf2d position, float scale, olc::Decal* Decal)
 {
@@ -88,10 +154,10 @@ void RPG_Engine::LoadBaseUiSettings()
 
 
 	//                  THis is when we add in vector which we drawning ing game like backstub 
-	AddUi((RPG_Assets::get().GetUiElements("Attack Back")));
-	AddUi((RPG_Assets::get().GetUiElements("Appear Behind")));
+//	AddUi((RPG_Assets::get().GetUiElements("Attack Back")));
+//	AddUi((RPG_Assets::get().GetUiElements("Appear Behind")));
 
-	AddUi((RPG_Assets::get().GetUiElements("Swirl Attack")));
+	//AddUi((RPG_Assets::get().GetUiElements("Swirl Attack")));
 
 
 	AddUi((RPG_Assets::get().GetUiElements("NewEnergyIndicator_1")));
@@ -101,6 +167,11 @@ void RPG_Engine::LoadBaseUiSettings()
 	AddUi((RPG_Assets::get().GetUiElements("NewRageIndicator_1")));
 	AddUi((RPG_Assets::get().GetUiElements("NewRageIndicator_2")));
 	AddUi((RPG_Assets::get().GetUiElements("NewRageIndicator_3")));
+
+//	AddUi((RPG_Assets::get().GetUiElements("Attack Low")));   // locks for attack
+//	AddUi((RPG_Assets::get().GetUiElements("Attack High")));   // locks for attack
+//	AddUi((RPG_Assets::get().GetUiElements("Attack Mid")));   // locks for attack
+
 	//
 
 	m_vecEquip.resize(6);
@@ -117,19 +188,6 @@ void RPG_Engine::LoadBaseUiSettings()
 
 	}
 	// Bind Vector with pointesr in char
-
-
-	
-
-
-
-	//m_vecEquip[6]->Item =
-//	m_vecEquip.push_back(m_pPlayer->pEquipedNeck);  //  6 equip index
-	//m_vecEquip.push_back(m_pPlayer->pEquipedHelmet); // 5 equip index
-//m_vecEquip.push_back(m_pPlayer->pEquipedWeapon); //1 index
-//	m_vecEquip.push_back(m_pPlayer->pEquipedChest); // 4 equip index
-//	m_vecEquip.push_back(m_pPlayer->pEquipedBack);  // 2 equipindex
-//	m_vecEquip.push_back(m_pPlayer->pEquipedBoots); // 3 equip index
 
 
 
@@ -213,15 +271,12 @@ bool RPG_Engine::OnUserCreate()
 
 
 	LoadSoundPool(20);
-	sf::SoundBuffer* buffer = RPG_Assets::get().findSound("Run");
-	WalkSound->setBuffer(*buffer);
-	WalkSound->setVolume(25);
 
 	m_sprFont = RPG_Assets::get().GetSprite("font");   //take font
 
 
 	
-	m_listQusets.push_front(RPG_Assets::get().GetQuest(0)); // add in lust First Main quest
+	m_listQusets.push_front(RPG_Assets::get().GetActiveQuest(0)); // add in lust First Main quest
 
 	LoadBaseUiSettings();
 
@@ -268,10 +323,33 @@ bool RPG_Engine::OnUserCreate()
 	
 	//m_vecHpBars.push_back(RPG_Assets::get().GetIndicators("HpFirst"));
 
+	olc::vi2d MainUiBlockPos = { 0,(ScreenHeight() -  static_cast<int>(4*CellSize*fscale)) };
+	int UiButtonsY = ScreenHeight() - (1 * CellSize * fscale);
+	int fixCellSize = CellSize * fscale;
+
+	UIPosOnScreenAr =             //Ui pos on screen 
+	{
+		olc::vi2d{MainUiBlockPos},      //MainBlock UI Pos
+		olc::vi2d{ 14 * fixCellSize,UiButtonsY},      //Pos auest 
+		olc::vi2d{ 19 * fixCellSize,UiButtonsY },      //inv 
+		olc::vi2d{ 25 * fixCellSize,UiButtonsY },       //Talent 
+		// For drowing
+
+			olc::vi2d{ MainUiBlockPos.x+72,MainUiBlockPos.y+40 },      //Energy Active Spell
+			olc::vi2d{ MainUiBlockPos.x+120,MainUiBlockPos.y+40 },      //Rage  Active Spell
+
+			olc::vi2d{ MainUiBlockPos.x+96,MainUiBlockPos.y+35 },      //Energy UI Indicator
+			olc::vi2d{ MainUiBlockPos.x+147,MainUiBlockPos.y+35 },       //Rage UI Indicator
+			
 
 
+			olc::vi2d{ MainUiBlockPos.x + 14,MainUiBlockPos.y + 14 },      //First Ui Fast available slot
+			olc::vi2d{ MainUiBlockPos.x + 14,MainUiBlockPos.y + 33 },      //Second UI Fast available slot
+	};
 
+	// SpawnBossBandt({ 0,0 });
 
+	
 
 #ifdef  DEBUG_MODE
 	layer = CreateLayer();
@@ -288,17 +366,19 @@ bool RPG_Engine::OnUserCreate()
 	D_Inventory = RPG_Assets::get().GetSprite("inventory");
 	D_FullUi = RPG_Assets::get().GetSprite("FullUi");
 	D_Map = RPG_Assets::get().GetSprite("MapLayer");
-
+	D_FX = RPG_Assets::get().GetSprite("VFX");
 	
 	m_vecCloseWeather_2.reserve(100);
 	
+
+	RPG_Assets::get().playMusic("Sounds/MainMenuMusic.wav");
 
     return true;
 }
 
 bool RPG_Engine::OnUserUpdate(float fElapsedTime)
 {
-	bool Result;
+	bool Result = true;
 	
 	//std::cout << "FPS: " << test <<"Thread ID: " << std::this_thread::get_id()<< std::endl;
 
@@ -310,7 +390,7 @@ bool RPG_Engine::OnUserUpdate(float fElapsedTime)
 
 	removeStoppedSounds();
 
-	auto First = std::chrono::steady_clock::now();
+//	auto First = std::chrono::steady_clock::now();
 
 
 	// Perform game logic updates
@@ -325,6 +405,7 @@ bool RPG_Engine::OnUserUpdate(float fElapsedTime)
 	case MODE_SHOP:
 	case MODE_PROFESSION:
 	case MODE_BLACKSMITH:
+	case MODE_QUESTLOG:
 		Result = UpdateLocalMap(fElapsedTime);
 		break;
 	}
@@ -338,7 +419,7 @@ bool RPG_Engine::OnUserUpdate(float fElapsedTime)
 
 //	std::cout << fElapsedTime << " /n " << fSleepTime << std::endl;
 
-	return true;
+	return Result;
 }
 
 void RPG_Engine::LoadSoundPool(size_t poolSize)
@@ -360,13 +441,30 @@ void RPG_Engine::PlaySounds(std::string buffername)
 		sf::SoundBuffer* buf = RPG_Assets::get().findSound(buffername);
 
 		sound2->setBuffer(*buf);
-		sound2->setVolume(25);  // Устанавливаем громкость по необходимости
+		sound2->setVolume(50);  // Устанавливаем громкость по необходимости
 		sound2->play();
 		sounds.push_back(sound2);
 	}
 
 }
 
+
+void RPG_Engine::UpdateAnimationFrame(float fElapsedTime)   // use for animate some in distance 8 frames 
+{
+
+	animsprite += fElapsedTime;
+	// Logic For Dynamic Layer
+	if (animsprite > framespeed)
+	{
+		frameIndex++;
+		animsprite = 0;
+
+	}
+	if (frameIndex >= 8)
+	{
+		frameIndex = 0;
+	}
+}
 
 bool RPG_Engine::UpdateTitleScreen(float fElapsedTime)   // <---MAIN MENU Start
 {
@@ -436,7 +534,7 @@ bool RPG_Engine::UpdateTitleScreen(float fElapsedTime)   // <---MAIN MENU Start
 
 
 	std::ofstream data;
-	data.open("Load/CurrSave.txt", std::ofstream::in);
+	data.open("Load/CurrSave.bin", std::ofstream::in);
 	if (data.is_open())
 	{
 		DrawBigText("Continue", spelluix + (25 * fscale), spelluiy, 1 * fscale, 1 * fscale, olc::WHITE);
@@ -590,8 +688,10 @@ bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 		{
 		//	SaveFunction();
 			m_pPlayer->clearFlag(m_pPlayer->bDead);
+			m_pPlayer->clearFlag(m_pPlayer->bDraw);
 			m_pPlayer->nHealth = 1;
 		//	m_pPlayer->SwitchLayer(2);
+			m_script.AddCommand((new cComand_HideScreen(2)));
 			m_script.AddCommand((new  cComand_LoadFunction));
 
 	
@@ -634,17 +734,7 @@ bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 				}),
 			m_vecProjectiles.end());
 
-		m_vecIndicators.erase(
-			remove_if(m_vecIndicators.begin(), m_vecIndicators.end(),
-				[](cDynamic* d) {
-					if (((cDynamic_HpBar*)d)->checkFlag(d->bRedundant)) {
-						delete d;
-						return true;
-					}
-		return false;
-				}),
-			m_vecIndicators.end());
-
+	
 
 		m_vecDynamics.erase(                              //check m_vecProjectiles on flag -bredundand and erase it    hp bars the same in vecdynamics
 			remove_if(m_vecDynamics.begin(), m_vecDynamics.end(),
@@ -698,9 +788,9 @@ bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 
 		if (GetKey(olc::Key::ESCAPE).bPressed)
 		{
-			if (n_nGameMode == MODE_LOCAL_MAP || n_nGameMode==MODE_WAREHOUSE || n_nGameMode == MODE_SHOP ||n_nGameMode==MODE_INVENTORY|| n_nGameMode == MODE_MAP || n_nGameMode ==MODE_PROFESSION || n_nGameMode ==MODE_BLACKSMITH)
+			if (n_nGameMode == MODE_LOCAL_MAP || n_nGameMode==MODE_WAREHOUSE || n_nGameMode == MODE_SHOP ||n_nGameMode==MODE_INVENTORY|| n_nGameMode == MODE_MAP || n_nGameMode ==MODE_PROFESSION || n_nGameMode ==MODE_BLACKSMITH || n_nGameMode == MODE_QUESTLOG)
 			{
-			n_nGameMode = 1;
+			n_nGameMode = MODE_LOCAL_MAP;
 			bPause = !bPause;
 			}
 
@@ -708,16 +798,9 @@ bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 
 		}
 
-		if (GetKey(olc::Key::I).bPressed)
-		{
-			
-			 if (n_nGameMode == MODE_INVENTORY)
-			{
-				bPause = false;
-				n_nGameMode = MODE_LOCAL_MAP;     // <-----Inventory
-			}
+	
+		
 
-		}
 		
 
 		if (!bPause)
@@ -731,19 +814,26 @@ bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 			{
 
 
-
 				if (GetKey(olc::Key::I).bPressed)
 				{
-					if (n_nGameMode == MODE_LOCAL_MAP)
-					{
-						bPause = true;
-						n_nGameMode = MODE_INVENTORY;     // <-----Inventory
-					}
-					
+
+
+					n_nGameMode = (n_nGameMode == MODE_INVENTORY) ? MODE_LOCAL_MAP : MODE_INVENTORY;
+
 
 				}
+				if (GetKey(olc::Key::T).bPressed)
+				{
 
+					n_nGameMode = (n_nGameMode == MODE_PROFESSION) ? MODE_LOCAL_MAP : MODE_PROFESSION;
 
+				}
+				if (GetKey(olc::Key::U).bPressed)
+				{
+
+					n_nGameMode = (n_nGameMode == MODE_QUESTLOG) ? MODE_LOCAL_MAP : MODE_QUESTLOG;
+
+				}
 
 
 				if (IsFocused())
@@ -754,7 +844,7 @@ bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 					{
 
 
-
+						
 
 
 						if (GetKey(olc::Key::SPACE).bPressed)
@@ -767,7 +857,7 @@ bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 								{
 								case 0:
 									m_pPlayer->MoveJump();
-									WalkSound->stop();
+								
 									break;
 								case 1:
 									m_pPlayer->MoveDoubleJump();
@@ -853,88 +943,95 @@ bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 
 						}
 
-						if (GetMouse(2).bPressed)
+
+						if (n_nGameMode == MODE_LOCAL_MAP)
 						{
 
-							system("cls");
-							if (!m_vecVisibleDynamics.empty())
+
+							if (GetMouse(2).bPressed)
 							{
-								SetMouseTarget(mouse);
+
+								system("cls");
+								if (!m_vecVisibleDynamics.empty())
+								{
+									SetMouseTarget(mouse);
+								}
+
+
+
+
 							}
-
-
-
-
-						}
-						if (GetMouse(1).bPressed)    // Right mouse 
-						{
-
-
-							switch (m_pPlayer->GetFacingDirectionVertical())
+							if (GetMouse(1).bPressed)    // Right mouse 
 							{
-							case 1:              //<-- Look Up
-								if (!m_pPlayer->checkFlag(m_pPlayer->bOnGround) && !m_pPlayer->checkFlag(m_pPlayer->bOnLanded))   // air attack
-								{
 
-								}
-								else  //means on the ground
+
+								switch (m_pPlayer->GetFacingDirectionVertical())
 								{
-									if (m_pPlayer->rageAmount >= 35 && m_pPlayer->enumCounter != 17 && GetLearnedTalent(13))
+								case 1:              //<-- Look Up
+									if (!m_pPlayer->checkFlag(m_pPlayer->bOnGround) && !m_pPlayer->checkFlag(m_pPlayer->bOnLanded))   // air attack
 									{
-										//Sonner we change it decition
-										m_pPlayer->RageMoveAttackJumpUp();
+
 									}
-								}
-
-
-								break;
-							case 0:             // <--Look Down
-								if (!m_pPlayer->checkFlag(m_pPlayer->bOnGround) && !m_pPlayer->checkFlag(m_pPlayer->bOnLanded))   // air attack
-								{
-									if (m_pPlayer->rageAmount >= 35 && m_pPlayer->enumCounter != 18 && GetLearnedTalent(14))
+									else  //means on the ground
 									{
-										m_pPlayer->RageMoveAttackAirDown();
-									}
-								}
-								else  //means on the ground
-								{
-
-									if (m_pPlayer->rageAmount >= 35 && GetLearnedTalent(11) && m_pPlayer->enumCounter != 8)
-									{
-										m_pPlayer->RageMoveAttackUp();
+										if (m_pPlayer->rageAmount >= 35 && m_pPlayer->enumCounter != 17 && GetLearnedTalent(13))
+										{
+											//Sonner we change it decition
+											m_pPlayer->RageMoveAttackJumpUp();
+										}
 									}
 
-								}
 
-
-								break;
-							case 3:            // <--No Looking
-
-								if (!m_pPlayer->checkFlag(m_pPlayer->bOnGround) && !m_pPlayer->checkFlag(m_pPlayer->bOnLanded))   // air attack
-								{
-									if (m_pPlayer->rageAmount >= 35 && GetLearnedTalent(12) && m_pPlayer->enumCounter != 12)
+									break;
+								case 0:             // <--Look Down
+									if (!m_pPlayer->checkFlag(m_pPlayer->bOnGround) && !m_pPlayer->checkFlag(m_pPlayer->bOnLanded))   // air attack
 									{
-										m_pPlayer->RageMoveAttackAir();
+										if (m_pPlayer->rageAmount >= 35 && m_pPlayer->enumCounter != 18 && GetLearnedTalent(14))
+										{
+											m_pPlayer->RageMoveAttackAirDown();
+										}
 									}
-								}
-								else  //means on the ground
-								{
-									if (m_pPlayer->rageAmount >= 35 && GetLearnedTalent(11) && m_pPlayer->enumCounter !=26)
+									else  //means on the ground
 									{
-										//Sonner we change it decition
-										m_pPlayer->RageMoveAttck();
+
+										if (m_pPlayer->rageAmount >= 35 && GetLearnedTalent(11) && m_pPlayer->enumCounter != 8)
+										{
+											m_pPlayer->RageMoveAttackUp();
+										}
+
 									}
+
+
+									break;
+								case 3:            // <--No Looking
+
+									if (!m_pPlayer->checkFlag(m_pPlayer->bOnGround) && !m_pPlayer->checkFlag(m_pPlayer->bOnLanded))   // air attack
+									{
+										if (m_pPlayer->rageAmount >= 35 && GetLearnedTalent(12) && m_pPlayer->enumCounter != 12)
+										{
+											m_pPlayer->RageMoveAttackAir();
+										}
+									}
+									else  //means on the ground
+									{
+										if (m_pPlayer->rageAmount >= 35 && GetLearnedTalent(11) && m_pPlayer->enumCounter != 26)
+										{
+											//Sonner we change it decition
+											m_pPlayer->RageMoveAttck();
+										}
+									}
+
+									break;
 								}
 
-								break;
+
+
 							}
-
-
-
 						}
 
-						if (!m_pPlayer->checkFlag(m_pPlayer->isAttack))
-						{
+							m_pPlayer->SetVerticalDirection(3);
+
+
 
 							if (GetKey(olc::Key::W).bHeld)
 							{
@@ -949,14 +1046,34 @@ bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 							}
 
 
+						if (!m_pPlayer->checkFlag(m_pPlayer->isAttack))
+						{
 
-							m_pPlayer->SetVerticalDirection(3);
+						
+
+
+
+
+
+						
+
 
 							if (GetKey(olc::Key::D).bHeld)
 							{
 
+
+								
 								m_pPlayer->vx += (m_pPlayer->checkFlag(m_pPlayer->bOnGround) ? 35.0f * m_pPlayer->GetMovement() : 25.0f * m_pPlayer->GetMovement()) * fElapsedTime;
 							}
+							if (GetKey(olc::Key::A).bHeld)
+							{
+							//	m_pPlayer->ReductionAcctn(fElapsedTime);
+								m_pPlayer->vx += (m_pPlayer->checkFlag(m_pPlayer->bOnGround) ? -35.0f * m_pPlayer->GetMovement() : -25.0f * m_pPlayer->GetMovement()) * fElapsedTime;
+
+							}
+
+							
+							
 
 							if (GetKey(olc::Key::SHIFT).bPressed)
 							{
@@ -1008,14 +1125,9 @@ bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 							}
 
 
-							if (GetKey(olc::Key::A).bHeld)
-							{
-
-								m_pPlayer->vx += (m_pPlayer->checkFlag(m_pPlayer->bOnGround) ? -35.0f * m_pPlayer->GetMovement() : -25.0f * m_pPlayer->GetMovement()) * fElapsedTime;
-
-							}
-
-							if (GetMouse(0).bPressed)   // <--LeftAttack
+							
+						
+							if (GetMouse(0).bPressed && n_nGameMode == MODE_LOCAL_MAP)   // <--LeftAttack
 							{
 								if (highlighted != nullptr)
 								{
@@ -1038,7 +1150,7 @@ bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 
 
 
-											PlaySounds("SwordSwingTwo");
+											
 
 
 
@@ -1089,7 +1201,7 @@ bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 													m_pPlayer->EnergyMoveAttackBack();
 
 
-													PlaySounds("BackStab");
+													
 
 
 
@@ -1125,6 +1237,8 @@ bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 
 							if (GetKey(olc::Key::F).bPressed)
 							{
+
+							//	testCounter = 0;
 								float fTestX, fTestY;
 								defineFacingDirection(fTestX, fTestY);
 								for (auto dyns : m_vecVisibleDynamics)
@@ -1162,6 +1276,7 @@ bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 					if (GetKey(olc::Key::SPACE).bPressed)
 					{
 						m_bShowDialog = false;
+						ClearDisplayText();
 						m_script.CompleteCommand();
 					}
 
@@ -1171,56 +1286,49 @@ bool RPG_Engine::UpdateLocalMap(float fElapsedTime)
 			////////////               locks for speed 
 
 
-float cameraSpeed = 0.01f;
+float cameraSpeed = fElapsedTime/0.25f;
 float mouseSnapFactor = 0.001f; // Adjust this value as needed
 
 if (IsFocused())
 {
-
+	
 
 	// Get offset for smooth movement
 	if (!blockCamera)
 	{
-		if (m_pPlayer->Gettarget() == nullptr)
-		{
+	/*	if (m_pPlayer->Gettarget() == nullptr)
+		{*/
 
 
-		// Calculate the distance between the current camera position and the player's position
-	//	float deltaX = (m_pPlayer->px + (GetMouseX() - ScreenWidth() / 2) * mouseSnapFactor) - fCameraPosX;
-	//	float deltaY = (m_pPlayer->py + (GetMouseY() - ScreenHeight() / 2) * mouseSnapFactor) - fCameraPosY;
+		
 
-		// Snap the camera towards the player and mouse position
-		fCameraPosX = m_pPlayer->px + ((m_pPlayer->CollbordersXF - m_pPlayer->CollbordersX) / 2);
-		fCameraPosY = m_pPlayer->py + (m_pPlayer->CollbordersYF - m_pPlayer->CollbordersY) / 2;
+		fCameraPosX = Lerp(fCameraPosX, m_pPlayer->px + ((m_pPlayer->CollbordersXF - m_pPlayer->CollbordersX) / 2), cameraSpeed);
+		fCameraPosY = Lerp(fCameraPosY, m_pPlayer->py + (m_pPlayer->CollbordersYF - m_pPlayer->CollbordersY) / 2, cameraSpeed);
 
-		// Apply interpolation to smooth out the movement
-	//	fCameraPosX += deltaX * cameraSpeed;
-	//	fCameraPosY += deltaY * cameraSpeed;
-		}
-		else
-		{
+	
+		//}
+		//else
+		//{
 
 
-			
+		//	
 
-			float X = m_pPlayer->px -((m_pPlayer->px - m_pPlayer->Gettarget()->px)/2);
-			float Y = m_pPlayer->py - ((m_pPlayer->py - m_pPlayer->Gettarget()->py)/2);
+		//	float X = m_pPlayer->px -((m_pPlayer->px - m_pPlayer->Gettarget()->px)/2);
+		//	float Y = m_pPlayer->py - ((m_pPlayer->py - m_pPlayer->Gettarget()->py)/2);
 
-			float deltaX = (X + (GetMouseX() - ScreenWidth() / 2) * mouseSnapFactor) - fCameraPosX;
-			float deltaY = (Y + (GetMouseY() - ScreenHeight() / 2) * mouseSnapFactor) - fCameraPosY;
+		//	float deltaX = (X + (GetMouseX() - ScreenWidth() / 2) * mouseSnapFactor) - fCameraPosX;
+		//	float deltaY = (Y + (GetMouseY() - ScreenHeight() / 2) * mouseSnapFactor) - fCameraPosY;
 
-			// Snap the camera towards the player and mouse position
-			fCameraPosX = X + (GetMouseX() - ScreenWidth() / 2) * mouseSnapFactor;
-			fCameraPosY = Y - 1 + (GetMouseY() - ScreenHeight() / 2) * mouseSnapFactor;
+		//	// Snap the camera towards the player and mouse position
+		//	fCameraPosX = X + (GetMouseX() - ScreenWidth() / 2) * mouseSnapFactor;
+		//	fCameraPosY = Y - 1 + (GetMouseY() - ScreenHeight() / 2) * mouseSnapFactor;
 
-			// Apply interpolation to smooth out the movement
-			fCameraPosX += deltaX * cameraSpeed;
-			fCameraPosY += deltaY * cameraSpeed;
-		}
+		//	// Apply interpolation to smooth out the movement
+		//	fCameraPosX += deltaX * cameraSpeed;
+		//	fCameraPosY += deltaY * cameraSpeed;
+		//}
 
-		// Interpolate camera position towards the character
-	//	fCameraPosX = Lerp(fCameraPosX, m_pPlayer->px, cameraSpeed);
-	//	fCameraPosY = Lerp(fCameraPosY, m_pPlayer->py, cameraSpeed);
+
 	}
 
 	// Get current mouse position
@@ -1239,67 +1347,68 @@ if (IsFocused())
 		mouseY = ScreenHeight() - 1;
 }
 
-		
+m_pPlayer->vy += m_pPlayer->accelerationY * fElapsedTime;
+m_pPlayer->vx += m_pPlayer->accelerationX * fElapsedTime;
 
 //std::cout << m_pPlayer->px << '\n' << m_pPlayer->py << std::endl;
 			bool bWorkingWithProjectiles = false;
-			bUibackstub = false;
+	
 			for (auto& source : { &m_vecVisibleDynamics, &m_vecProjectiles })
 			{
 				for (auto& object : *source) // for every chars in this vector will be calculate their move
 				{
 
 
-					if (object->checkFlag(object->gravity) )
+					if (object->checkFlag(object->gravity))
 					{
 						object->vy += object->mass * fElapsedTime;                     //Gravitation for everyone
 
+
+
 					}
 
-					
+
 
 
 
 					//object->bOnGround = false;
-					
+
 					float fNewObjectPosX = object->px + object->vx * fElapsedTime;
 					float fNewObjectPosY = object->py + object->vy * fElapsedTime;
 
-				
 
-					
+
+
 
 					//	fCameraPosX = fCameraPosX + fCameraVx * fElapsedTime;
 					//	fCameraPosY = fCameraPosY + fCameraVy * fElapsedTime;
 
 						////Collision
 
-					
-					
+
+
 
 					bool bslope = false;
-				
+				//	bool in = false;
 
-				//	float middleX = object->CollbordersX + ((object->CollbordersXF - object->CollbordersX) / 2.0f);
+					//	float middleX = object->CollbordersX + ((object->CollbordersXF - object->CollbordersX) / 2.0f);
 
-						//Check slopes
-
+							//Check slopes
+					//	std::cout << "Before: =" << m_pPlayer->vy <<"\n"<<"BOnGround =: " << m_pPlayer->checkFlag(m_pPlayer->bOnGround) << "\n" <<"BonLanded = :" << m_pPlayer->checkFlag(m_pPlayer->bOnLanded) << std::endl;
 					if (object->bSolidVsMap)
 					{
 
 
 						if (object->vx < 0)  //move Left
 						{
-
-
-							if (m_pCurrentMap->GetColliziionIndex(fNewObjectPosX + object->CollbordersX, object->py + object->CollbordersY) == 1 || m_pCurrentMap->GetColliziionIndex(fNewObjectPosX + object->CollbordersX, object->py + object->CollbordersYF - 0.1f) == 1)
+						if (m_pCurrentMap->GetColliziionIndex(fNewObjectPosX + object->CollbordersX, object->py + object->CollbordersY) == 1 || m_pCurrentMap->GetColliziionIndex(fNewObjectPosX + object->CollbordersX, object->py + object->CollbordersYF - 0.1f) == 1)
 							{
 
 								fNewObjectPosX = object->px;  //if there won't emprty cell we move right
 								object->vx = 0;
 
 							}
-							else if ( m_pCurrentMap->GetColliziionIndex(fNewObjectPosX + object->CollbordersXF, object->py + object->CollbordersYF)==2)
+							else if (m_pCurrentMap->GetColliziionIndex(fNewObjectPosX + object->CollbordersXF, object->py + object->CollbordersYF) == 2)
 							{
 
 								if (object->obsticlepoints == nullptr)
@@ -1308,37 +1417,28 @@ if (IsFocused())
 								float deltaX = object->obsticlepoints->second->x - object->obsticlepoints->first->x;
 								float deltaY = object->obsticlepoints->first->y - object->obsticlepoints->second->y;
 								float slopeAtangle = deltaY / deltaX; // artnagents
-								float charX = object->px + object->CollbordersXF - object->obsticlepoints->first->x;						
+								float charX = fNewObjectPosX + object->CollbordersXF - object->obsticlepoints->first->x;
 								float reqHigh = charX * slopeAtangle;
 								if (fNewObjectPosY + object->CollbordersYF >= object->obsticlepoints->first->y - reqHigh)
 								{
-									if (!object->checkFlag(object->bOnGround))                                // <- we trying to make in OnLanded anim
-									{
-										object->IsLanded();
-									} 
 									object->vy = 49.0f;
-									fNewObjectPosY = object->obsticlepoints->first->y - reqHigh - object->CollbordersYF;
-									object->Jumpcounter = 0;
-									object->setFlag(object->bOnGround);
 									bslope = true;
 								}
 
 							}
-							
+
 
 						}
 						else   //move right
 						{
-							
-
-							if (m_pCurrentMap->GetColliziionIndex(fNewObjectPosX + object->CollbordersXF, object->py + object->CollbordersY ) == 1 || m_pCurrentMap->GetColliziionIndex(fNewObjectPosX + object->CollbordersXF, object->py + object->CollbordersYF-0.1f) == 1)
+						if (m_pCurrentMap->GetColliziionIndex(fNewObjectPosX + object->CollbordersXF, object->py + object->CollbordersY) == 1 || m_pCurrentMap->GetColliziionIndex(fNewObjectPosX + object->CollbordersXF, object->py + object->CollbordersYF - 0.1f) == 1)
 							{
 
-							fNewObjectPosX = object->px;  //if there won't emprty cell we move right
+								fNewObjectPosX = object->px;  //if there won't emprty cell we move right
 
 
 								object->vx = 0;
-
+							//	std::cout << "Move right Collision 3" << std::endl;
 							}
 							else if (m_pCurrentMap->GetColliziionIndex(fNewObjectPosX + object->CollbordersX, object->py + object->CollbordersYF) == 3)
 							{
@@ -1356,154 +1456,192 @@ if (IsFocused())
 								{
 
 									object->vy = 49.0f;
-									fNewObjectPosY = object->obsticlepoints->second->y - sloperatio - object->CollbordersYF;
-									if (!object->checkFlag(object->bOnGround))                                // <- we trying to make in OnLanded anim
-									{
-										object->IsLanded();
-									}
-									object->Jumpcounter = 0;
-									object->setFlag(object->bOnGround);
 									bslope = true;
 								}
+							//	std::cout << "Move right Collision 4" << std::endl;
 							}
 						}
 					}
-						if (object->vy < 0)  //move Up
+					if (object->vy < 0)  //move Up
+					{
+						if (m_pCurrentMap->GetColliziionIndex(object->px + object->CollbordersX, fNewObjectPosY + object->CollbordersY) == 1 || m_pCurrentMap->GetColliziionIndex(object->px + object->CollbordersXF, fNewObjectPosY + object->CollbordersY) == 1)
 						{
-								if (m_pCurrentMap->GetColliziionIndex(object->px + object->CollbordersX, fNewObjectPosY + object->CollbordersY) == 1 || m_pCurrentMap->GetColliziionIndex(object->px + object->CollbordersXF, fNewObjectPosY + object->CollbordersY) == 1)
-								{
-									object->obsticlepoints = nullptr;
-									fNewObjectPosY = object->py;  //if there won't emprty cell we move right
-									//fNewObjectPosY = std::round(fNewObjectPosY * 10.0f) / 10.0f;
-									object->vy = 0;
-								}
-						
+							object->obsticlepoints = nullptr;
+							fNewObjectPosY = object->py;  //if there won't emprty cell we move right
+							//fNewObjectPosY = std::round(fNewObjectPosY * 10.0f) / 10.0f;
+							object->vy = 0;
 						}
-						else   //move Down
+
+					}
+					else   //move Down
+					{
+						if (m_pCurrentMap->GetColliziionIndex(object->px + object->CollbordersX, fNewObjectPosY + object->CollbordersYF) == 2|| m_pCurrentMap->GetColliziionIndex(object->px + object->CollbordersXF, fNewObjectPosY + object->CollbordersYF) == 2)
 						{
-							 if (m_pCurrentMap->GetColliziionIndex(object->px + object->CollbordersXF, fNewObjectPosY + object->CollbordersYF) == 2)
-							{
 							if (object->obsticlepoints == nullptr)
-							object->obsticlepoints = (m_pCurrentMap->getObsticlesPoints(object->px + object->CollbordersX, object->px + object->CollbordersXF, object->py + object->CollbordersY, fNewObjectPosY + object->CollbordersYF));
+								object->obsticlepoints = (m_pCurrentMap->getObsticlesPoints(object->px + object->CollbordersX, object->px + object->CollbordersXF, object->py + object->CollbordersY, fNewObjectPosY + object->CollbordersYF));
 
 							float deltaX = object->obsticlepoints->second->x - object->obsticlepoints->first->x;
 							float deltaY = object->obsticlepoints->first->y - object->obsticlepoints->second->y;
 							float slopeRatio = deltaY / deltaX;
 							float charX = object->px + object->CollbordersXF - object->obsticlepoints->first->x;
-							float sloperatio = charX * slopeRatio;
+							float CharRequireHigh = charX * slopeRatio;
 
-							if (sloperatio < 0.01f)  //for move out from slope  set high equal lower point
+							float borderX = object->px + object->CollbordersXF - object->obsticlepoints->second->x;
+
+							if (CharRequireHigh < 0.01f)  //for move out from slope  set high equal lower point
 							{
-								sloperatio = 0;
+								CharRequireHigh = 0;
 
 							}
-								//	fNewObjectPosX += DeltaX;
-								if (fNewObjectPosY + object->CollbordersYF >= object->obsticlepoints->first->y - sloperatio)
-								{
-							
+							//	fNewObjectPosX += DeltaX;
+							if (fNewObjectPosY + object->CollbordersYF >= object->obsticlepoints->first->y - CharRequireHigh)
+							{
+
 								
-
-									fNewObjectPosY = object->obsticlepoints->first->y - sloperatio - object->CollbordersYF;
-
-									if (!object->checkFlag(object->bOnGround))                                // <- we trying to make in OnLanded anim
-									{
-										object->IsLanded();
-									}
-
-									object->Jumpcounter = 0;
-									object->setFlag(object->bOnGround);
-									
-									if (charX!=0)
-									{
-									bslope = true;
-
-									}
-								}
-							 }
-							 else if (m_pCurrentMap->GetColliziionIndex(object->px + object->CollbordersX, fNewObjectPosY + object->CollbordersYF) == 3)
-							 {
-								 if (object->obsticlepoints == nullptr)
-									 object->obsticlepoints = (m_pCurrentMap->getObsticlesPoints(object->px + object->CollbordersX, object->px + object->CollbordersXF, object->py + object->CollbordersY, object->py + object->CollbordersYF));
-								 float deltaX = object->obsticlepoints->second->x - object->obsticlepoints->first->x;
-								 float deltaY = object->obsticlepoints->second->y - object->obsticlepoints->first->y;
-								 float slopeRatio = deltaY / deltaX;
-								 float charX = object->obsticlepoints->second->x - object->px-object->CollbordersX;
-								 float sloperatio = charX * slopeRatio;
-								 if (sloperatio < 0.01f)
-								 {
-									 sloperatio = 0;
-
-								 }
-								 //	fNewObjectPosX += DeltaX;
-								 if (fNewObjectPosY + object->CollbordersYF >= object->obsticlepoints->second->y - sloperatio)
-								 {
-
-									 fNewObjectPosY = object->obsticlepoints->second->y - sloperatio- object->CollbordersYF;
-
-									 if (!object->checkFlag(object->bOnGround))                                // <- we trying to make in OnLanded anim
-									 {
-										 object->IsLanded();
-									 }
-
-									 object->Jumpcounter = 0;
-									 object->setFlag(object->bOnGround);
-									 bslope = true;
-								 }
-							 }
-							 else if (m_pCurrentMap->GetColliziionIndex(object->px + object->CollbordersXF, fNewObjectPosY + object->CollbordersYF) == 1 || m_pCurrentMap->GetColliziionIndex(object->px + object->CollbordersX, fNewObjectPosY + object->CollbordersYF) == 1)  // 1 means tough collision
+								if (borderX > 0)
 								{
-
-									object->obsticlepoints = nullptr;
-									if (!object->checkFlag(object->bOnGround))                                // <- we trying to make in OnLanded anim
-									{
-										object->IsLanded();
-									}
-									fNewObjectPosY = object->py;  //if there won't emprty cell we move right
-									object->vy = 0;
-									object->Jumpcounter = 0;
-									object->setFlag(object->bOnGround);
+									fNewObjectPosY = object->obsticlepoints->second->y - object->CollbordersYF;
 								}
-							 else if (m_pCurrentMap->GetColliziionIndex(object->px + object->CollbordersX, fNewObjectPosY + object->CollbordersYF) == 5 || m_pCurrentMap->GetColliziionIndex(object->px + object->CollbordersXF, fNewObjectPosY + object->CollbordersYF) == 5)  // 5 means spikes
+								else {
+
+									fNewObjectPosY = object->obsticlepoints->first->y - CharRequireHigh - object->CollbordersYF;
+								}
+
+								if (!object->checkFlag(object->bOnGround))                                // <- we trying to make in OnLanded anim
 								{
-									if (object == m_pPlayer)
-									{
-										if (charDeath == false)
-										{
-											charDeath = true;
-											m_script.AddCommand((new  cComand_LoadFunction));
-										}
+									object->IsLanded();
 
-									}
-									else
-									{
-										object->setFlag(object->bDead);
 
-									}
+									auto& FxLand = GetSpriteData(DataStruct::FxDust);
+									float centerX = object->nSheetSizeX / 2 - FxLand.Size.x / 2;
+									float centerY = (FxLand.Size.y / CellSize) * fscale + 0.1f;
+									centerX /= CellSize;
+
+									SpawnMirrors({ object->px + centerX,object->py + object->CollbordersYF - centerY }, FxLand.Pos, 5, FxLand.Size.x, FxLand.Size.y, D_FX);
 								}
+
+								bslope = true;
+								object->Jumpcounter = 0;
+								object->setFlag(object->bOnGround);
+
+
+					//			std::cout <<"char high =  " << borderX << "  assign : " << object->obsticlepoints->first->y - CharRequireHigh - object->CollbordersYF << "   Move Down Collision 1" << std::endl;
+							}
+						}
+						else if (m_pCurrentMap->GetColliziionIndex(object->px + object->CollbordersX, fNewObjectPosY + object->CollbordersYF) == 3|| m_pCurrentMap->GetColliziionIndex(object->px + object->CollbordersXF, fNewObjectPosY + object->CollbordersYF) == 3)
+						{
+							if (object->obsticlepoints == nullptr)
+								object->obsticlepoints = (m_pCurrentMap->getObsticlesPoints(object->px + object->CollbordersX, object->px + object->CollbordersXF, object->py + object->CollbordersY, object->py + object->CollbordersYF));
+							float deltaX = object->obsticlepoints->second->x - object->obsticlepoints->first->x;
+							float deltaY = object->obsticlepoints->second->y - object->obsticlepoints->first->y;
+							float slopeRatio = deltaY / deltaX;
+							float charX = object->obsticlepoints->second->x - object->px - object->CollbordersX;
+
+							float borderX = object->obsticlepoints->first->x - (object->px + object->CollbordersX);
+							float CharRequireHigh = charX * slopeRatio;
+							if (CharRequireHigh < 0.01f)
+							{
+								CharRequireHigh = 0;
+
+							}
+							//	fNewObjectPosX += DeltaX;
+							if (fNewObjectPosY + object->CollbordersYF >= object->obsticlepoints->second->y - CharRequireHigh)
+							{
+
+								if (borderX>0)
+								{
+									fNewObjectPosY = object->obsticlepoints->first->y - object->CollbordersYF;
+								}
+								else
+								{
+								fNewObjectPosY = object->obsticlepoints->second->y - CharRequireHigh - object->CollbordersYF;
+								}
+
+								if (!object->checkFlag(object->bOnGround))                                // <- we trying to make in OnLanded anim
+								{
+									object->IsLanded();
+
+
+									auto& FxLand = GetSpriteData(DataStruct::FxDust);
+									float centerX = object->nSheetSizeX / 2 - FxLand.Size.x / 2;
+									float centerY = (FxLand.Size.y / CellSize) * fscale + 0.1f;
+									centerX /= CellSize;
+
+									SpawnMirrors({ object->px + centerX,object->py + object->CollbordersYF - centerY }, FxLand.Pos, 5, FxLand.Size.x, FxLand.Size.y, D_FX);
+								}
+
+								object->Jumpcounter = 0;
+								object->setFlag(object->bOnGround);
+								bslope = true;
+							}
+						//	std::cout <<"object->pX : =  " << object->px << "with coll : = " << object->px + object->CollbordersX << object->obsticlepoints->first->x << "\t" << object->obsticlepoints->second->x << "borderX : =" << borderX << std::endl;
+						}
+						else if (m_pCurrentMap->GetColliziionIndex(object->px + object->CollbordersXF, fNewObjectPosY + object->CollbordersYF) == 1 || m_pCurrentMap->GetColliziionIndex(object->px + object->CollbordersX, fNewObjectPosY + object->CollbordersYF) == 1)  // 1 means tough collision
+						{
+							if (!bslope)
+							{
+
+								object->obsticlepoints = nullptr;
+								if (!object->checkFlag(object->bOnGround))                                // <- we trying to make in OnLanded anim
+								{
+									object->IsLanded();
+
+									auto& FxLand = GetSpriteData(DataStruct::FxDust);
+
+									float centerX = object->nSheetSizeX / 2 - FxLand.Size.x / 2;
+									float centerY = (FxLand.Size.y / CellSize) * fscale +0.1f;
+									centerX /= CellSize;
+
+									SpawnMirrors({ object->px+centerX,object->py+object->CollbordersYF- centerY}, FxLand.Pos, 5, FxLand.Size.x, FxLand.Size.y, D_FX);
+
+							//		testCounter++;
+								}
+								fNewObjectPosY = ceil(object->py*10)/10;  // example: 25.47*10= 254,7 -> ceil(254.7->255)->/10-?25.5
+								object->vy = 0;
+								object->Jumpcounter = 0;
+								object->setFlag(object->bOnGround);
+
+								
+							}
+						//	std::cout << "Move Down Collision 3" << std::endl;
+						}
+						else if (m_pCurrentMap->GetColliziionIndex(object->px + object->CollbordersX, fNewObjectPosY + object->CollbordersYF) == 5 || m_pCurrentMap->GetColliziionIndex(object->px + object->CollbordersXF, fNewObjectPosY + object->CollbordersYF) == 5)  // 5 means spikes
+						{
+							if (object == m_pPlayer)
+							{
+								if (charDeath == false)
+								{
+									charDeath = true;
+									m_script.AddCommand((new  cComand_LoadFunction));
+								}
+
+							}
+							else
+							{
+								object->setFlag(object->bDead);
+
+							}
+					//		std::cout << "Move Down Collision 4" << std::endl;
+						}
 
 					}
 
-				
-				
-				
 
-					if (object->vy <=-0.1f &&!bslope || object->vy>=0.1f && !bslope)
+
+
+
+					if (object->vy <= -0.1f && !bslope || object->vy >= 0.1f && !bslope)
 						object->clearFlag(object->bOnGround);
-					
+
+
+				
 
 					float fDynamicObjectPosX = fNewObjectPosX;
 					float fDynamicObjectPosY = fNewObjectPosY;
 
-					
-
 
 
 					// Object V Object collisions
-
-
-
-
-
 
 					if (m_script.bUserControlEnabled)
 					{
@@ -1647,6 +1785,44 @@ if (IsFocused())
 								}
 							
 						}
+
+
+						for (auto& dyn : m_vecProjectiles)
+						{
+							if (fDynamicObjectPosX + object->CollbordersX  < (dyn->px + dyn->CollbordersXF) && (fDynamicObjectPosX + object->CollbordersXF) > dyn->px + dyn->CollbordersX &&
+								fDynamicObjectPosY + object->CollbordersY  < (dyn->py + dyn->CollbordersYF) && (fDynamicObjectPosY + object->CollbordersYF) > dyn->py + dyn->CollbordersY)
+							{
+					
+								//Here  means       not equal layers       //m_Layer 2 - means NEUTRAL(for skip projectile)
+								if (dyn->m_layer != object->m_layer && dyn->m_layer != 2 && object->m_layer != 2)
+								{
+					
+									if (dyn->checkFlag(dyn->IsThrow)&& object->checkFlag(object->BisProjectile))
+									{
+										dyn->m_layer = object->m_layer;
+
+										dyn->vy = dyn->vy * 3.0f;
+										
+										dyn->vx = sign(dyn->vx)* -15.0f;
+
+
+										auto& FxLand = GetSpriteData(DataStruct::FXDeflect);
+
+										float centerX = object->nSheetSizeX / 2 - FxLand.Size.x / 2;
+										float centerY = (FxLand.Size.y / CellSize) * fscale + 0.1f;
+										centerX /= CellSize;
+
+										SpawnMirrors({ object->px + centerX,object->py + object->CollbordersYF - centerY }, { FxLand.Pos.x/FxLand.Size.x,FxLand.Pos.y/ FxLand.Size.y }, 2, FxLand.Size.x, FxLand.Size.y, D_FX);
+										PlaySounds("DeflectSound");
+
+									}
+
+								}
+
+
+							}
+
+						}
 					}
 
 				
@@ -1660,7 +1836,7 @@ if (IsFocused())
 
 			}
 			
-
+		
 			//m_vecVisibleDynamics.clear();
 			for (auto& source : { &m_vecVisibleDynamics,&m_vecProjectiles,&m_vecFightText,&m_vecParticles })  // <- run on vecDynamics array and use Update function in every person this array
 				for (auto& dyns : *source)
@@ -1670,9 +1846,6 @@ if (IsFocused())
 
 						dyns->Update(fElapsedTime, m_pPlayer);
 
-					//cDynamic* entity = dyns;
-				//	if (dynamic_cast<cDynamic_Creature*>(entity)) 
-				//		m_vecVisibleDynamics.push_back(entity); // Add the Bandit 
 					}
 					else
 					{
@@ -1698,7 +1871,7 @@ if (IsFocused())
 								{
 
 									//bHitSomething = true;
-									break;
+									//break;
 								}
 						}
 						else  //Check for backstubUi
@@ -1751,7 +1924,7 @@ if (IsFocused())
 				
 
 				}
-
+		
 			//Remove quests that have been completed
 			auto i = remove_if(m_listQusets.begin(), m_listQusets.end(), [](const cQuest* d) {return d->bCompleted; });  //go through the list and check for any quests that have
 			//be completed flag set to true -remove them
@@ -1765,6 +1938,7 @@ if (IsFocused())
 			
 			
 		}
+		std::cout << m_listQusets.size() << std::endl;
 			fOldOffset = fOffsetX;
 
 			//Calculate Top-Leftmost visible tile
@@ -2043,7 +2217,7 @@ if (IsFocused())
 						}
 						}
 
-				m_vecVisibleDynamics[0]->DrawSelf(this, fOffsetX, fOffsetY);
+			//	m_vecVisibleDynamics[0]->DrawSelf(this, fOffsetX, fOffsetY);
 
 
 				if (m_pCurrentMap->sName == "Forest")
@@ -2139,31 +2313,6 @@ if (IsFocused())
 					for (auto& dyns : *source)
 						dyns->DrawSelf(this, (m_pPlayer->px-fOffsetX)* CellSize, (m_pPlayer->py - fOffsetY+1.5) * CellSize);
 
-			//	std::cout <<m_pPlayer->px << '\t'<< (ScrollingY + 90) - (fOffsetY * 6.0f) <<'\t'<< m_pPlayer->py << std::endl;
-
-
-			
-					
-				/*defineFacingDirection(fTestX, fTestY);
-				
-				DrawCircle((fTestX-fOffsetX) * 64, (fTestY-fOffsetY) * 64, 0.5*64);
-				*/
-			
-
-
-			
-			//std::cout << m_pPlayer->py<< '\t'<< fOffsetY << '\t' << fCameraPosY <<'\t'<< std::endl;
-			
-					//if (fTestX + 0.5f > m_pPlayer->px + dyns->CollbordersX && fTestX <(dyns->px + dyns->CollbordersXF) && fTestY > dyns->py + dyns->CollbordersY && fTestY < dyns->py + dyns->CollbordersYF)
-					
-
-		
-
-					//		DrawLine((m_pPlayer->px+m_pPlayer->CollbordersXF - fOffsetX) * 64 , (m_pPlayer->py + m_pPlayer->CollbordersYF - fOffsetY) * 64, ((m_pPlayer->px + m_pPlayer->CollbordersXF - fOffsetX) * 64 )+ (m_pPlayer->vx )*64, ((m_pPlayer->py + m_pPlayer->CollbordersYF - fOffsetY) * 64)+ (m_pPlayer->vy)*64);
-
-
-				
-				
 			
 
 				if (PressF)
@@ -2178,14 +2327,12 @@ if (IsFocused())
 
 				//
 
-				Drawcursor(mouse);
+			//	Drawcursor(mouse);
 
 
 
 		
-				if (bPause)
-			{
-					olc::vf2d quitPos{ (ScreenWidth() / 2) - (167 * fscale) ,ScreenHeight() / 2 + (31 * fscale) };
+			
 			
 					switch (n_nGameMode)
 					{
@@ -2193,60 +2340,35 @@ if (IsFocused())
 
 						break;
 					case MODE_LOCAL_MAP:
-						DrawPartialDecal({ ((float)ScreenWidth() / 2) - (167*fscale), (float)ScreenHeight() / 2 - (71*fscale) }, D_FullUi, { 832,0 }, { 334,142 },{fscale,fscale});
-						//DrawBigText("Travel ?", (ScreenWidth() / 2) - 72, ScreenHeight() / 2 - 62, 1, 1, olc::WHITE);
-
-						DrawBigText("Quit", (ScreenWidth() / 2) - (167*fscale), ScreenHeight() / 2 + (31*fscale), 1*fscale, 1*fscale, olc::WHITE);
-
-						DrawBigText("Options", (ScreenWidth() / 2) + ((167 - 144)*fscale), ScreenHeight() / 2 + (31*fscale), 1*fscale, 1*fscale, olc::WHITE);
-
-#ifdef  DEBUG_MODE
-
-						SetPixelMode(olc::Pixel::NORMAL);
-						EnableLayer(layer, true);
-						SetDrawTarget(nullptr);
-#endif // DEBUG
-
 					
-						DrawRect((ScreenWidth() / 2) - (167 * fscale), ScreenHeight() / 2 + (31 * fscale), 40,20);
-
-
-						if (GetMouse(0).bPressed) //LeftMouse
-						{
-
-							if ((int)mouse.x >=(int)quitPos.x && (int)mouse.y >= (int)quitPos.y && (int)mouse.x <= (int)quitPos.x+40 && (int)mouse.y <= (int)quitPos.x + 40)
-							{
-								return false;
-							}
-
-						}
-						Drawcursor(mouse);
-						DrawBigText("Pause", ScreenWidth() / 2 - (45*fscale), ScreenHeight() / 2 - (71 * fscale) , 1 * fscale, 1 * fscale, olc::WHITE);
-
-					
+					//	 DrawPause(mouse);
+							
 						break;
 					case MODE_WAREHOUSE:
-						UpdateWarehouse(fElapsedTime);
+						UpdateWarehouse(fElapsedTime,mouse);
 						break;
 					case MODE_INVENTORY:
-						UpdateInventory(fElapsedTime);
+						UpdateInventory(fElapsedTime,mouse);
 						break;
 					case MODE_SHOP:
-						UpdateShop(fElapsedTime);
+						UpdateShop(fElapsedTime,mouse);
 						break;
 					case MODE_PROFESSION:
-						UpdateProfession(fElapsedTime);
+						UpdateProfession(fElapsedTime,mouse);
 						break;
 					case MODE_MAP:
-						UpdateMap(fElapsedTime);
+						UpdateMap(fElapsedTime,mouse);
 						break;
 					case MODE_BLACKSMITH:
-						UpdateBlackSmith(fElapsedTime);
+						UpdateBlackSmith(fElapsedTime,mouse);
+						break;
+					case MODE_QUESTLOG:
+						UpdateQuestLog(fElapsedTime,mouse);
 						break;
 					}
 				
 
-			}
+			
 
 
 
@@ -2254,10 +2376,12 @@ if (IsFocused())
 				for (auto& quest : m_listQusets)  // ui drawing quest right up corner on the screen
 				{
 				
+				
 					DrawBigText(quest->sName, ScreenWidth() - (250*fscale), y * (32*fscale), 0.35*fscale, 0.35*fscale, olc::YELLOW);
 					y++;
 					DrawBigText(quest->sDescription, ScreenWidth() - (250*fscale), y * (32*fscale), 0.25*fscale, 0.25*fscale);
 					y++;
+
 				}
 
 
@@ -2270,20 +2394,9 @@ if (IsFocused())
 				if (m_bShowDialog)
 					DisplayDialog(m_vecDialogToShow, 100*fscale, ScreenHeight() - (150*fscale));
 
-		
+				UpdateAnimationFrame(fElapsedTime);
 
-				animsprite += fElapsedTime;
-				// Logic For Dynamic Layer
-				if (animsprite > framespeed)
-				{
-					frameIndex++;
-					animsprite = 0;
-
-				}
-				if (frameIndex >= 8)
-				{
-					frameIndex = 0;
-				}
+				
 				//
 #ifdef  DEBUG_MODE
 
@@ -2295,12 +2408,12 @@ if (IsFocused())
 				// Limit the frame rate to 60 frames per second
 			//	Sleep(4); // Sleep for the appropriate time to achieve desired frame rate
 
-				return true;
+				return  DrawPause(mouse);
 			
 	
 }
 
-bool RPG_Engine::UpdateWarehouse(float fElapsedTime)
+bool RPG_Engine::UpdateWarehouse(float fElapsedTime,olc::vi2d& mouse)
 {
 
 
@@ -2309,7 +2422,7 @@ bool RPG_Engine::UpdateWarehouse(float fElapsedTime)
 
 
 
-	olc::vf2d mouse = { (float)GetMouseX(), (float)GetMouseY() };
+	//olc::vf2d mouse = { (float)GetMouseX(), (float)GetMouseY() };
 	olc::vf2d mousefix = { (mouse.x / (CellSize*fscale)), (mouse.y / (CellSize*fscale)) };
 
 	
@@ -2696,7 +2809,7 @@ void RPG_Engine::DrawWarehouse(const float offestX, const float offsetY, olc::vf
 	}
 }
 
-bool RPG_Engine::SetMouseTarget(olc::vi2d mouse)
+bool RPG_Engine::SetMouseTarget(olc::vi2d& mouse)
 {
 
 	if (m_pPlayer->Gettarget() == nullptr)
@@ -2751,76 +2864,51 @@ bool RPG_Engine::SetMouseTarget(olc::vi2d mouse)
 
 
 
-void RPG_Engine::uiCellUpdate(olc::vi2d mouse)
+void RPG_Engine::DrawInventoryFastCells(olc::vi2d mouse,uint8_t SelObjSize,olc::vi2d mousefix)
 {
-
-	 highlighted = nullptr;
-	// GrabItem = nullptr;
-	
-	
-	olc::vi2d mousefix = { (mouse.x / (int)(CellSize*fscale)),(mouse.y / (int)(CellSize*fscale)) };
-	uint8_t SelObjSize =64;
-
-	uint8_t spriteCoordX = 4 % 32;
-	uint8_t spriteCoordY = 4/32;
-
-	//uint8_t UiFirstCellX = 64 * fscale / (64 * fscale);
-	uint8_t UiFirstCellY = (ScreenHeight() - (ScreenHeight() / 6)) / (CellSize);
-
-//	uint8_t UiSecondCellX = 64 * 3 * fscale / (64 * fscale);
-	//uint8_t UiSecondCellY = (ScreenHeight() - (ScreenHeight() / 6)) / (64 * fscale);
-
-	DrawPartialDecal({ (float)CellSize * fscale, (float)ScreenHeight() - (ScreenHeight() / 6) }, D_Items, { (float)spriteCoordX*64,(float)spriteCoordY*64 }, { (float)SelObjSize, (float)SelObjSize }, { 0.5f*fscale,0.5f*fscale });
-	DrawBigText("Q", (float)CellSize * fscale + (32 / 2 * (fscale - 0.2f)), (float)ScreenHeight() - (ScreenHeight() / 9), (fscale + 0.2f)*fscale, (fscale + 0.2f)*fscale, olc::WHITE);
-
-
-	DrawPartialDecal({ (float)CellSize * 3 * fscale, (float)ScreenHeight() - (ScreenHeight() / 6) }, D_Items, { (float)spriteCoordX * 64,(float)spriteCoordY * 64 }, { (float)SelObjSize, (float)SelObjSize }, { 0.5f*fscale,0.5f*fscale });
-	DrawBigText("E", (float)CellSize * 3 * fscale + (32 / 2 * (fscale - 0.2f)), (float)ScreenHeight() - (ScreenHeight() / 9), (fscale + 0.2f)*fscale, (fscale + 0.2f)*fscale, olc::WHITE);
-
-	//std::cout << mousefix.x << '\t' << mousefix.y << std::endl;
-	uint8_t xcoor = 1;
-	for (auto i : m_vecUi)
+	uint8_t xcoor = 8;
+	for (auto i : m_vecUi) // when we have on fast key sobe objects
 	{
-
-		//i->spriteindex
-		
-
-
 		if (i != nullptr)
 		{
-			float x = i->Item->spriteindex % 32;
+			float x = i->Item->spriteindex % 32;   // find in sprite texture  position
 			float y = i->Item->spriteindex / 32;
 
 			if (!i->checkFlag(i->Grabitem))
 
 			{
+				//UIPosAr[xcoor]
 
-			DrawPartialDecal({ (float)CellSize * xcoor * fscale, (float)ScreenHeight() - (ScreenHeight() / 6) }, i->Item->pSprite, { x*64,y*64 }, { (float)SelObjSize, (float)SelObjSize }, { 0.5f*fscale,0.5f*fscale });
 
-		//	std::cout << SelObjSize * xcoor * fscale / (64*fscale) << '\t' << mousefix.y << std::endl;
 
-			if ((int)mousefix.x == CellSize * xcoor * fscale / CellSize && mousefix.y ==UiFirstCellY)
-			{
-				highlighted = i;
-			}
+
+				DrawPartialDecal(UIPosOnScreenAr[xcoor], i->Item->pSprite, { x * 64,y * 64 }, { (float)SelObjSize, (float)SelObjSize }, { 0.5f * fscale,0.5f * fscale });
+
+				//	std::cout << SelObjSize * xcoor * fscale / (64*fscale) << '\t' << mousefix.y << std::endl;
+
+				if (mouse.x >= UIPosOnScreenAr[xcoor].x && mouse.x <= UIPosOnScreenAr[xcoor].x + (SelObjSize * 0.5f * fscale) &&
+					mouse.y >= UIPosOnScreenAr[xcoor].y && mouse.y <= UIPosOnScreenAr[xcoor].y + (SelObjSize * 0.5f * fscale))
+				{
+					highlighted = i;
+				}
 
 			}
 			else
 			{
 
-				DrawPartialDecal({ (float)(mouse.x - (32 / 2)) , (float)(mouse.y - (32 / 2)) }, i->Item->pSprite, { x*64,y*64 }, { 64,64 }, { fscale,fscale });
+				DrawPartialDecal({ (float)(mouse.x - (32 / 2)) , (float)(mouse.y - (32 / 2)) }, i->Item->pSprite, { x * 64,y * 64 }, { 64,64 }, { fscale,fscale });
 				GrabItem = i;
 			}
-			
 
-			
+
+
 
 
 		}
-		xcoor += 2;
+		xcoor++;
 	}
-	
-	if (highlighted !=nullptr)
+
+	if (highlighted != nullptr)
 	{
 		float nLinesX = 0;
 		int nLinesY = 3;
@@ -2843,26 +2931,166 @@ void RPG_Engine::uiCellUpdate(olc::vi2d mouse)
 
 			nsaveline++;     //  32/100 = 0.32-> 1 percent.   32-18 = 14   14/0,32 = 0.43   1-0.43 = 0.57    
 		}
-	//	if (highlighted->bEquipable)
-	//	{
-	//		nLinesY+=3;
-	//	}
-	//	else
-	//	{
-		//	if (nLinesX < 32 + 20 * 18 && !highlighted->bKeyItem)  // fill @press space to use like default value
-		//	{
-		//		nLinesX = 32 + 20 * 18;
 
-	//	}
-	//	}
-		
-	olc::vi2d Discription(ScreenWidth()-(32+nLinesX*fscale), ScreenHeight() - (ScreenHeight() / 6)-(nLinesY*32*fscale)*fscale);
-	DrawDescriptionPattern(highlighted, Discription, mousefix);
+
+		olc::vi2d Discription(ScreenWidth() - (32 + nLinesX * fscale), ScreenHeight() - (ScreenHeight() / 6) - (nLinesY * 32 * fscale) * fscale);
+		DrawDescriptionPattern(highlighted, Discription, mousefix);
 
 	}
+
+
+
+
+
+
 }
 
-bool RPG_Engine::UpdateInventory(float fElapsedTIme)
+void RPG_Engine::uiCellUpdate(olc::vi2d& mouse)
+{
+
+	highlighted = nullptr;
+	// GrabItem = nullptr;
+
+
+	olc::vi2d mousefix = { (mouse.x / (int)(CellSize * fscale)),(mouse.y / (int)(CellSize * fscale)) };
+	uint8_t SelObjSize = 64;
+
+
+
+	uint8_t UiFirstCellY = (ScreenHeight() - (ScreenHeight() / 6)) / (CellSize);
+	auto& MainBlock = GetSpriteData(DataStruct::UIMainBox);
+
+	DrawPartialDecal(UIPosOnScreenAr[0], D_FullUi, MainBlock.Pos, MainBlock.Size, { 2.0f * fscale,2.0f * fscale });
+
+
+
+	auto& UiEnergy = GetSpriteData(DataStruct::UiEnergy);
+	auto& UiRage = GetSpriteData(DataStruct::UiRage);
+	//here we get from 0 -> 1.0f
+	float EnergyUpdate = UiEnergy.Size.y * (static_cast<float>(m_pPlayer->GetEnergy()) / static_cast<float>(m_pPlayer->MaxEnergy));
+	float RageUpdate = UiEnergy.Size.y * (static_cast<float>(m_pPlayer->GetRage()) / static_cast<float>(m_pPlayer->MaxRage));
+
+
+	
+	DrawPartialDecal({ (float)UIPosOnScreenAr[6].x, (float)UIPosOnScreenAr[6].y + UiEnergy.Size.y - EnergyUpdate }, D_FullUi, { (float)UiEnergy.Pos.x,(float)UiEnergy.Pos.y + UiEnergy.Size.y - EnergyUpdate }, { (float)UiEnergy.Size.x, EnergyUpdate }, { 2.0f * fscale,2.0f * fscale });
+	DrawPartialDecal({ (float)UIPosOnScreenAr[7].x, (float)UIPosOnScreenAr[7].y + UiRage.Size.y - RageUpdate }, D_FullUi, { (float)UiRage.Pos.x, (float)UiRage.Pos.y + UiRage.Size.y - RageUpdate }, { (float)UiRage.Size.x, RageUpdate }, { 2.0f * fscale,2.0f * fscale });
+
+
+
+	for (int i = 1; i < 4; i++)
+	{
+		auto& spriteData = GetSpriteData(static_cast<DataStruct>(i+14));
+
+		DrawPartialDecal(UIPosOnScreenAr[i], D_FullUi, spriteData.Pos, spriteData.Size, { 2.0f * fscale,2.0f * fscale });
+
+	}
+	
+	for (int i = 0; i < SpellsUiAr.size(); i++)
+	{
+
+
+		DrawPartialDecal(UIPosOnScreenAr[i+4], D_FullUi, SpellsUiAr[i]->Pos, SpellsUiAr[i]->Size, {0.5f * fscale,0.5f * fscale});
+
+	}
+
+	DrawInventoryFastCells(mouse,SelObjSize,mousefix);
+	
+	
+
+
+	if (TalentPoint >0)
+	{
+		
+		int AnimCounter = frameIndex % 4;
+
+		auto& TButton = GetSpriteData(DataStruct::FxTalentButton);
+		
+		float Xcoord = TButton.Pos.x / TButton.Size.x + AnimCounter;
+		//int Ycoord = TButton.Pos.y / TButton.Size.y;
+
+		DrawPartialDecal({ (float)UIPosOnScreenAr[3].x,(float)UIPosOnScreenAr[3].y-1 }, D_FullUi, { Xcoord * TButton.Size.x,(float)TButton.Pos.y }, TButton.Size, { 2.0f*fscale,2.0f*fscale });
+
+	}
+
+	
+}
+
+void RPG_Engine::UpdateQuestLog(float fElapsedTime, olc::vi2d& mouse)
+{
+
+
+
+	auto& BookPos = GetSpriteData(DataStruct::QuestBook);
+
+	olc::vi2d Bookcellsize = { 18,18 };  // клетки для книг поудобнее
+	olc::vi2d QuestBookPos = { ScreenWidth() / 2 - 150,ScreenHeight() / 2 - 100 };
+	olc::vi2d ActiveMainPos = { QuestBookPos.x+Bookcellsize.x * 1,QuestBookPos.y + Bookcellsize.y * 2 };
+	olc::vi2d DescriptionMainPos = { ActiveMainPos.x + (Bookcellsize.x * 8), ActiveMainPos.y };
+	olc::vi2d CompletedPos = { ActiveMainPos.x,QuestBookPos.y + Bookcellsize.y * 9 };
+
+	DrawPartialDecal(QuestBookPos, D_FullUi, BookPos.Pos, BookPos.Size, { 2.0f * fscale,2.0f * fscale });
+
+
+
+	uint8_t y = 0;
+	cQuest* Highlighted = nullptr;
+	uint8_t LightIndex = 0;
+
+	for (auto& quest : m_listQusets)  // ui drawing quest right up corner on the screen
+	{
+
+		if (mouse.x >= ActiveMainPos.x && mouse.y >= ActiveMainPos.y + (y * Bookcellsize.y/2) &&
+			mouse.x <= ActiveMainPos.x + (Bookcellsize.x * 6) && mouse.y <= ActiveMainPos.y + ((y + 1) * Bookcellsize.y/2))
+		{
+			Highlighted = quest;
+			LightIndex = y;
+		}
+
+		olc::Pixel color = (Highlighted == quest) ? olc::YELLOW : olc::WHITE;
+
+		DrawBigText(quest->sName, ActiveMainPos.x,ActiveMainPos.y+ (y*Bookcellsize.y/2), 0.5 * fscale, 0.5 * fscale, color);
+
+
+		if (DescrqstIndex == y)
+		{
+		DrawBigText(quest->sDescription, DescriptionMainPos.x, DescriptionMainPos.y, 0.5 * fscale, 0.5 * fscale);
+
+		}
+		
+		y++;
+	
+	}
+
+	y = 0;
+	for (auto& quest : m_CompletedQuest)  // Completed quest
+	{
+
+		DrawBigText(quest->sName, CompletedPos.x, CompletedPos.y + (y * Bookcellsize.y / 2), 0.5 * fscale, 0.5 * fscale, olc::GREY);
+
+	}
+
+	if (Highlighted != nullptr)
+	{
+
+		if (GetMouse(0).bPressed)
+		{
+
+
+
+		
+
+				DescrqstIndex = LightIndex;
+
+				//Highlighted->SeeDescription = true;
+		}
+	
+	}
+
+
+	Drawcursor(mouse);
+}
+
+bool RPG_Engine::UpdateInventory(float fElapsedTIme, olc::vi2d& mouse)
 {
 	
 
@@ -2874,7 +3102,7 @@ bool RPG_Engine::UpdateInventory(float fElapsedTIme)
 	const int inventoryHeight = 523;
 	const int inventoryWidth = 512;
 	float Scale =0.5f*fscale;
-	olc::vi2d mouse = {(GetMouseX()), (GetMouseY()) };
+	//olc::vi2d mouse = {(GetMouseX()), (GetMouseY()) };
 
 
 	olc::vi2d mousefix = { (mouse.x / (int)(CellSize * fscale)),(mouse.y / (int)(CellSize * fscale)) };
@@ -3132,7 +3360,18 @@ void RPG_Engine::DrawInventory(float offestX, float offsetY, olc::vi2d mouse, ol
 			if (item->Item->MaxStack>1)
 			DrawBigText( std::to_string(item->currStacks), (float)(offestX + (x * fscale)+0.05) * CellSize, (offsetY + (y * fscale)) * CellSize, fscale*0.5f, fscale*0.5f,olc::WHITE); //Money
 			if (item->Gold > 0)
-			DrawBigText(std::to_string(item->Gold), (float)(offestX + (x * fscale)+0.4) * CellSize, (offsetY + (y * fscale)+0.3) * CellSize, fscale*0.5f, fscale*0.5f, olc::YELLOW); //Money
+			{
+				if (item->Gold>10)
+				{
+					DrawBigText(std::to_string(item->Gold), (float)(offestX + (x * fscale) + 0.1) * CellSize, (offsetY + (y * fscale) + 0.3) * CellSize, fscale * 0.5f, fscale * 0.5f, olc::YELLOW); //Money
+				}
+				else
+				{
+					DrawBigText(std::to_string(item->Gold), (float)(offestX + (x * fscale)+0.3) * CellSize, (offsetY + (y * fscale)+0.3) * CellSize, fscale*0.5f, fscale*0.5f, olc::YELLOW); //Money
+
+				}
+
+			}
 
 			if (mouseFixed.x == ((offestX / fscale) + x ) && mouseFixed.y == (offsetY / fscale) + y )
 				highlighted = item;
@@ -3210,17 +3449,10 @@ void RPG_Engine::moveIItems(olc::vi2d mouse, float x, float y,float eqX,float eq
 	const int cellsEqCoordX = mouse.x - (eqX / fscale);     // Coordinates x and y where first cell in eq begins 0,0; 0,1; 0,2
 	const int cellsEqCoordY = mouse.y - (eqY / fscale);
 
-
-	
-	uint8_t UiFirstCellX = 1;
-	uint8_t UiFirstCellY = (ScreenHeight() - (ScreenHeight() / 6)) / (int)(CellSize * fscale);
-
-	uint8_t UiSecondCellX = 3;
-	uint8_t UiSecondCellY = (ScreenHeight() - (ScreenHeight() / 6)) / (int)(CellSize * fscale);
 	
 	//std::cout << "Invenotry -" << '\t' << cellsInvCoordX << '\t' << cellsInvCoordY << std::endl;
 	//std::cout << "Equip -" << '\t' << cellsEqCoordX << '\t' << cellsEqCoordY << std::endl;
-	std::cout << "Equip -" << '\t' << (int)mouse.x << '\t' << (int)mouse.y << std::endl;
+//	std::cout << "Equip -" << '\t' << (int)mouse.x << '\t' << (int)mouse.y << std::endl;
 
 	if (cellsEqCoordX >= 0 && cellsEqCoordY >= 0 && cellsEqCoordX <= 1 && cellsEqCoordY <= 2)   // Equip
 	{
@@ -3288,14 +3520,6 @@ void RPG_Engine::moveIItems(olc::vi2d mouse, float x, float y,float eqX,float eq
 
 				vector[currIndex]->Item = grabitem->Item;
 				EqVector[GrabbedIndex]->Item = help;
-
-				/*grabitem->bEquiped = false;
-				vector[currIndex]->Item->equipIndex = grabitem->Item->equipIndex;
-				vector[currIndex]->bEquiped = true;
-				grabitem->index = currIndex;
-				vector[currIndex]->index = GrabbedIndex;
-				std::swap(vector[currIndex], EqVector[GrabbedIndex]);
-				AttachEq(EqVector, GrabbedIndex);*/
 				AttachEq(EqVector, GrabbedIndex);
 			}
 
@@ -3339,21 +3563,27 @@ void RPG_Engine::moveIItems(olc::vi2d mouse, float x, float y,float eqX,float eq
 
 	}
 
-	if ((int)mouse.x >= UiFirstCellX && (int)mouse.y >= UiFirstCellY && (int)mouse.x <= UiFirstCellX && (int)mouse.y <= UiFirstCellY)
+	float test = static_cast<int>(CellSize * fscale);
+
+	olc::vi2d mousehelp = { GetMouseX()-static_cast<int>(CellSize/2*fscale),GetMouseY()- static_cast<int>(CellSize/2 * fscale) };
+
+
+	for (int i = 8; i < 10; i++)
 	{
-		//cItem* helper = grabitem->Item;
 
-		m_vecUi[0] = grabitem;
-		m_vecUi[0]->Uiindex = 0;
+		// Сразу находим разницу векторов и вычисляем её длину
+		if ((UIPosOnScreenAr[i] - mousehelp).mag() <4) /* пороговое значение расстояния */
+		{
+			
+			if (grabitem->Item->equipIndex == 0)
+			{
+			m_vecUi[i-8] = grabitem;
+			m_vecUi[i-8]->Uiindex = 0;
+			}
 
-	}
-	if ((int)mouse.x >= UiSecondCellX && (int)mouse.y >= UiSecondCellY && (int)mouse.x <= UiSecondCellX && (int)mouse.y <= UiSecondCellY)
-	{
-		//cItem* helper = grabitem->Item;
+		};
 
-		m_vecUi[1] = grabitem;
-		m_vecUi[1]->Uiindex = 1;
-
+	
 	}
 
 
@@ -3562,6 +3792,46 @@ void RPG_Engine::FillBatch(int TileIndex, int layer, int x, int y,  std::vector<
 		//batch.push_back({ {posX, posY}, {(float)sx * 64, (float)sy * 64}}, bdynLayer);
 	}
 }
+bool RPG_Engine::DrawPause(olc::vi2d mouse)
+{
+	if (bPause)
+	{
+		olc::vf2d quitPos{ (ScreenWidth() / 2) - (167 * fscale) ,ScreenHeight() / 2 + (31 * fscale) };
+		DrawPartialDecal({ ((float)ScreenWidth() / 2) - (167 * fscale), (float)ScreenHeight() / 2 - (71 * fscale) }, D_FullUi, { 832,0 }, { 334,142 }, { fscale,fscale });
+		//DrawBigText("Travel ?", (ScreenWidth() / 2) - 72, ScreenHeight() / 2 - 62, 1, 1, olc::WHITE);
+
+		DrawBigText("Quit", quitPos.x, quitPos.y, 1 * fscale, 1 * fscale, olc::WHITE);
+
+		DrawBigText("Options", (ScreenWidth() / 2) + ((167 - 144) * fscale), ScreenHeight() / 2 + (31 * fscale), 1 * fscale, 1 * fscale, olc::WHITE);
+
+
+
+#ifdef  DEBUG_MODE
+
+		SetPixelMode(olc::Pixel::NORMAL);
+		EnableLayer(layer, true);
+		SetDrawTarget(nullptr);
+#endif // DEBUG
+
+
+		DrawRect((ScreenWidth() / 2) - (167 * fscale), ScreenHeight() / 2 + (31 * fscale), 40, 20);
+
+
+		if (GetMouse(0).bPressed) //LeftMouse
+		{
+
+			if ((int)mouse.x >= (int)quitPos.x && (int)mouse.y >= (int)quitPos.y && (int)mouse.x <= (int)quitPos.x + 40 && (int)mouse.y <= (int)quitPos.y + 40)
+			{
+				return false;
+			}
+
+		}
+		Drawcursor(mouse);
+		DrawBigText("Pause", ScreenWidth() / 2 - (45 * fscale), ScreenHeight() / 2 - (71 * fscale), 1 * fscale, 1 * fscale, olc::WHITE);
+
+	}
+	return true;
+}
 
 
 void RPG_Engine::ClearAbsorbedSlots(std::vector<InventaryItem*>& m_listItems)
@@ -3599,14 +3869,9 @@ void RPG_Engine::ClearAbsorbedSlots(std::vector<InventaryItem*>& m_listItems)
 	absorbCounter = 0;
 }
 
-bool RPG_Engine::UpdateShop(float fElapsedTime)                                                                                                       // < ----SHOP
+bool RPG_Engine::UpdateShop(float fElapsedTime, olc::vi2d& mouse)                                                                                                       // < ----SHOP
 {
 	ClearAbsorbedSlots(m_listItems);
-
-
-
-	olc::vi2d mouse = { (GetMouseX()), (GetMouseY()) };
-
 
 	olc::vi2d mousefix = { (mouse.x / (int)(CellSize * fscale)),(mouse.y / (int)(CellSize * fscale)) };
 
@@ -3786,32 +4051,24 @@ void RPG_Engine::DrawStoreInventory(float sX, float sY, olc::vi2d mousefix, Inve
 }
 
 
-bool RPG_Engine::UpdateProfession(float fElapsedTime)   //<--profession
+bool RPG_Engine::UpdateProfession(float fElapsedTime, olc::vi2d& mouse )   //<--profession
 {
 
-	olc::vf2d mouse = { float(GetMouseX()), float(GetMouseY()) };
+	//olc::vf2d mouse = { float(GetMouseX()), float(GetMouseY()) };
 
 	const float TalentPlateWidth = 960;
 	const float TalentPlateHeigh = 768;
 
-//	olc::Decal* HrzStickEmptry = RPG_Assets::get().GetSprite("Horizontal StickEmpty");
-//	olc::Decal* HrzStickFull = RPG_Assets::get().GetSprite("Horizontal StickFill");
 
-
-//	olc::Decal* VertStickEmptry = RPG_Assets::get().GetSprite("Vertical StickEmpty");
-//	olc::Decal* VertStickFull = RPG_Assets::get().GetSprite("Vertical StickFill");
-
-
-//	olc::Decal* SelectedObject = RPG_Assets::get().GetSprite("SelectedObject");
 	float fixsSize = 0.5f * fscale;
 
 	float BaseposX = (float)(ScreenWidth() / 2 - ((TalentPlateWidth / 2)* fixsSize));
 	float BasePosY = (float)(ScreenHeight() / 2 - ((TalentPlateHeigh / 2)* fixsSize));
 
-	
+	auto& ProfBack = GetSpriteData(DataStruct::ProfessionBack);
 
-	DrawPartialDecal({ BaseposX,  BasePosY }, D_FullUi, { (float)0,(float)142 }, { TalentPlateWidth,TalentPlateHeigh }, { fixsSize,fixsSize });
-	//DrawPartialDecal({ BaseposX,  BasePosY }, RPG_Assets::get().GetSprite("Talent Plate"), {0,0}, { TalentPlateWidth,TalentPlateHeigh },{fscale,fscale});
+	DrawPartialDecal({ BaseposX,  BasePosY }, D_FullUi, ProfBack.Pos,ProfBack.Size, { fixsSize,fixsSize });
+
 
 
 
@@ -3913,10 +4170,12 @@ bool RPG_Engine::UpdateProfession(float fElapsedTime)   //<--profession
 
 
 
-	if (GetMouse(0).bPressed)
+	if (GetMouse(0).bPressed)  // when we learn spell
 	{
 
 
+		if (TalentPoint>0)
+		{
 
 
 		for (auto i = 0; i < TalentPositions.size(); i++)
@@ -3924,12 +4183,15 @@ bool RPG_Engine::UpdateProfession(float fElapsedTime)   //<--profession
 
 			if (mouse.x >= BaseposX + TalentPositions[i].x * fixsSize && mouse.x <= BaseposX + (TalentPositions[i].x + 64) * fixsSize && mouse.y >= BasePosY + TalentPositions[i].y * fixsSize && mouse.y <= BasePosY + (TalentPositions[i].y + 64) * fixsSize)
 			{
+				TalentPoint--;
+
 				m_vecSaveTalents.push_back(TalentSavePoints[i]);
 				break;
 			}
 
 		};
 
+		}
 
 
 	}
@@ -3938,22 +4200,18 @@ bool RPG_Engine::UpdateProfession(float fElapsedTime)   //<--profession
 
 	Drawcursor(mouse);
 
-	//Mouse
-	//DrawPartialDecal({ (float)(mouse.x - 0.15f), (float)(mouse.y - 0.1f) }, RPG_Assets::get().GetSprite("Pantir's Dagger"), { 0,0 }, { (float)64,(float)(64) },{fscale,fscale});
-
-
 
 
 	return true;
 }
 
 
-bool RPG_Engine::UpdateBlackSmith(float fElapsedTime)
+bool RPG_Engine::UpdateBlackSmith(float fElapsedTime, olc::vi2d& mouse)
 {
 	ClearAbsorbedSlots(m_listItems);
 
 	
-	olc::vi2d mouse = { GetMouseX(),GetMouseY() };
+//	olc::vi2d mouse = { GetMouseX(),GetMouseY() };
 	olc::vi2d mousefix = { (mouse.x / (int)(CellSize * fscale)),(mouse.y / (int)(CellSize * fscale)) };
 
 	
@@ -4407,11 +4665,11 @@ void RPG_Engine::DrawDescriptionPattern(InventaryItem* highlighted, olc::vi2d mo
 }
 
 
-bool RPG_Engine::UpdateMap(float fElapsedTime)
+bool RPG_Engine::UpdateMap(float fElapsedTime, olc::vi2d& mouse)
 {
 
 	
-	olc::vf2d mouse = { float(GetMouseX()), float(GetMouseY())};
+//	olc::vf2d mouse = { float(GetMouseX()), float(GetMouseY())};
 	
 	
 	const auto& DMap = GetSpriteData(DataStruct::Map);
@@ -4532,70 +4790,75 @@ bool RPG_Engine::UpdateMap(float fElapsedTime)
 
 bool RPG_Engine::SaveFunction()
 {
-	std::ofstream data;
-	int AmountQuests = 0;
-	int AmountTalents = 0;
-	data.open("Load/CurrSave.txt");
-	if (data.is_open())
+
+
+ 	std::ofstream data("Load/CurrSave.bin", std::ios::binary);
+	if (!data.is_open())
 	{
-		data << GetLvl();
-		data << "\t";
-		data << GetCurrExp();
-		data << "\t";
-		data << GetRequredExp();
-		data << "\t";
-		data << GetCurrentMap()->sName;
-		data << "\t";
-		data << m_pPlayer->px;
-		data << "\t";
-		data << m_pPlayer->py;
-		data << "\t";
-		
-
-		AmountQuests = GetListQuest().size();
-		AmountTalents = GetLearnedTalentVector().size();
-
-
-
-
-		data << AmountQuests;
-		data << "\t";
-		data << AmountTalents;
-		data << "\t";
-		for (auto i : GetListQuest())
-		{
-			data << "\n";
-			data << i->SaveSlot;  // 0 main quest
-			data << " ";
-			data << i->GetPhase();
-
-		}
-		data << "\t";
-		for (auto i : GetLearnedTalentVector())
-		{
-			data << "\n";
-			data << i;  // 0 main talents
-
-		}
-
-
-
-
-
-
-
-
-
-		return true;
-		std::cout << "save Succeed" << std::endl;
-
-	}
-	else
-	{
+		std::cout << "Save Denied" << std::endl;
 		return false;
-		std::cout << "save Denied" << std::endl;
 	}
+
+	uint32_t AmountQuests = 0;
+	uint32_t AmountTalents = 0;
+
+	// Записываем основные параметры
+	int lvl = GetLvl();
+	data.write(reinterpret_cast<const char*>(&lvl), sizeof(int));
+
+	int currExp = GetCurrExp();
+	data.write(reinterpret_cast<const char*>(&currExp), sizeof(int));
+
+	int requiredExp = GetRequredExp();
+	data.write(reinterpret_cast<const char*>(&requiredExp), sizeof(int));
+
+	// Записываем карту
+	std::string mapName = GetCurrentMap()->sName;
+	uint32_t numLetters = static_cast<uint32_t>(mapName.size());
+	data.write(reinterpret_cast<const char*>(&numLetters), sizeof(numLetters));
+	data.write(mapName.data(), numLetters);
+
+	// Записываем координаты игрока
+	float px = m_pPlayer->px;
+	float py = m_pPlayer->py;
+	data.write(reinterpret_cast<const char*>(&px), sizeof(float));
+	data.write(reinterpret_cast<const char*>(&py), sizeof(float));
+
+	// Записываем количество квестов и талантов
+	AmountQuests = static_cast<uint32_t>(GetListQuest().size());
+	AmountTalents = static_cast<uint32_t>(GetLearnedTalentVector().size());
+	data.write(reinterpret_cast<const char*>(&AmountQuests), sizeof(AmountQuests));
+	data.write(reinterpret_cast<const char*>(&AmountTalents), sizeof(AmountTalents));
+
+	// Записываем квесты
+	for (auto& quest : GetListQuest())
+	{
+		int saveSlot = quest->SaveSlot;
+		int phase = quest->GetPhase();
+		data.write(reinterpret_cast<const char*>(&saveSlot), sizeof(int));
+		data.write(reinterpret_cast<const char*>(&phase), sizeof(int));
+	}
+
+	// Записываем таланты
+	data.write(reinterpret_cast<const char*>(&TalentPoint), sizeof(int));
+
+	
+
+	for (int talent : GetLearnedTalentVector())
+	{
+		data.write(reinterpret_cast<const char*>(&talent), sizeof(int));
+	}
+
 	data.close();
+	std::cout << "Save Succeeded" << std::endl;
+
+	for (int i = 0; i < m_vecSaveTalents.size(); i++)
+	{
+		std::cout << " " << m_vecSaveTalents[i] << " ";
+	}
+	std::cout << m_vecSaveTalents.size() << "/////" << "SAVE FILE COMPLETE  " << std::endl;
+
+	return true;
 
 }
 
@@ -4603,101 +4866,127 @@ bool RPG_Engine::SaveFunction()
 
 bool RPG_Engine::LoadFunction()
 {
-	std::ifstream data;
-	std::string mapName;
+	std::ifstream inFile("Load/CurrSave.bin", std::ios::binary);
+	if (!inFile.is_open())
+	{
+		std::cout << "Load Denied" << std::endl;
+
+		m_script.AddCommand(new cComand_HideScreen(2));
+		m_script.AddCommand(new cComand_ResetQuestList());
+		m_script.AddCommand(new cComand_Changemap("Forest", 4, 24));
+		m_script.AddCommand(new cComand_SetNgameMod(1));
+		m_script.AddCommand(new cComand_CalculateExp());
+		return false;
+	}
+
+	// Очистка текущих данных
 	m_vecSaveTalents.clear();
 	m_listQusets.clear();
-	data.open("Load/CurrSave.txt", std::ofstream::in);
+	RPG_Assets::get().ResetQuests();
 
-	if (data.is_open())
+	// Чтение основных параметров
+	int lvl, currExp, ExpRequred;
+	if (!inFile.read(reinterpret_cast<char*>(&lvl), sizeof(lvl))) return false;
+	if (!inFile.read(reinterpret_cast<char*>(&currExp), sizeof(currExp))) return false;
+	if (!inFile.read(reinterpret_cast<char*>(&ExpRequred), sizeof(ExpRequred))) return false;
+
+	// Устанавливаем параметры
+	SetLvl(lvl);
+	SetCurrExp(currExp);
+	SetRequredExp(ExpRequred);
+
+	// Чтение карты
+	uint32_t numLetters;
+	if (!inFile.read(reinterpret_cast<char*>(&numLetters), sizeof(numLetters))) return false;
+
+	std::string mapName(numLetters, '\0'); // Резервируем место для строки
+	if (!inFile.read(&mapName[0], numLetters)) return false;
+
+	// Чтение координат игрока
+	float px, py;
+	if (!inFile.read(reinterpret_cast<char*>(&px), sizeof(px))) return false;
+	if (!inFile.read(reinterpret_cast<char*>(&py), sizeof(py))) return false;
+
+	// Устанавливаем координаты игрока
+	m_pPlayer->px = px;
+	m_pPlayer->py = py;
+
+	// Чтение количества квестов и талантов
+	uint32_t AmountQuests, AmountTalents;
+	if (!inFile.read(reinterpret_cast<char*>(&AmountQuests), sizeof(AmountQuests))) return false;
+	if (!inFile.read(reinterpret_cast<char*>(&AmountTalents), sizeof(AmountTalents))) return false;
+
+	// Чтение квестов
+	for (uint32_t i = 0; i < AmountQuests; ++i)
 	{
+		int QuestSlot, phase;
+		if (!inFile.read(reinterpret_cast<char*>(&QuestSlot), sizeof(QuestSlot))) return false;
+		if (!inFile.read(reinterpret_cast<char*>(&phase), sizeof(phase))) return false;
 
-		m_listQusets.clear();
-		//m_listQusets.push_front(new cQuset_MainQuest()); // add in lust First Main quest
-		int QuestSlot;
-		int AmountQuests;
-		int AmountTalents;
-
-		data >> lvl;
-		data >> currExp;
-		data >> ExpRequred;
-		data >> mapName;
-		data >> m_pPlayer->px;
-		data >> m_pPlayer->py;
-
-		//m_pPlayer->GetFacingDirection
-		data >> AmountQuests;
-		data >> AmountTalents;
-
-		for (int i = 0; i < AmountQuests; i++)
+		// Восстанавливаем квест
+		auto* quest = RPG_Assets::get().GetActiveQuest(QuestSlot);
+		if (quest)
 		{
-			int phase;
-
-			data >> QuestSlot;
-
-			data >> phase;
-
-			RPG_Assets::get().GetQuest(QuestSlot)->SetPhase(phase);
-			AddQuest(RPG_Assets::get().GetQuest(QuestSlot));
-			
-	
+			quest->SetPhase(phase);
+			AddActiveQuest(quest);
+			quest->makeActual();
 		}
-		for (int i = 0; i < AmountTalents; i++)
-		{
-			int help;
-			data >> help;
-			m_vecSaveTalents.push_back(help);
-		}
-
-
-
-
-		m_pPlayer->SetFacingDirection(1);
-
-		std::cout << "Load succeed" << std::endl;
-		
-		//m_script.AddCommand((new cComand_AppearScreen(2)));
-		data.close();
-		m_script.AddCommand((new cComand_HideScreen(2)));
-		m_script.AddCommand((new cComand_Changemap(mapName, m_pPlayer->px, m_pPlayer->py)));   //clear all vectors
-		m_script.AddCommand((new cComand_SetNgameMod(1)));
-		m_script.AddCommand((new cComand_CalculateExp));   //clear all vectors
-		//fCameraPosX = m_pPlayer->px;
-		//fCameraPosY = m_pPlayer->py;
-	//	ScrollingCurrX = fCameraPosX;
-	//	n_nGameMode = MODE_LOCAL_MAP;
-
-
 	}
-	else
-	{
-		m_script.AddCommand((new cComand_HideScreen(2)));
 
-		m_script.AddCommand((new cComand_ResetQuestList));   //clear all vectors
-
-		m_script.AddCommand((new cComand_Changemap("Forest", 4, 24)));
-		m_script.AddCommand((new cComand_SetNgameMod(1)));
-		m_script.AddCommand((new cComand_CalculateExp));   //clear all vectors
-		
-	
-
-		//ScrollingCurrX = fCameraPosX;
-
-		//	n_nGameMode = MODE_LOCAL_MAP;
+	// Чтение очков талантов
+	if (!inFile.read(reinterpret_cast<char*>(&TalentPoint), sizeof(int))) {
+		std::cerr << "Ошибка чтения TalentPoint" << std::endl;
 		return false;
-
 	}
-	data.close();
-	return true;
 
+	// Чтение талантов
+	m_vecSaveTalents.clear();
+	for (uint32_t i = 0; i < AmountTalents; ++i)
+	{
+		int talent;
+		if (!inFile.read(reinterpret_cast<char*>(&talent), sizeof(talent))) return false;
+		m_vecSaveTalents.push_back(talent);
+	}
+
+	// Устанавливаем направление игрока
+	m_pPlayer->SetFacingDirection(1);
+
+	// Настройка карты и игровых режимов
+	m_script.AddCommand(new cComand_Changemap(mapName, px, py));
+	m_script.AddCommand(new cComand_SetNgameMod(1));
+	m_script.AddCommand(new cComand_CalculateExp());
+
+	inFile.close();
+	std::cout << "Load Succeeded" << std::endl;
+
+
+	std::cout << "Save Succeeded" << std::endl;
+
+	for (int i = 0; i < m_vecSaveTalents.size(); i++)
+	{
+		std::cout << " " << m_vecSaveTalents[i] << " ";
+	}
+	std::cout << m_vecSaveTalents.size() << "/////" << "LOAD FILE  COMPLETE  " << std::endl;
+
+	return true;
 }
 
-void RPG_Engine::AddQuest(cQuest* quest)
+void RPG_Engine::AddActiveQuest(cQuest* quest)
 {
 	m_listQusets.push_back(quest);
 }
 
-cQuest* RPG_Engine::GetQuest(std::string name)
+void RPG_Engine::AddCompletedQuest(cQuest* quest)
+{	// Если список содержит более 3 элементов, удаляем первый
+	if (m_CompletedQuest.size() >3)
+	{
+		m_CompletedQuest.erase(m_CompletedQuest.begin());
+	}
+	// Добавляем новый элемент в конец списка
+	m_CompletedQuest.push_back(quest);
+}
+
+cQuest* RPG_Engine::GetActiveQuest(std::string name)
 {
 	
 
@@ -4831,7 +5120,7 @@ bool RPG_Engine::SaleItem(int Price, InventaryItem* Sale)
 	return false;
 }
 
-bool RPG_Engine::GiveItem(std::string Name,uint8_t count)
+bool RPG_Engine::GiveItem(std::string Name,uint8_t count, bool offstack)
 {
 	
 	
@@ -4844,7 +5133,9 @@ bool RPG_Engine::GiveItem(std::string Name,uint8_t count)
 
 
 	
-	
+	if (offstack)
+	{
+
 		for (auto invItem : m_listItems)  //for money 
 		{
 
@@ -4918,6 +5209,7 @@ bool RPG_Engine::GiveItem(std::string Name,uint8_t count)
 			}
 		}
 
+	}
 
 		
 
@@ -5286,10 +5578,7 @@ void RPG_Engine::AddVecDynamic(cDynamic* proj)
 //{
 //	m_vecEnviroment.push_back(env);
 //}
-void RPG_Engine::AddIndicators(cDynamic* ind)
-{
-	m_vecIndicators.push_back(ind);
-}
+
 
 void RPG_Engine::AddUi(cUI* hpBar)
 {
@@ -5305,9 +5594,19 @@ int RPG_Engine::GetLvl()
 	return lvl;
 }
 
+void RPG_Engine::SetLvl(int lvl)
+{
+	this->lvl = lvl;
+}
+
 int RPG_Engine::GetCurrExp()
 {
 	return currExp;
+}
+
+void RPG_Engine::SetCurrExp(int currexp)
+{
+	currExp = currexp;
 }
 
 cMap* RPG_Engine::GetCurrentMap()
@@ -5323,6 +5622,11 @@ cMap* RPG_Engine::GetCurrentMap()
 int RPG_Engine::GetRequredExp()
 {
 	return ExpRequred;
+}
+
+void RPG_Engine::SetRequredExp(int reqexp)
+{
+	ExpRequred = reqexp;
 }
 
 void RPG_Engine::CalculateExp()
@@ -5357,17 +5661,18 @@ void RPG_Engine::CalculateExp()
 void RPG_Engine::SetCurrentExp(int DeathExp)
 {
 
-	currExp += DeathExp;
-	if (currExp >=ExpRequred)
+	currExp += DeathExp;       
+	if (currExp >=ExpRequred)   
 	{
 		do
 		{
 			lvl++;
-
+			TalentPoint++;
 			m_vecParticles.push_back(new VfxLevel(m_pPlayer->px, m_pPlayer->py));
 
 			int spare = currExp - ExpRequred;
 			CalculateExp();
+			PlaySounds("NewLvlSound");
 
 			currExp = spare;
 		} while (currExp>ExpRequred);
@@ -5555,13 +5860,19 @@ void RPG_Engine::DrawBigText(std::string sText, float x, float y, float scalex, 
 
 void RPG_Engine::DisplayDialog(std::vector<std::string> vecText, int x, int y)
 {
-	int nMaxLineLength = 0;
+ 	int nMaxLineLength = 0;
 	int nLines = vecText.size();
+	int Fullsize = 0;
 
-	for (auto i : vecText)  if (i.size() > nMaxLineLength) nMaxLineLength = i.size();
+	for (auto i : vecText)
+	{
+		Fullsize += i.size();
 
+		if (i.size() > nMaxLineLength)
+		nMaxLineLength = i.size();
+	}
 
-	
+//	std::cout << vecText.size() << << std::endl;
 	olc::Decal* BlackPattern = RPG_Assets::get().GetSprite("DescriptionPattern");
 
 
@@ -5578,10 +5889,45 @@ void RPG_Engine::DisplayDialog(std::vector<std::string> vecText, int x, int y)
 
 	
 
+	// Логика для отображения текста по символам с задержкой
+	textCounter += GetElapsedTime();
+
 	
 
-	for (int l = 0; l < vecText.size(); l++)
-		DrawBigText(vecText[l], x, y + ((l * 32)*fscale), 1*fscale,1*fscale);
+
+	if (textCounter > 0.1f) {
+		if (rowIndex < nLines) {  // Проверка, что не вышли за границы текста
+			if (chartIndex < vecText[rowIndex].size()) {
+				// Добавляем очередной символ в текущую строку
+				currentLine += vecText[rowIndex][chartIndex];
+				chartIndex++;
+
+				if (chartIndex % 2 == 0)
+				{
+				PlaySounds("ReleaseButtonsSound");
+				}
+
+			}
+			else {
+				// Когда текущая строка полностью отображена, добавляем её в vecdisplayText
+				vecdisplayText.push_back(currentLine);
+				currentLine.clear();  // Очищаем временную строку для следующей строки
+				rowIndex++;
+				chartIndex = 0;
+			}
+		}
+		textCounter = 0.0f; // Сбрасываем таймер
+	}
+
+	// Отображаем накопленный текст  строчек
+	for (int l = 0; l < vecdisplayText.size(); l++) {
+		DrawBigText(vecdisplayText[l], x, y + (l * 32 * fscale), fscale, fscale, olc::WHITE);
+	}
+
+	// Отображаем текущую неполную строку  динамическую 
+	if (!currentLine.empty()) {
+		DrawBigText(currentLine, x, y + (vecdisplayText.size() * 32 * fscale), fscale, fscale, olc::WHITE);
+	}
 
 }
 
@@ -5609,14 +5955,26 @@ int RPG_Engine::GetRage()
 	return m_pPlayer->rageAmount;
 }
 
-uint8_t RPG_Engine::GetEnergy()
+int8_t RPG_Engine::GetEnergy()
 {
+	if (m_pPlayer->energyAmount < 0)
+	{
+		return 0;
+	}
+	else
+	{
+
 	return m_pPlayer->energyAmount;
+	}
 }
 bool RPG_Engine::GetBackStab()
 {
 	return bUibackstub;
 	
+}
+void RPG_Engine::SetBackStab(bool toggle)
+{
+	bUibackstub = toggle;
 }
 bool RPG_Engine::GetTarget()
 {
@@ -6002,6 +6360,11 @@ bool CheckZeroDivide(float check, float& variable)
 
 }
 
+int sign(float x)
+{
+		return(x > 0) - (x < 0);
+}
+
 void RPG_Engine::LoadenemyInstances()  /// load all pools 
 {
 	// Initialize the Bandit pool
@@ -6014,13 +6377,31 @@ void RPG_Engine::LoadenemyInstances()  /// load all pools
 		ItemPool[i]=new cDynamic_Item();
 		TextPool[i]=new cDynamic_TextDamage();
 		BanditBossPool[i]=new cDynamic_creature_BossBandit();
+
+
 		ProjectilePool[i]=new cDynamic_Projectile();
 		VfxShotPool[i] = new VfxShot(0,0);   // Initialize Fx  shot
+		MirrorsFx[i] = new mirror(0, 0, { 0,0 }, 0,0, nullptr);
 
 	}
 
+	BossAr =
+	{
+		BanditBossPool[0]
+	};
 
-	
+
+	NPC_Ar =
+	{
+	 new cDynamic_creature_NPC("Map", 3),
+	 new cDynamic_creature_NPC("BlackSmith", 1),
+	 new cDynamic_creature_NPC("LuxurySeller", 0),
+	 new cDynamic_creature_NPC("ProfessionMan", 2),
+	 new cDynamic_creature_NPC("Warehouse", -1),
+	 new cDynamic_creature_NPC("TavernVillage", -1),
+	 new cDynamic_creature_NPC("CaveEntrence", -1),
+	 new cDynamic_creature_NPC("CaveOut", -1),
+	};
 
 
 	// Initialize the raindrops
@@ -6032,17 +6413,14 @@ void RPG_Engine::LoadenemyInstances()  /// load all pools
 	}
 
 
-	for (uint16_t i = 100; i < 200; ++i)
+	for (uint16_t i = 1; i < 101; ++i)
 	{
 	
 		EnvironmentPool[i] = new ERainSpray(0, 0,  i);
 
 	}
-	
 
-
-
-	for (uint16_t i = 200; i < 205; ++i)
+	for (uint16_t i = 101; i < 106; ++i)
 	{
 		EnvironmentPool[i] = new Edynamic_Cloud(rand() % 256 * 64, 0.0f, RPG_Assets::get().GetSprite("ForestCloud"), 1, i);
 		
@@ -6122,7 +6500,7 @@ cDynamic* RPG_Engine::SpawnBoar(const olc::vf2d position)
 			m_vecDynamics.push_back(entity); // Add the Bandit entity to the game
 			entity->px = position.x;
 			entity->py = position.y;
-			*it = nullptr;                  // Удаляем заспаунинного бандита из пула
+			*it = nullptr;                  // Удаляем заспаунинного бандита из пула   не удаляет а говорит смотреть на Nullptr
 			return entity; // Exit the function after spawning a Bandit
 		
 	}
@@ -6213,6 +6591,25 @@ cDynamic* RPG_Engine::SpawnVfxShot(const olc::vf2d position)
 		Shot->Spawn();
 		m_vecParticles.push_back(Shot); // Add the Bandit entity to the game
 		*it = nullptr;                  // Удаляем заспаунинного бандита из пула
+		return entity;
+	}
+	return nullptr;;
+}
+
+cDynamic* RPG_Engine::SpawnMirrors(const olc::vf2d position, olc::vi2d framePos, int sizeX, int sizeY, int amountframes,olc::Decal* Decal)
+{
+	for (auto it = MirrorsFx.begin(); it != MirrorsFx.end(); it++)
+	{
+		cDynamic* entity = *it;
+		if (entity == nullptr) {
+			continue; // Пропустить пустые ячейки
+		}
+		mirror* Mirror = (mirror*)entity;
+		entity->clearFlag(entity->bRedundant);
+		
+		Mirror->Spawn(position,framePos,sizeX,sizeY,amountframes,Decal);
+		m_vecParticles.push_back(Mirror); // Add the Bandit entity to the game
+		*it = nullptr;                  // Удаляем заспаунинного бандита из пула разименовав указатель
 		return entity;
 	}
 	return nullptr;;
@@ -6311,7 +6708,6 @@ void RPG_Engine::SpawnClouds(const uint16_t index) // 400-405
 		std::cout << "SpawnClouds() Return Nullptr" << std::endl;
 	}
 }
-
 
 void RPG_Engine::removeStoppedSounds()
 {

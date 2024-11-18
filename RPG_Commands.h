@@ -299,9 +299,11 @@ class cComand_CleanDeath : public cComand        // clean puppet Death
 {
 public:
 	cComand_CleanDeath(std::vector<cDynamic*>& vecDynobs, std::string name);
+	cComand_CleanDeath(std::vector<cDynamic*>& vecDynobs, cDynamic*);
 	void Start() override;
 private:
 	std::vector<cDynamic*>* vecDyn;
+	cDynamic* compare;
 	std::string Name;
 };
 

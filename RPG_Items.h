@@ -13,6 +13,7 @@ public:
 	virtual bool OnInteract(cDynamic* object) { return false; }
 	virtual bool OnUse(cDynamic* object, std::vector<InventaryItem*>& m_listItems, InventaryItem* socket =nullptr) { return false; }
 	virtual bool OnUse(cDynamic* object) { return false; }
+	virtual bool OnUse(cDynamic * object, bool toggle = true) { return false; };
 	virtual bool OnSell() ;
 	virtual bool OnBuy();
 	virtual bool OnCraft(bool click) { return false; };
@@ -49,6 +50,7 @@ public:
 	cEquip(std::string name, olc::Decal* sprite, std::string desc, uint8_t dmg, uint8_t aglty, uint8_t inteleg, uint8_t versality, uint8_t Strangth, uint32_t spriteindex, uint8_t equipindex,uint8_t tradeprice);
 	bool OnInteract(cDynamic* object) override;
 	bool OnUse(cDynamic* object) override;
+	bool OnUse(cDynamic* object, bool toggle) override { return true; };
 	bool OnBuy()  override { return false; };
 	bool OnCraft(bool click)  override;
 
@@ -79,7 +81,7 @@ class cWeapon : public cEquip    //store is amount of damage  that particular we
 {
 public:
 	cWeapon(std::string name, olc::Decal* sprite,olc::Decal*ProjectileLeft,olc::Decal* ProjectileRight, std::string desc, uint8_t dmg, uint8_t aglty, uint8_t inteleg, uint8_t versality, uint8_t Strangth, uint32_t spriteindex, uint8_t equipIndex,uint8_t price);
-	bool OnUse(cDynamic* object) override;
+	bool OnUse(cDynamic* object,bool toggle) override;
 	bool OnInteract(cDynamic* object) override;
 
 private:

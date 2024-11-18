@@ -43,7 +43,7 @@ bool cWeapon::OnInteract(cDynamic* object)
 	return true;
 }
 
-bool cWeapon::OnUse(cDynamic* object)
+bool cWeapon::OnUse(cDynamic* object, bool toggle)
 {
 	// When weapons are used, they are used on the object that owns the weapon, i.e.
 		// the attacker. However this does not imply the attacker attacks themselves
@@ -52,8 +52,14 @@ bool cWeapon::OnUse(cDynamic* object)
 	cDynamic_Creature* aggressor = (cDynamic_Creature*)object;
 
 
+
 	// Determine attack origin
 	float x, y, vx, vy, attackdir;
+
+
+
+	
+
 
 
 	if (aggressor->GetFacingDirection() == 1) // West
@@ -74,9 +80,12 @@ bool cWeapon::OnUse(cDynamic* object)
 
 	}
 
+	if (toggle)   // for escape position  (mainchar escape it)
+	{
+
 	if (aggressor->GetFacingDirectionVertical() == 1)  // Up
 	{
-		x = aggressor->px+1.0f;
+		x = aggressor->px;
 		y = aggressor->py;
 		vx = 0; vy = aggressor->vy;
 		
@@ -86,7 +95,7 @@ bool cWeapon::OnUse(cDynamic* object)
 	}
 	if (aggressor->GetFacingDirectionVertical() == 0)  // Down
 	{
-		x = aggressor->px+1 ;
+		x = aggressor->px;
 		y = aggressor->py;
 		vx = 0; vy = aggressor->vy;
 		aggressor->setFlag(aggressor->isprojEqualX);
@@ -95,6 +104,7 @@ bool cWeapon::OnUse(cDynamic* object)
 
 	}
 
+	}
 
 
 
@@ -184,7 +194,7 @@ bool cCoin::OnInteract(cDynamic* object)
 	return true;
 }
 
-cSmallWallet::cSmallWallet() : cGold("SmallWallet", RPG_Assets::get().GetSprite("Items"), "Keep 60 golds:  " + std::to_string(GoldCount) + "/60\n",0)
+cSmallWallet::cSmallWallet() : cGold("SmallWallet", RPG_Assets::get().GetSprite("Items"), "\nKeep 60 golds.\n",0)
 {
 	MaxStack = 0;
 	bKeyItem = false;
@@ -258,7 +268,7 @@ bool cSmallWallet::OnUse(cDynamic* object, std::vector<InventaryItem*>& m_listIt
 			//item->Absorbed = true;  // absorb coin
 			//g_engine->absorbCounter++; // COunter for cyle when we need to find cells for delete
 			//this->GoldCount++;
-			sDescription = "Keep 60 golds:  " + std::to_string(socket->Gold)+ "/60" + "\n" + "Shalalala dont be scared"+'\n'+"you got to mood prepare\n";
+			//sDescription = "Keep 60 golds:  " + std::to_string(socket->Gold)+ "/60" + "\n" + "Shalalala dont be scared"+'\n'+"you got to mood prepare\n";
 			//spriteindex = 66;
 			continue;
 			
@@ -283,7 +293,7 @@ bool cSmallWallet::OnBuy()
 	{
 		g_engine->TakeItem(this->sTradeBuyPrice); // first take item froms inventory for get free the space 
 
-	g_engine->GiveItem("SmallWallet",1);  // then we get bought object
+	g_engine->GiveItem(this->sName,1,false);  // then we get bought object
 	return true;
 	}
 	
@@ -296,7 +306,7 @@ bool cSmallWallet::OnCraft(bool click)
 	if (g_engine->HasItem(FirstItem) && g_engine->HasItem(SecondItem))
 	{
 		if (click==1)
-		g_engine->GiveItem(this->sName,1);
+		g_engine->GiveItem(this->sName,1,false);
 	return true;
 	}
 	
@@ -326,23 +336,28 @@ cEquip::cEquip(std::string name, olc::Decal* sprite, std::string desc, uint8_t d
 
 	switch (spriteindex)
 	{
-	case 35:
+	case 35:                        // Neck
 		FirstItem = "Cooper";
 		SecondItem = "White Nuggets";
 		sCraftRequaries = std::to_string(1) + FirstItem + "\n" + std::to_string(1) + SecondItem + "\n";;
 		break;
 
-	case 32:
+	case 32:                        //Helment
 		FirstItem = "Piece Of Leather";
 		SecondItem = "Cooper";
 		sCraftRequaries = std::to_string(10) + FirstItem + "\n" + std::to_string(3) + SecondItem + "\n";;
 		break;
-	case 33:
-		FirstItem = "Piece Of Leather";
+	case 33:                       // Chest 
+		FirstItem = "Piece Of Leather"; 
 		SecondItem = "Cooper";
 		ThirdItem = "Red Sample";
 		sCraftRequaries = std::to_string(10) + FirstItem + "\n" + std::to_string(1) + SecondItem + "\n" + std::to_string(1) + ThirdItem + "\n";
 		break;
+
+	case 34:
+		sTradeBuyPrice = 100;
+		break;
+	
 
 	}
 	//sCraftRequaries = std::to_string(1) + FirstItem + "\n" + std::to_string(1) + SecondItem + "\n"+ std::to_string(1) + ThirdItem + "\n"+ std::to_string(1) + FourItem;
@@ -390,6 +405,7 @@ cHealthElixir::cHealthElixir() : cItem("Health Elixir", RPG_Assets::get().GetSpr
 	spriteindex = 1;
 	MaxStack = 10;
 	sTradePrice = 2;       // за сколько продать в магаз
+	sTradeBuyPrice = sTradePrice * 10;    //сколько стоит в магазе
 }
 
 bool cHealthElixir::OnUse(cDynamic* object, std::vector<InventaryItem*>& m_listItems, InventaryItem* socket)
@@ -422,6 +438,7 @@ cEnergyElixir::cEnergyElixir() : cItem("Energy Elixir", RPG_Assets::get().GetSpr
 	spriteindex = 2;
 	MaxStack = 10;
 	sTradePrice = 3;       // за сколько продать в магаз
+	sTradeBuyPrice = sTradePrice * 10;    //сколько стоит в магазе
 }
 
 bool cEnergyElixir::OnUse(cDynamic* object, std::vector<InventaryItem*>& m_listItems, InventaryItem* socket)
@@ -461,6 +478,7 @@ cRageElixir::cRageElixir() : cItem("Rage Elixir", RPG_Assets::get().GetSprite("I
 	spriteindex = 0;
 	MaxStack = 10;
 	sTradePrice = 5;       // за сколько продать в магаз
+	sTradeBuyPrice = sTradePrice * 10;    //сколько стоит в магазе
 }
 
 bool cRageElixir::OnUse(cDynamic* object, std::vector<InventaryItem*>& m_listItems, InventaryItem* socket)
@@ -507,6 +525,7 @@ PieceOfLeather::PieceOfLeather() : cItem("Piece Of Leather", RPG_Assets::get().G
 	spriteindex = 32 * 4;
 	MaxStack = 10;
 	sTradePrice = 3;
+	sTradeBuyPrice = sTradePrice * 3;    //сколько стоит в магазе
 }
 
 WhiteNuggets::WhiteNuggets() : cItem("White Nuggets", RPG_Assets::get().GetSprite("Items"), "ingredient for,\nCraft\n")
@@ -514,7 +533,7 @@ WhiteNuggets::WhiteNuggets() : cItem("White Nuggets", RPG_Assets::get().GetSprit
 	spriteindex = 32 * 3 + 1;
 	MaxStack = 10;
 	sTradePrice = 10;
-
+	sTradeBuyPrice = sTradePrice * 3;    //сколько стоит в магазе
 }
 
 RedSample::RedSample() : cItem("Red Sample", RPG_Assets::get().GetSprite("Items"), "ingredient for,\nCraft\n")
@@ -522,6 +541,7 @@ RedSample::RedSample() : cItem("Red Sample", RPG_Assets::get().GetSprite("Items"
 	spriteindex = 32 * 3 + 2;
 	MaxStack = 10;
 	sTradePrice = 13;
+	sTradeBuyPrice = sTradePrice *3;    //сколько стоит в магазе
 }
 
 copper::copper() : cItem("Cooper", RPG_Assets::get().GetSprite("Items"), "ingredient for,\nCraft\n")
@@ -529,4 +549,5 @@ copper::copper() : cItem("Cooper", RPG_Assets::get().GetSprite("Items"), "ingred
 	spriteindex = 5;
 	MaxStack = 1;
 	sTradePrice = 20;
+	sTradeBuyPrice = 60;    //сколько стоит в магазе
 }

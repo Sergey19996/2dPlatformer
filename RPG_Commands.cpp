@@ -149,6 +149,7 @@ cComand_ShowDialog::cComand_ShowDialog(std::vector<std::string> line)
 
 void cComand_ShowDialog::Start()
 {
+	
 	g_engine->ShowDialog(vecLines);
 
 }
@@ -161,7 +162,7 @@ cComand_AddQuest::cComand_AddQuest(cQuest* quest)
 
 void cComand_AddQuest::Start()
 {
-	g_engine->AddQuest(m_quest);
+	g_engine->AddActiveQuest(m_quest);
 	bCompleted = true;
 }
 
@@ -193,14 +194,16 @@ cComand_CheatDeath::cComand_CheatDeath(cDynamic* object )
 {
 	
 
-	
 	m_pObject = (cDynamic_Creature*)object;
+	m_pObject->clearFlag(m_pObject->isDirectionLock);
 	m_pObject->clearFlag(m_pObject->bDead);
 	m_pObject->setFlag(m_pObject->bDraw);
 	m_pObject->setFlag(m_pObject->quested);
 	m_pObject->SetHealth(1);
-	m_pObject->sName = "Fake";
+//	m_pObject->sName = "Fake";
 	m_pObject->clearFlag(m_pObject->bControllable);
+	m_pObject->clearFlag(m_pObject->DrawBar);
+
 	//cDynamic_creature_WereWolf* fake = new cDynamic_creature_WereWolf();
 
 	//vecDyn->push_back(m_pObject);
@@ -228,6 +231,12 @@ cComand_CleanDeath::cComand_CleanDeath(std::vector<cDynamic*>& vecDynobs ,std::s
 {
 	vecDyn = &vecDynobs;
 	this->Name = Name;
+}
+
+cComand_CleanDeath::cComand_CleanDeath(std::vector<cDynamic*>& vecDynobs, cDynamic* obj)
+{
+	vecDyn = &vecDynobs;
+	compare = obj;
 
 }
 
@@ -235,10 +244,10 @@ void cComand_CleanDeath::Start()
 {
 	for (auto it = vecDyn->begin(); it != vecDyn->end(); ++it)
 	{
-		if ((*it)->sName == Name)
+		if ((*it) == compare)
 		{
 
-			delete* it;  // Освобождение памяти, занимаемой объектом
+		//	delete* it;  // Освобождение памяти, занимаемой объектом
 			it = vecDyn->erase(it);  // Удаление указателя из вектора и корректное обновление итератора
 
 			break;  // Прерываем цикл, так как элемент уже найден и удалён
@@ -485,8 +494,8 @@ void cComand_SaveFunction::Start()
 void cComand_ResetQuestList::Start()
 {
 	g_engine->QuestListClear();
-	g_engine->AddQuest(RPG_Assets::get().GetQuest(0));
-	RPG_Assets::get().GetQuest(0)->SetPhase(0);
+	g_engine->AddActiveQuest(RPG_Assets::get().GetActiveQuest(0));
+	RPG_Assets::get().GetActiveQuest(0)->SetPhase(0);
 	bCompleted = true;
 }
 

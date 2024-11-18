@@ -142,6 +142,23 @@ void RPG_Assets::SetMusicVolume(float number)
 
 
 
+void RPG_Assets::ResetQuests()
+{
+	for (auto& quest : m_mapQuests)
+	{
+		quest.second->reset();
+	}
+
+}
+
+void RPG_Assets::MakeQuestsActual()
+{
+	for (auto& quest : m_mapQuests)
+	{
+		quest.second->makeActual();
+	}
+}
+
 void RPG_Assets::LoadSprites()
 {
 	auto load = [&](std::string sName, std::string sFileName)
@@ -288,10 +305,12 @@ void RPG_Assets::LoadSprites()
 
 	//FVX
 
-	load("RainVfx", "graphs/Fvx/RaindDropFx.png");
-	load("LevelVfx", "graphs/Fvx/LevelParticleFx.png");
-	load("SoulShotVfx", "graphs/Fvx/SoulShotFx.png");
+	//load("RainVfx", "graphs/Fvx/RaindDropFx.png");
 
+	load("SoulShotVfx", "graphs/Fvx/SoulShotFx.png");
+	load("LevelVfx", "graphs/Fvx/LevelParticleFx.png");
+
+	load("VFX", "graphs/Fvx/VfxAll.png");
 
 
 
@@ -421,9 +440,9 @@ void RPG_Assets::LoadQuests()
 
 	load(new cQuset_MainQuest);
 	load(new cQuset_FirstBandit);
-	load(new cQuset_KeyPointsInVillage);
-	load(new cQuset_KillBanditBoss);
 	load(new cQuset_KillWerewolf);
+	load(new cQuset_KillBanditBoss);
+	load(new cQuset_KeyPointsInVillage);
 	
 }
 
@@ -444,7 +463,22 @@ void RPG_Assets::LoadMusc()
 
 	loadSound("BackStab", "Sounds/HitLandedSound.wav");
 
+	loadSound("Charge", "Sounds/ChargeSound.wav");
 
+	loadSound("Inventory", "Sounds/InventorySound.wav");
+	loadSound("RageJumpUp", "Sounds/RageJumpUpSound.wav");
+	loadSound("SwirlLanding", "Sounds/SwirlLandingSound.wav");
 
+	loadSound("BanditDeathSound", "Sounds/BanditDeathSound.wav");
+	loadSound("DeflectSound", "Sounds/DeflectSound.wav");
+	loadSound("WerewolfSpawnSound", "Sounds/WerewolfSpawnSound.wav");
+	loadSound("WolfAttackSound", "Sounds/WolfAttackSound.wav");
+	loadSound("WolfDeathSound", "Sounds/WolfDeathSound.wav");
 
+	loadSound("WolfSpecAttackSound", "Sounds/WolfSpecAttackSound.wav");
+	loadSound("WolfHitSOund", "Sounds/WolfHitSound.wav");
+	loadSound("BanditHitSound", "Sounds/BanditHitSound.wav");
+	loadSound("NewLvlSound", "Sounds/NewLvlSound.wav");
+	loadSound("ReleaseButtonsSound", "Sounds/ReleaseButtonsSound.wav");
+	
 }
