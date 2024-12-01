@@ -772,6 +772,8 @@ public:
 
 	void SpecAttack(float targetX, float targetY, float Distance) override;
 
+	void PrepareProjectileData();
+
 	void Behaviour(float fElapsedTime, cDynamic* player = nullptr) override;
 
 	void obsticleReaction();
@@ -783,6 +785,9 @@ public:
 	bool IsLanded()  override;
 
 	void ReturnToPool()override;
+
+	void KnockBack(float dx, float dy, float dist) override
+	{};
 	
 private:
 	bool Run =false;
@@ -1011,11 +1016,13 @@ public:
 	bool ReductionAcceleration(float fElapsedTime);
 
 
+
+
 private:
 
 
-	void EnergyUIManagment();
-	bool RageUIManagment();
+//	void EnergyUIManagment();
+	
 //	static constexpr int NewState2 = cDynamic_Creature::IdleReaction + 2; // = 27
 
 	bool run = false;
@@ -1155,7 +1162,7 @@ private:
 	cDynamic_Creature* agrsr;
 
 private:
-	bool repitable = false;
+//	bool repitable = false;
 	float angle =0.0f;
 	
 protected:

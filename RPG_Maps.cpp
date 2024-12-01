@@ -390,6 +390,7 @@ bool cMap_Forest::PopulateDynamics(std::vector<cDynamic*>& vecDyns)
 bool cMap_Forest::OnInteraction(std::vector<cDynamic*>& vecDynobs, cDynamic* target, NATURE nature)
 {
 
+
 	if (target->sName == "Teleport")
 	{ 
 		g_script->AddCommand((new cComand_HideScreen(2)));
@@ -400,15 +401,16 @@ bool cMap_Forest::OnInteraction(std::vector<cDynamic*>& vecDynobs, cDynamic* tar
 
 	}
 
+	
 
-	if (target->sName == "CaveEntrence" && nature == TALK)   //  <-------------------Map NPC Teleport From Village in Tavern
+	if (target == g_engine->GetNpc(RPG_Engine::NpcStruct::CaveEntrance) && nature == TALK)   //  <-------------------Map NPC Teleport From Village in Tavern
 	{
 		g_script->AddCommand((new cComand_HideScreen(3)));
 		g_script->AddCommand(new cComand_Changemap("Forest", 249.0f, 54.5f));
 
 	}
 
-	if (target->sName == "CaveOut" && nature == TALK)   //  <-------------------Map NPC Teleport From Village in Tavern
+	if (target == g_engine->GetNpc(RPG_Engine::NpcStruct::CaveOut) && nature == TALK)   //  <-------------------Map NPC Teleport From Village in Tavern
 	{
 		g_script->AddCommand((new cComand_HideScreen(3)));
 		g_script->AddCommand(new cComand_Changemap("Forest", 180.0f, 27.5f));
@@ -703,28 +705,28 @@ bool cMap_Village::OnInteraction(std::vector<cDynamic*>& vecDynobs, cDynamic* ta
 			((cDynamic_Teleport*)target)->fMapPosX,
 			((cDynamic_Teleport*)target)->fMapPosY));
 	}
-
-	if (target->sName == "TavernVillage" && nature == TALK)   //  <-------------------Map NPC Teleport From Village in Tavern
+	
+	if (target == g_engine->GetNpc(RPG_Engine::NpcStruct::TavernVillageEntrance) && nature == TALK)   //  <-------------------Map NPC Teleport From Village in Tavern
 	{
 		g_script->AddCommand((new cComand_HideScreen(3)));
 		g_script->AddCommand(new cComand_Changemap("VillageTavern", 12, 10));
 
 	}
 
-	if (target->sName == "Map" && nature == TALK)   //  <-------------------Map NPC First Village
+	if (target == g_engine->GetNpc(RPG_Engine::NpcStruct::Map) && nature == TALK)   //  <-------------------Map NPC First Village
 	{
 		g_script->AddCommand((new cComand_SetNgameMod(5)));
 		//g_script->AddCommand((new cComand_SetPause(1)));
 		
 	}
 
-	if (target->sName == "ProfessionMan" && nature == TALK)   //  <-------------------Profession NPC First Village
+	if (target == g_engine->GetNpc(RPG_Engine::NpcStruct::proffesion) && nature == TALK)   //  <-------------------Profession NPC First Village
 	{
 		g_script->AddCommand((new cComand_SetNgameMod(6)));
 	//	g_script->AddCommand((new cComand_SetPause(1)));
 
 	}
-	if (target->sName == "BlackSmith" && nature == TALK)   //  <-------------------BlacksmithNPC First Village
+	if (target == g_engine->GetNpc(RPG_Engine::NpcStruct::blacksmith) && nature == TALK)   //  <-------------------BlacksmithNPC First Village
 	{
 		g_script->AddCommand((new cComand_SetNgameMod(7)));
 //		g_script->AddCommand((new cComand_SetPause(1)));
@@ -816,19 +818,19 @@ bool cMap_VillageTavern::OnInteraction(std::vector<cDynamic*>& vecDynobs, cDynam
 	}
 
 
-	if (target->sName == "SaveMan" && nature == TALK)   // Talking with first Bandit  4
+	if (target == g_engine->GetNpc(RPG_Engine::NpcStruct::SaveMan) && nature == TALK)   // Talking with first Bandit  4
 	{
 		g_engine->SaveFunction();
 
 	}
 
-	if (target->sName == "Warehouse" && nature == TALK)
+	if (target == g_engine->GetNpc(RPG_Engine::NpcStruct::Warehouse) && nature == TALK)
 	{
 		g_script->AddCommand((new cComand_SetNgameMod(2)));
 //		g_script->AddCommand((new cComand_SetPause(1)));
 	}
 
-	if (target->sName == "LuxurySeller" && nature == TALK)
+	if (target == g_engine->GetNpc(RPG_Engine::NpcStruct::luxary) && nature == TALK)
 	{
 		g_script->AddCommand((new cComand_SetNgameMod(4)));
 	//	g_script->AddCommand((new cComand_SetPause(1)));
@@ -871,7 +873,6 @@ bool cMap_ForestPartTwo::PopulateDynamics(std::vector<cDynamic*>& vecDyns)
 	
 
 		cDynamic* g1 = g_engine->SpawnBoar(BoarsPositions[i]);
-		vecDyns.push_back(g1);
 		i++;
 
 

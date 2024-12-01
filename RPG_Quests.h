@@ -160,8 +160,14 @@ public:
 		VisitBlacksmith = false;
 		VisitMap = false;
 		VisitTrainer = false;
-	}
+		for (int i = 0; i < namesAr.size(); i++)
+		{
+			namesAr[0] = "\0";
 
+		}
+
+	}
+	void makeActual() override;
 private:
 
 	cDynamic* Bob = nullptr;
@@ -184,6 +190,8 @@ private:
 	bool VisitTrainer;
 	cDynamic* sVisTrainer;
 
+
+	std::array<std::string, 6> namesAr;
 
 };
 

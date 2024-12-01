@@ -121,6 +121,10 @@
       <AdditionalLibraryDirectories>D:\C++\SFML-2.6.1\lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);sfml-audio-d.lib;sfml-system-d.lib</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /Y /Q "D:\C++\SFML-2.6.1\bin\*.dll" "$(OutDir)"
+</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -132,6 +136,8 @@
       </PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>D:\C++\SFML-2.6.1\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -141,12 +147,17 @@
       <AdditionalLibraryDirectories>D:\C++\SFML-2.6.1\lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);sfml-audio.lib;sfml-system.lib</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /Y /Q "D:\C++\SFML-2.6.1\bin\*.dll" "$(OutDir)"
+</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="cGameSettings.h" />
     <ClInclude Include="FFmpeg.h" />
     <ClInclude Include="olcPixelGameEngine.h" />
     <ClInclude Include="PerlinNoise.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="RPG_Assets.h" />
     <ClInclude Include="RPG_Commands.h" />
     <ClInclude Include="RPG_Dynamic.h" />
@@ -155,7 +166,9 @@
     <ClInclude Include="RPG_Maps.h" />
     <ClInclude Include="RPG_Quests.h" />
     <ClInclude Include="RPG_UI.h" />
+    <ClInclude Include="InventorySocket.h" />
     <ClInclude Include="stb_image.h" />
+    <ClInclude Include="TalentController.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cGameSettings.cpp" />
@@ -171,6 +184,7 @@
     <ClCompile Include="RPG_Maps.cpp" />
     <ClCompile Include="RPG_Quests.cpp" />
     <ClCompile Include="RPG_UI.cpp" />
+    <ClCompile Include="TalentController.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\config.lua" />
@@ -178,6 +192,15 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="vertex_shader.glsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="resources.rc">
+      <DeploymentContent>true</DeploymentContent>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="icon1.ico" />
+    <Image Include="Pantir%27sDagger.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

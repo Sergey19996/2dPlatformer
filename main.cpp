@@ -1,5 +1,4 @@
 #include "cGameSettings.h"
-
 #include "RPG_Engine.h"
 
 //// Function to snap the console window to the primary screen
@@ -79,8 +78,10 @@ int main()
 
     game.fscale = 1.0f / config.nPixelWidth;
 	ShowWindow(GetConsoleWindow(),1);
-	if (game.Construct(config.nScreenWidth, config.nScreenHeight, config.nPixelWidth, config.nPixelHeight, true,true))
+    if (game.Construct(config.nScreenWidth, config.nScreenHeight, config.nPixelWidth, config.nPixelHeight, true, true))
+    {
 		game.Start();
+    }
   
   
 

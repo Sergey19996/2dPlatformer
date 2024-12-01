@@ -2,807 +2,1025 @@
 #include "RPG_Engine.h"
 
 RPG_Engine* cUI::g_engine = nullptr;
-
+cScriptProcessor* UIButton::g_script = nullptr;
 cUI::cUI(std::string name)
 {
-	sName = name; ;
+	sName = name; 
 
 }
 
-cIndicator::cIndicator(std::string name) : cUI(name)
+Event::Event(std::string name,olc::vi2d soursepos, olc::vi2d soursesize, float MaxTImer) :cUI (name)
 {
-	
-	this->pSpriteEmpty = pSpriteEmpty;  // empty we add in indicator
+	timer = MaxTimer;
+	sourcePos = soursepos;
+	sourceSize = soursesize;
+	MaxTimer = MaxTImer;
+}
+
+void Event::DrawSelf()
+{
+
+	g_engine->DrawPartialDecal({ (float)g_engine->ScreenWidth() / 2 - (sourceSize.x / 2), (float)g_engine->ScreenHeight() / 4 - sourceSize.y, }, g_engine->D_FullUi, sourcePos, sourceSize, { 1,1 }, olc::Pixel(255, 255, 255, Alpha));
+
+
+}
+
+bool Event::update(float FelapsedTime)
+{
+	timer -= FelapsedTime;
+
+	Alpha = (timer / MaxTimer) * 255.0f;  // вычисление альфа-значения
+
+	if (timer<=0.0f)
+	{
+		Redundant = true;
+		Alpha = 0.0f;
+		return true;
+	}
+
+	return false;
+
 }
 
 
-
-
-int  cIndicator::SaveSlotTalent()
+UIButton::UIButton(std::string name) : cUI (name)
 {
-	return TalentSave;
 }
 
-
-
-
-bool cIndicator::OnInteract(cDynamic* object)
+bool UIButton::OnInteraction(olc::vi2d& Mouse)
 {
+	if (Mouse.x >=Pos.x && Mouse.y>=Pos.y && 
+		Mouse.x <=Pos.x+ sourceSize.x && Mouse.y<=Pos.y+sourceSize.y)
+	{
+	return true;
+
+	}
 	return false;
 }
-bool cIndicator::OnUse(cDynamic* object)
+
+void UIButton::Update(const float& fElapsedTime , olc::vi2d& mouse )
 {
+	Interacted = OnInteraction(mouse);
+}
+
+void UIButton::DrawSelf()
+{
+
+	
+	auto textColor = Interacted ? olc::YELLOW : olc::WHITE;
+
+	g_engine->DrawBigText(sName,  Pos.x, Pos.y, 1 * g_engine->fscale, 1 * g_engine->fscale, textColor);
+
+
+
+}
+
+void UIButton::SwitchChain(UiRect*Back)
+{
+
+	Rect = Back;
+
+	CalculatePosition();
+
+}
+
+UIStartButton::UIStartButton() : UIButton("Start")
+{
+	Rect = (UiRect*)RPG_Assets::get().GetUiElements("MainRect");
+
+	CalculatePosition();
+
+
+}
+
+bool UIStartButton::Onclick(olc::vi2d& mouse)
+{
+	if (Interacted)
+	{
+		g_script->AddCommand((new cComand_HideScreen(2)));
+		g_script->AddCommand((new cComand_Changemap("Forest", -1, 25.5)));
+		g_script->AddCommand((new cComand_SetNgameMod(1)));
+	}
+	return true;
+}
+
+void UIStartButton::CalculatePosition()
+{
+	Pos = { static_cast<int>(25 * g_engine->fscale) + Rect->GetRectPosX(),static_cast<int>(30 * g_engine->fscale) + Rect->GetRectPosY() };
+	sourceSize = { static_cast<int>(sName.size() * (18 * g_engine->fscale) + (32 * g_engine->fscale)),static_cast<int>(32 * g_engine->fscale) };
+
+}
+
+UIContinueButton::UIContinueButton() : UIButton("Continue")
+{
+	Rect = (UiRect*)RPG_Assets::get().GetUiElements("MainRect");
+
+	CalculatePosition();
+
+	std::ofstream data;
+	data.open("Load/CurrSave.bin", std::ofstream::in);
+	if (data.is_open())
+	{
+		bSaveExist = true;
+
+	}
+	else
+	{
+		bSaveExist = false;
+
+	}
+		data.close();
+
+}
+
+bool UIContinueButton::Onclick(olc::vi2d& mouse)
+{
+	if (Interacted)
+	{
+		g_script->AddCommand((new cComand_HideScreen(2)));
+		g_script->AddCommand((new cComand_LoadFunction));  // in load function in start allredy 2 comands but they call not instant 
+	}
+
+
+
+		return true;
+
+}
+
+void UIContinueButton::DrawSelf()
+{
+
+
+
+	if (bSaveExist)
+	{
+		//Interacted = OnInteraction(Mouse);
+		auto textColor = Interacted ? olc::YELLOW : olc::WHITE;
+
+		g_engine->DrawBigText(sName,  Pos.x, Pos.y, 1 * g_engine->fscale, 1 * g_engine->fscale, textColor);
+	}
+	else
+	{
+		olc::Pixel Color = olc::GREY;
+
+		g_engine->DrawBigText(sName,  Pos.x, Pos.y,  1 * g_engine->fscale, 1 * g_engine->fscale, Color);
+	}
+
+
+		
+}
+
+void UIContinueButton::CalculatePosition()
+{
+	Pos = { static_cast<int>(25 * g_engine->fscale) + Rect->GetRectPosX(),0 + Rect->GetRectPosY() };
+	sourceSize = { static_cast<int>(sName.size() * (18 * g_engine->fscale) + (32 * g_engine->fscale)),static_cast<int>(32 * g_engine->fscale) };
+
+}
+
+UIOptionButton::UIOptionButton() :UIButton("Options")
+{
+	Rect = (UiRect*)RPG_Assets::get().GetUiElements("MainRect");
+	CalculatePosition();
+	
+}
+
+bool UIOptionButton::Onclick(olc::vi2d& mouse)
+{
+	if (Interacted)
+	{
+
+		 g_engine->OptionSettings();
+
+	}
+
+	return true;
+}
+
+void UIOptionButton::CalculatePosition()
+{
+	
+	
+
+	Pos = { static_cast<int>(25 * g_engine->fscale) + Rect->GetRectPosX(),static_cast<int>(60 * g_engine->fscale) + Rect->GetRectPosY() };
+	sourceSize = { static_cast<int>(sName.size() * (18 * g_engine->fscale) + (32 * g_engine->fscale)),static_cast<int>(32 * g_engine->fscale) };
+
+
+}
+
+UIQuitButton::UIQuitButton() :UIButton("Quit") 
+{
+	Rect = (UiRect*)RPG_Assets::get().GetUiElements("MainRect");
+	CalculatePosition();
+
+
+}
+
+bool UIQuitButton::Onclick(olc::vi2d& mouse)
+{
+	if (Interacted)
+	{
+
+		return !Interacted;
+	}
+	else
+	{
+		return true;
+	}
+
+}
+
+void UIQuitButton::CalculatePosition()
+{
+	Pos = { static_cast<int>(25 * g_engine->fscale) + Rect->GetRectPosX(),static_cast<int>(90 * g_engine->fscale) + Rect->GetRectPosY() };
+	sourceSize = { static_cast<int>(sName.size() * (18 * g_engine->fscale) + (32 * g_engine->fscale)),static_cast<int>(32 * g_engine->fscale) };
+
+}
+
+UIFullScreenButton::UIFullScreenButton(): UIButton("FullScreen")
+{
+	Rect = (UiRect*)RPG_Assets::get().GetUiElements("OptionRect");
+
+	CalculatePosition();
+
+	
+
+
+}
+
+void UIFullScreenButton::DrawSelf()
+{
+
+	//Interacted = OnInteraction(mouse);
+	auto textColor = Interacted ? olc::YELLOW : olc::WHITE;
+
+	int draw = spritesAr.size() - 1 + Toggle;
+
+	for (int i = 0; i < draw; i++)
+	{
+		
+		g_engine->DrawPartialDecal({(float)spritesAr[i].Pos.x,(float)spritesAr[i].Pos.y }, g_engine->D_FullUi, spritesAr[i].SourcePos, spritesAr[i].SourceSize,{2*g_engine->fscale,2*g_engine->fscale}, textColor);
+
+	}
+
+
+
+}
+
+bool UIFullScreenButton::OnInteraction(olc::vi2d& Mouse)
+{ 
+	if (Mouse.x >= spritesAr[1].Pos.x && Mouse.y >= spritesAr[1].Pos.y &&   // описываем задник галочки 
+		Mouse.x <= spritesAr[1].Pos.x + spritesAr[1].SourceSize.x &&
+		Mouse.y <= spritesAr[1].Pos.y + spritesAr[1].SourceSize.y)
+	{
+		return true;
+
+	}
 	return false;
 }
 
-void cIndicator::DrawSelf(olc::PixelGameEngine* gfx, float px, float py)    // Draw indicators
+bool UIFullScreenButton::Onclick(olc::vi2d& mouse)
 {
+	if(Interacted)
+	Toggle = SwitchScreen();
+
+
+
+	return true;
 }
-
-void cIndicator::DrawSelfTalent(olc::PixelGameEngine* gfx, float px, float py)    // Draw indicators
-{
-}
-
-cExperience::cExperience() : cIndicator("Experience Indicator")
-{
-	/*sourcePosX = 960;
-	sourcePosY = 142;
-	sourceSizeX = 230;
-	sourceSizeY = 17;*/
-	sourcePos = { 960,142 };
-	sourceSize = { 230,17 };
-}
-
-
-void cExperience::DrawSelf(olc::PixelGameEngine* gfx, float px, float py)
-{
-	float procent = g_engine->GetRequredExp() / (float)sourceSize.x;
-
-	float EXperienceiff = g_engine->GetCurrExp() / procent;
-
-	float pix = 0;
-	float piy = 0;
-
-	//g_engine->D_Ui
-
-	gfx->DrawPartialDecal({ pix,piy }, g_engine->D_FullUi, { sourcePos }, { (float)sourceSize.x,(float)sourceSize.y },{g_engine->fscale,g_engine->fscale });   //offset pulling player back into the screen
-	gfx->DrawPartialDecal({ pix,piy }, g_engine->D_FullUi, { (float)sourcePos.x,(float)sourcePos.y+ (float)sourceSize.y }, { EXperienceiff,(float)sourceSize.y }, { g_engine->fscale,g_engine->fscale });   //offset pulling player back into the screen
-
-
-	g_engine->DrawBigText("EXP:" + std::to_string(g_engine->GetCurrExp()) + "/" + std::to_string(g_engine->GetRequredExp()), pix+(sourceSize.x / 3)*g_engine->fscale, piy+1, 0.35*g_engine->fscale, 0.35*g_engine->fscale);
-
-	
-}
-
-
-
-cAttackLow::cAttackLow() : cEnergyIndicators("Attack Low")
+bool UIFullScreenButton::SwitchScreen()
 {
 
-	this->offsetX =0;
-	this->offsetY = 0;
+	HWND hWnd = FindWindowW(L"OLC_PIXEL_GAME_ENGINE", NULL);
 
-	m_Classenum = LOWATTACK;
+	// Получаем текущие стили окна
+	DWORD dwStyle = GetWindowLong(hWnd, GWL_STYLE);
+	DWORD dwExStyle = GetWindowLong(hWnd, GWL_EXSTYLE);
 
-	TalentSave = 1;
+	// Проверяем, находимся ли мы в полноэкранном режиме
+	bool bFullScreen = (dwStyle & WS_OVERLAPPEDWINDOW) == 0;
 
-//	sourcePosX = 0;
-//	sourcePosY = 0;
-//	sourceSizeX = 64;
-	//sourceSizeY = 64;
-	sourcePos = { 0,0 };
-	sourceSize = { 64,64 };
-}
-
-
-
-
-cAttackMid::cAttackMid() : cEnergyIndicators("Attack Mid")
-{
-
-	/*sourcePosX = 64;
-	sourcePosY = 0;
-	sourceSizeX = 64;
-	sourceSizeY = 64;*/
-	sourcePos = { 64,0 };
-	sourceSize = { 64,64 };
-
-
-	this->offsetX = sourceSize.x - (0.2 * sourceSize.x);
-	this->offsetY = 0;
-
-	m_Classenum = MIDATTACK;
-
-
-
-	TalentSave = 2;
-
-}
-
-
-
-cAttackHigh::cAttackHigh() : cEnergyIndicators("Attack High")
-{
-	/*sourcePosX = 128;
-	sourcePosY = 0;
-	sourceSizeX = 64;
-	sourceSizeY = 64;*/
-
-	sourcePos = { 128,0 };
-	sourceSize = { 64,64 };
-
-	this->offsetX = 2*(sourceSize.x -(0.2* sourceSize.x));
-	this->offsetY = 0;
-
-	m_Classenum = HIGHATTACK;
-
-	
-	TalentSave = 3;
-	
-
-}
-
-cAttacBack::cAttacBack() : cEnergyIndicators("Attack Back")
-{
-	/*sourcePosX = 192;
-	sourcePosY = 0;
-	sourceSizeX = 64;
-	sourceSizeY = 64;*/
-
-	sourcePos = { 192,0 };
-	sourceSize = { 64,64 };
-
-	this->offsetX = 1 * sourceSize.x*0.5f;
-	this->offsetY = -120;
-
-	m_Classenum = BACKATTACK;
-
-	
-	TalentSave = 4;
-
-	
-}
-
-
-cStepBack::cStepBack() : cEnergyIndicators("Appear Behind")
-{
-
-	/*sourcePosX = 576;
-	sourcePosY = 0;
-	sourceSizeX = 64;
-	sourceSizeY = 64;*/
-
-	sourcePos = { 576,0 };
-	sourceSize = { 64,64 };
-
-	this->offsetX = 1 * sourceSize.x * 0.5f;
-	this->offsetY = -120;
-
-	m_Classenum = STAPBACK;
-
-	
-	TalentSave = 5;
-
-
-
-	
-}
-
-
-cSwirlAttack::cSwirlAttack() : cEnergyIndicators("Swirl Attack")
-{
-	/*sourcePosX = 512;
-	sourcePosY = 0;
-	sourceSizeX = 64;
-	sourceSizeY = 64;*/
-
-	sourcePos = { 512,0 };
-	sourceSize = { 64,64 };
-
-	this->offsetX = 1 * sourceSize.x * 0.5f;
-	this->offsetY = -120;
-
-	m_Classenum =SWIRLATTACK;
-
-	
-
-	
-	TalentSave = 6;
-}
-
-cVanish::cVanish() : cEnergyIndicators("Vanish")   // spells for talent
-{
-	/*sourcePosX = 640;
-	sourcePosY = 0;
-	sourceSizeX = 64;
-	sourceSizeY = 64;*/
-
-	sourcePos = { 640,0 };
-	sourceSize = { 64,64 };
-
-	this->offsetX = 1 * sourceSize.x * 0.5f;
-	this->offsetY = -120;
-
-	m_Classenum = VANISH;
-
-	
-	TalentSave = 7;
-
-
-}
-
-
-
-
-
-
-
-cRightAttack::cRightAttack() : cRageIndicators("Attack Right")   // spells for talent
-{
-	/*sourcePosX = 448;
-	sourcePosY = 0;
-	sourceSizeX = 64;
-	sourceSizeY = 64;*/
-
-	sourcePos = { 448,0 };
-	sourceSize = { 64,64 };
-
-
-	this->offsetX = 3 * (sourceSize.x - (0.2 * sourceSize.x))+50;
-	this->offsetY = 50;
-
-	m_Classenum = ATTACKEARTH;
-
-	
-	TalentSave = 11;
-
-	
-
-}
-
-
-
-
-
-cRightAttackAir::cRightAttackAir() : cRageIndicators("Attack Right Air")   // spells for talen
-{
-	/*sourcePosX = 256;
-	sourcePosY = 0;
-	sourceSizeX = 64;
-	sourceSizeY = 64;*/
-
-	sourcePos = { 256,0 };
-	sourceSize = { 64,64 };
-
-	this->offsetX = 3 * (sourceSize.x - (0.2 * sourceSize.x)) + 50;
-	this->offsetY = 50;
-
-	m_Classenum = ATTACKAIR;
-	
-	TalentSave = 12;
-
-
-}
-
-
-
-cRightFlightUp::cRightFlightUp():cRageIndicators("Attack Right Flight Up")   // spells for talent
-{
-	/*sourcePosX = 384;
-	sourcePosY = 0;
-	sourceSizeX = 64;
-	sourceSizeY = 64;*/
-
-	sourcePos = { 384,0 };
-	sourceSize = { 64,64 };
-
-
-	this->offsetX = 3 * (sourceSize.x - (0.2 * sourceSize.x)) + 50;
-	this->offsetY = 50;
-
-	m_Classenum = ATTACKFLIGHTUP;
-
-	
-	TalentSave = 13;
-
-	
-
-}
-
-cRightEpicLanding::cRightEpicLanding():cRageIndicators("Attack Right Epic Landing")   // spells for talent
-{
-
-	//sourcePosX = 320;
-	//sourcePosY = 0;
-	//sourceSizeX = 64;
-	//sourceSizeY = 64;
-
-	sourcePos = { 320,0 };
-	sourceSize = { 64,64 };
-
-	this->offsetX = 3 * (sourceSize.x - (0.2 * sourceSize.x)) + 50;
-	this->offsetY = 50;
-
-	m_Classenum = ATTACKEPICLANDING;
-
-	
-	TalentSave = 14;
-
-
-}
-
-
-
-
-
-
-
-cEnergyIndicators::cEnergyIndicators(std::string name) : cIndicator(name)
-{
-
-	this->offsetX = 0;
-	this->offsetY = 0;
-//	sizeframe = pSpriteFull->sprite->width;
-
-}
-
-cRageIndicators::cRageIndicators(std::string name) : cIndicator(name)
-{
-	this->offsetX = 0;
-this->	offsetY = 0;
-//	sizeframe = pSpriteFull->sprite->width;
-}
-
-
-
-
-void cEnergyIndicators::DrawSelf(olc::PixelGameEngine* gfx, float px, float py)
-{
-	
-
-		
-		Update();
-
-		if (bhide != 0)
-		{
-
-
-
-			if (IndicatorDiff <= 0)
-			{
-				IndicatorDiff = 0;
-			}
-			if (IndicatorDiff >= 50)
-			{
-				IndicatorDiff = 50;
-			}
-	
-
-
-			if (bhide == 1)
-			{
-				gfx->DrawPartialDecal({ px + (offsetX * g_engine->fscale),py + (offsetY * g_engine->fscale) }, g_engine->D_FullUi, { (float)sourcePos.x- (float)sourceSize.x,(float)sourcePos.y+34 }, sourceSize, { (float)0.4*g_engine->fscale,(float)0.4 * g_engine->fscale });   //Empty
-
-				gfx->DrawPartialDecal({ px + (offsetX * g_engine->fscale),py + (offsetY * g_engine->fscale) }, g_engine->D_FullUi,  sourcePos, { IndicatorDiff,(float)sourceSize.y }, { (float)0.4 * g_engine->fscale,(float)0.4 * g_engine->fscale });   //Fill layer
-			}
-
-
-
-			if (  bhide == 3)   //with energy bar and rage bar case. when they full need draww borders 
-			{
-				gfx->DrawPartialDecal({ px + (offsetX * g_engine->fscale),py + (offsetY * g_engine->fscale) }, g_engine->D_FullUi, { (float)sourcePos.x,(float)sourcePos.y+(float)sourceSize.y }, sourceSize, { (float)0.4 * g_engine->fscale,(float)0.4 * g_engine->fscale });   //FillED layer
-			}
-		}
-
-	
-
-}
-
-
-void cEnergyIndicators::DrawSelfTalent(olc::PixelGameEngine* gfx, float px, float py)
-{
-
-
-	switch (m_Classenum)
+	// Если окно в полноэкранном режиме
+	if (bFullScreen)
 	{
+		// Переводим в оконный режим
+		SetWindowLong(hWnd, GWL_STYLE, dwStyle | WS_OVERLAPPEDWINDOW); // Восстанавливаем оконный стиль
+		SetWindowLong(hWnd, GWL_EXSTYLE, dwExStyle | WS_EX_APPWINDOW); // Восстанавливаем стиль
+		SetWindowPos(hWnd, HWND_NOTOPMOST, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), SWP_FRAMECHANGED); // Устанавливаем размеры окна
 
-	case cEnergyIndicators::LOWATTACK:
-		offsetX = 192;
-		offsetY = 640;
-
-
-		bhide = g_engine->GetLearnedTalent(TalentSave);    // when we return not returned backstub we can't see spell
-		break;
-
-	case cEnergyIndicators::MIDATTACK:
-		offsetX = 192;
-		offsetY = 512;
-
-		bhide = g_engine->GetLearnedTalent(TalentSave);    // when we return not returned backstub we can't see spell
-		break;
-
-	case cEnergyIndicators::HIGHATTACK:
-		offsetX = 64;
-		offsetY = 512;
-
-
-		bhide = g_engine->GetLearnedTalent(TalentSave);    // when we return not returned backstub we can't see spell
-		break;
-	case cEnergyIndicators::BACKATTACK:
-		offsetX = 64;
-		offsetY = 640;
-
-		bhide = g_engine->GetLearnedTalent(TalentSave);    // when we return not returned backstub we can't see spell
-		break;
-
-
-
-	case cEnergyIndicators::STAPBACK:
-		offsetX = 64;
-		offsetY = 384;
-
-		bhide = g_engine->GetLearnedTalent(TalentSave);
-		break;
-
-	case cEnergyIndicators::SWIRLATTACK:
-		offsetX = 64;
-		offsetY = 192;
-
-		bhide = g_engine->GetLearnedTalent(TalentSave);    // when we return not returned backstub we can't see spell
-		break;
-	case cEnergyIndicators::VANISH:
-		offsetX = 192;
-		offsetY = 384;
-
-		bhide = g_engine->GetLearnedTalent(TalentSave);    // when we return not returned backstub we can't see spell
-		break;
-
+		// Восстанавливаем размер и положение окна (можно заменить на ваши значения)
+		ShowWindow(hWnd, SW_SHOWNORMAL); // Показываем окно
+		return false;
 	}
-
-
-
-
-	float pix = px;
-	float piy = py;
-	float fixSize = 0.5f * g_engine->fscale;
-
-	gfx->DrawPartialDecal({ pix + (offsetX * fixSize),piy + (offsetY * fixSize) }, g_engine->D_FullUi, sourcePos, sourceSize, { fixSize,fixSize });   //Empty
-
-	if (bhide == true)
-		gfx->DrawPartialDecal({ pix + (offsetX *fixSize),piy + (offsetY * fixSize) }, g_engine->D_FullUi, { (float)sourcePos.x,(float)sourcePos.y + 64 }, sourceSize, { fixSize, fixSize });   //Fill layer
-
-
-}
-
-cNewEnergyIndicator::cNewEnergyIndicator(int attackvariation, int foffsetX, int foffsetY,std::string name) :cEnergyIndicators("NewEnergyIndicator")
-{
-//	pSpriteReady = RPG_Assets::get().GetSprite("EnergyBarNewReady");
-
-	sName += name;
-	offsetX = foffsetX;
-	offsetY = foffsetY;
-	
-	/*sourcePosX = 1010;
-	sourcePosY = 192;
-	sourceSizeX = 50;
-	sourceSizeY = 15;*/
-
-	sourcePos = { 1010,192 };
-	sourceSize = { 50,15 };
-
-	dampIndicator = 0;
-	lowCoefficient = 33;
-	switch (attackvariation)
+	else
 	{
-	case 0:
-	m_Classenum = EnergyIndicatorFirst;
-	highBorder = 33;
-		break;
-	case 1:
-		
-	m_Classenum = EnergyIndicatorSecond;
-	dampIndicator = 33;
-	highBorder = 66;
-		break;
-	case 2:
-	m_Classenum = EnergyIndicatorThird;
-	dampIndicator = 66;
-	highBorder = 99;
-		break;
+		// Переводим в полноэкранный режим
+		SetWindowLong(hWnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW); // Убираем оконные рамки
+		SetWindowLong(hWnd, GWL_EXSTYLE, dwExStyle & ~WS_EX_APPWINDOW); // Убираем стиль окна приложения
+		SetWindowPos(hWnd, HWND_TOP, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), SWP_NOZORDER | SWP_FRAMECHANGED); // Полный экран
 
+		ShowWindow(hWnd, SW_MAXIMIZE); // Максимизируем окно
+		return true;
 	}
+
+
+
 	
-
-	//sizeframe = 50;
-
 }
-
-void cNewEnergyIndicator::Update()
+void UIFullScreenButton::CalculatePosition()
 {
 
-	float procent;
-	IndicatorDiff;
-
-	procent = lowCoefficient / (float)sourceSize.x;   // calculate procent from width
-
-	// Проверяем, что procent не равен нулю перед делением
-	if (procent != 0) {
-		IndicatorDiff = (g_engine->GetEnergy() - dampIndicator) / procent;
-	}
-	else {
-		// Обрабатываем случай, когда procent равен нулю
-		IndicatorDiff = 0;  // или установите значение, подходящее под вашу логику
-	}
-
-
-
-
-	this->bhide = 1; // see filling
-	if (g_engine->GetEnergy() > highBorder)
+	spritesAr =
 	{
-		this->bhide = 3;
-	}
-}
-
-cNewRageIndicator::cNewRageIndicator(int attackvariation, int foffsetX, int foffsetY, std::string name) :cRageIndicators("NewRageIndicator")
-{
-	//sizeframe = 50;
-
-	//pSpriteReady = RPG_Assets::get().GetSprite("AngryBarNewReady");
-
-	sName += name;
-	offsetX = foffsetX;
-	offsetY = foffsetY;
-
-	lowCoefficient = 35;
-	dampIndicator = 0;
-	switch (attackvariation)
-	{
-	case 0:
-		m_Classenum = RageIndicatorFirst;
-
-		highBorder = 35;
-		break;
-	case 1:
-		m_Classenum = RageIndicatorSecond;
-		dampIndicator = 35;
-		highBorder = 70;
-		break;
-
-	case 2:
-		m_Classenum =RageIndicatorThird;
-		dampIndicator = 65;
-		highBorder = 99;
-		break;
-	
-	}
-
-	//sourcePosX = 960;
-	//sourcePosY = 192;
-	//sourceSizeX = 50;
-	//sourceSizeY = 16;
-
-	sourcePos = { 960,192 };
-	sourceSize = { 50,16 };
-}
-
-void cNewRageIndicator::Update()
-{
-
-	float procent;
-	IndicatorDiff;
-
-	procent = lowCoefficient / (float)sourceSize.x;   // calculate procent from width
-
-	// Проверяем, что procent не равен нулю перед делением
-	if (procent != 0) {
-		IndicatorDiff = (g_engine->GetRage() - dampIndicator) / procent;
-	}
-	else {
-		// Обрабатываем случай, когда procent равен нулю
-		IndicatorDiff = 0;  // или установите значение, подходящее под вашу логику
-	}
-
-	//	EnergyDiff = g_engine->GetEnergy() / procent - dampIndicator;
-
-//	std::cout << static_cast<int>(g_engine->GetEnergy()) << std::endl;
-
-	this->bhide = 1; // see filling
-	if (g_engine->GetRage() > highBorder)
-	{
-		this->bhide = 3;
-	}
-}
-
-void cRageIndicators::DrawSelfTalent(olc::PixelGameEngine* gfx, float px, float py)
-{
-
-
-	switch (m_Classenum)
-	{
-
-	case cRageIndicators::ATTACKEARTH:
-		offsetX = 320;
-		offsetY = 640;
-
-		bhide = g_engine->GetLearnedTalent(TalentSave);    // when we return @not@ returned backstub, we can't see spell
-		break;
-
-	case cRageIndicators::ATTACKAIR:
-		offsetX = 320;
-		offsetY = 512;
-
-		bhide = g_engine->GetLearnedTalent(TalentSave);    // when we return not returned backstub we can't see spell
-		break;
-
-
-	case cRageIndicators::ATTACKFLIGHTUP:
-		offsetX = 320;
-		offsetY = 256;
-
-		bhide = g_engine->GetLearnedTalent(TalentSave);    // when we return not returned backstub we can't see spell
-		break;
-
-	case cRageIndicators::ATTACKEPICLANDING:
-		offsetX = 320;
-		offsetY = 64;
-
-		bhide = g_engine->GetLearnedTalent(TalentSave);    // when we return not returned backstub we can't see spell
-		break;
-
-
-	}
-
-
-
-
-	float pix = px;
-	float piy = py;
-	float fixSize = 0.5f * g_engine->fscale;
-
-	gfx->DrawPartialDecal({ pix + (offsetX * fixSize),piy + (offsetY * fixSize) }, g_engine->D_FullUi, sourcePos,sourceSize, { fixSize,fixSize });   //Empty
-
-	if (bhide == true)
-		gfx->DrawPartialDecal({ pix + (offsetX * fixSize),piy + (offsetY * fixSize) }, g_engine->D_FullUi, { (float)sourcePos.x,(float)sourcePos.y+64 }, sourceSize, { fixSize,fixSize });   //Fill layer
-
-
+		ButtonData({191 + Rect->GetRectPosX(),27 + Rect->GetRectPosY()},{560,482},{78,11}), // <--Text   Pos, soursepos, size
+		ButtonData({272 + Rect->GetRectPosX(),16 + Rect->GetRectPosY()},{448,448},{32,32}), // <--ArrowBack   Pos, soursepos, size
+		ButtonData({276 + Rect->GetRectPosX(),26 + Rect->GetRectPosY()},{448,426},{24,17}) // <--Arrow   Pos, soursepos, size
+	};
 
 }
 
-
-
-void cRageIndicators::DrawSelf(olc::PixelGameEngine* gfx, float px, float py)
+void UiRect::DrawSelf()
 {
 
-
-	
-
-	Update();
-		
-
-
-
-		float pix = px;
-		float piy = py - (2 * sourceSize.y + (py / 64));
-
-
-		if (IndicatorDiff <= 0)
-		{
-			IndicatorDiff = 0;
-		}
-		if (IndicatorDiff >= 50)
-		{
-			IndicatorDiff = 50;
-		}
-
-
-		if (bhide != 0)
-		{
-
-			if (bhide == 1)
-			{
-				gfx->DrawPartialDecal({ pix + (offsetX*g_engine->fscale),piy + (offsetY * g_engine->fscale) }, g_engine->D_FullUi, { (float)sourcePos.x,(float)sourcePos.y+34 }, sourceSize, { (float)0.4 * g_engine->fscale,(float)0.4 * g_engine->fscale });   //Empty
-
-				gfx->DrawPartialDecal({ pix + (offsetX*g_engine->fscale),piy + (offsetY*g_engine->fscale) }, g_engine->D_FullUi, { (float)sourcePos.x,(float)sourcePos.y+18 }, { IndicatorDiff,(float)sourceSize.y }, { (float)0.4 * g_engine->fscale,(float)0.4 * g_engine->fscale });   //Fill layer
-			}
-
-
-
-			if (bhide == 3)
-			{
-				gfx->DrawPartialDecal({ pix + (offsetX*g_engine->fscale),piy + (offsetY*g_engine->fscale) }, g_engine->D_FullUi, sourcePos, sourceSize, { (float)0.4*g_engine->fscale,(float)0.4 * g_engine->fscale });   //FillED layer
-			}
-		}
-	
-
-
+	g_engine->DrawPartialDecal({ (float)offsetX,(float)offsetY }, g_engine->D_FullUi, sourcePos, sourceSize,{fscale*g_engine->fscale,fscale*g_engine->fscale });
 
 }
 
-
-
-
-cJump::cJump() :cEnergyIndicators("Jump")
-{
-	offsetX = 0;
-	offsetY = +4* sourceSize.x;
-	m_Classenum = JUMP;
-	
-}
-
-
-
-
-
-
-cStaticUi::cStaticUi(std::string name) : cUI(name)
-{
-	offsetX = 0;
-	offsetY = 0;
-}
-
-
-void  cStaticUi::DrawSelf(olc::PixelGameEngine* gfx, float px, float py)
-{
-
-
-	float pix = 10;
-	float piy = 10;
-
-
-
-	gfx->DrawPartialDecal({ (pix + (offsetX * g_engine->fscale)),(piy + (offsetY * g_engine->fscale)) }, g_engine->D_FullUi, sourcePos, sourceSize, { 0.5f * g_engine->fscale,0.5f * g_engine->fscale });   //offset pulling player back into the screen
-	
-}
-
-cLevel::cLevel() : cStaticUi("Level Ui")
-{
-	//RPG_Assets::get().GetSprite("UiLevelPlace")->sprite->width
-	offsetX = 0;
-	offsetY = 0;
-
-	/*sourcePosX = 960;
-	sourcePosY = 261;
-	sourceSizeX = 62;
-	sourceSizeY = 31;*/
-
-	sourcePos = { 960,261 };
-	sourceSize = { 62,31 };
-}
-
-cSpellPlace::cSpellPlace() : cStaticUi("Spell Place")
-{
-	//RPG_Assets::get().GetSprite("SpellUi")->sprite->height
-	offsetX = 0;
-	offsetY = 0;
-	 
-	/*sourcePosX = 832;
-	sourcePosY = 0;
-	sourceSizeX = 335;
-	sourceSizeY = 142;*/
-
+UIMainRect::UIMainRect() : UiRect("MainRect")
+{ 
 	sourcePos = { 832,0 };
-	sourceSize = { 335,142 };
+	sourceSize = { 334,142 };
+
+	offsetX = 25;     // позиция на ээкране
+	offsetY = g_engine->ScreenHeight() - (150 * g_engine->fscale);
+
+
+
+
 }
 
-cNumber::cNumber() :cStaticUi("Level Number")
+UIOptionRect::UIOptionRect() : UiRect("OptionRect")
 {
-	offsetX = 8;
+
+	sourcePos = { 449,530 };
+	sourceSize = { 336,144 };
+
+	offsetX = 2 * g_engine->CellSize;
+	offsetY = 1 * g_engine->CellSize;
+
+
+	
+
+}
+
+
+UIGameRect::UIGameRect() : UiRect("GameRect")
+{
+
+
+
+	sourcePos = { 448,128 };
+	sourceSize = { 167,65 };
+
+	offsetX = 0;  //позиция на экране 
+	offsetY = g_engine->ScreenHeight() - sourceSize.y;
+}
+
+
+
+UIExitButton::UIExitButton() :UIButton("ExitButton")
+{
+	Rect = (UiRect*)RPG_Assets::get().GetUiElements("OptionRect");
+	CalculatePosition();
+
+	
+
+}
+
+bool UIExitButton::Onclick(olc::vi2d& mouse)
+{
+
+	if (Interacted)
+	{
+
+		 g_engine->ReturnBackSettings();
+
+	}
+	return true;
+}
+
+void UIExitButton::DrawSelf()
+{
+
+
+	//Interacted = OnInteraction(Mouse);
+	//auto textColor = Interacted ? olc::YELLOW : olc::WHITE;
+
+	//g_engine->DrawBigText(sName, Rect->GetRectPosX() + Pos.x, Rect->GetRectPosY() + Pos.y, 1 * g_engine->fscale, 1 * g_engine->fscale, textColor);
+
+	g_engine->DrawPartialDecal(Pos, g_engine->D_FullUi, sourcePos, sourceSize, { 2 * g_engine->fscale,2 * g_engine->fscale });
+
+}
+
+void UIExitButton::CalculatePosition()
+{
+	sourcePos = { 615 ,128 };
+	sourceSize = { 16 ,16 };
+	Pos = { 320 + Rect->GetRectPosX(),0 + Rect->GetRectPosY() };
+
+
+}
+
+UIScroller::UIScroller(std::string name) :UIButton(name)
+{
+
+	offsetX = 4;  //<--4 пикселя офсет по краям для бордеров
+
+	Rect = (UiRect*)RPG_Assets::get().GetUiElements("OptionRect");
+}
+
+void UIScroller::DrawSelf()
+{
+
+
+	
+
+	for (int i = 0; i < spritesAr.size(); i++)
+	{
+
+		g_engine->DrawPartialDecal(spritesAr[i].Pos, g_engine->D_FullUi, spritesAr[i].SourcePos, spritesAr[i].SourceSize, { 2 * g_engine->fscale,2*g_engine->fscale });
+	}
+
+}
+
+void UIScroller::Update(const float& felapsedtime,olc::vi2d& Mouse)
+{
+	if (Interacted)
+	{
+		//int cursor = Cursor;
+
+
+
+		spritesAr[Cursor].Pos.x = Mouse.x;
+
+		
+		checkBorder();
+		CalculateRelation();
+		ScrollerAction(ScrollLine);   // <--Poly is here
+
+	}
+	
+
+
+
+}
+
+bool UIScroller::Onclick(olc::vi2d& mouse)
+{
+	
+	Interacted = (Interacted == true) ? false : OnInteraction(mouse);
+
+
+
+
+
+	return true;
+}
+
+bool UIScroller::OnInteraction(olc::vi2d& Mouse)
+{
+	if (olc::vi2d{ spritesAr[Cursor].Pos - Mouse }.mag() < spritesAr[Cursor].SourceSize.mag())
+	{
+		return true;
+
+	}
+	return false;
+}
+
+void UIScroller::checkBorder()
+{
+	if (spritesAr[Cursor].Pos.x < MIN)
+	{
+		spritesAr[Cursor].Pos.x = MIN;
+	}
+	if (spritesAr[Cursor].Pos.x > MAX)
+	{
+		spritesAr[Cursor].Pos.x = MAX;
+	}
+
+}
+
+void UIScroller::CalculateRelation()
+{
+
+	float cursorOnLine = (spritesAr[Cursor].Pos.x - MIN);
+
+	ScrollLine = (cursorOnLine * 100) / (MAX - MIN);
+
+	
+}
+
+
+UISoundScroller::UISoundScroller() : UIScroller("SoundScroller")
+{
+	/*sourcePos =
+	sourceSize =
+	Pos =*/
+	CalculatePosition();
+
+
+}
+
+void UISoundScroller::ScrollerAction(int parametr)
+{
+	g_engine->setSoundVolume(parametr);
+}
+
+void UISoundScroller::CalculatePosition()
+{
+	spritesAr =
+	{
+		ButtonData({17 + Rect->GetRectPosX(),9 + Rect->GetRectPosY()},{448,482 + 24},{112,24}), // <--Back   Pos, soursepos, size
+		ButtonData({72 + Rect->GetRectPosX(),23 + Rect->GetRectPosY()},{0,128},{3,9}) // <--Toggle   Pos, soursepos, size
+
+	};
+
+	MIN = spritesAr[Back].Pos.x + offsetX;
+	MAX = spritesAr[Back].Pos.x + spritesAr[Back].SourceSize.x - offsetX - spritesAr[Cursor].SourceSize.x + 1;
+
+}
+
+UIMusicScroller::UIMusicScroller() : UIScroller("MusicScroller")
+{
+
+	CalculatePosition();
+
+
+}
+
+void UIMusicScroller::ScrollerAction(int parametr)
+{
+
+	RPG_Assets::get().SetMusicVolume(parametr);
+
+}
+
+void UIMusicScroller::CalculatePosition()
+{
+	spritesAr =
+	{
+		ButtonData({17 + Rect->GetRectPosX(),41 + Rect->GetRectPosY()},{448,482},{112,24}), // <--Back   Pos, soursepos, size
+		ButtonData({72 + Rect->GetRectPosX(),55 + Rect->GetRectPosY()},{0,128},{3,9}) // <--Toggle   Pos, soursepos, size
+
+	};
+
+	MIN = spritesAr[Back].Pos.x + offsetX;
+	MAX = spritesAr[Back].Pos.x + spritesAr[Back].SourceSize.x - offsetX - spritesAr[Cursor].SourceSize.x + 1;
+
+}
+
+UITalentIcon::UITalentIcon() : UIIcons("UiTalentIcon")
+{
+
+	int fscale = g_engine->CellSize * g_engine->fscale;
+
+	SpriteDataAr =
+
+	{
+
+		ButtonData({25 * fscale,g_engine->ScreenHeight() - 18},{705,35},{66,18}),  // <ScreenPos, soursepos,size
+		ButtonData({25 * fscale-1,g_engine->ScreenHeight() - 18},{486,204},{18,17})
+
+	};
+
+
+	//sourcePos = { 704,36 };
+//	sourceSize = { 67,18 };
+
+//	offsetX = 25*g_engine->CellSize*g_engine->fscale;  //позиция на экране 
+//	offsetY = g_engine->ScreenHeight() - sourceSize.y;
+}
+
+bool UITalentIcon::Activate()
+{
+	
+	return g_engine->GetTalentPoint();  // Return true when talent point is exist
+}
+
+
+
+UIInventoryIcon::UIInventoryIcon() : UIIcons("UiInventoryIcon")
+{
+	int fscale = g_engine->CellSize * g_engine->fscale;
+	SpriteDataAr =
+
+	{
+
+		ButtonData({19 * fscale,g_engine->ScreenHeight() - 18},{705,17},{82,17}),  // <ScreenPos, soursepos,size
+		ButtonData({19 * fscale+1,g_engine->ScreenHeight() - 18},{560,204},{17,17})
+
+	};
+
+
+}
+
+bool UIInventoryIcon::Activate()
+{
+	return g_engine->GetInventoryChecked();
+}
+
+UIQuestIcon::UIQuestIcon() : UIIcons("UiQuestIcon")
+{
+	int fscale = g_engine->CellSize * g_engine->fscale;
+
+	SpriteDataAr =
+
+	{
+
+		ButtonData({14 * fscale,g_engine->ScreenHeight() - 18},{705,0},{65,16}),  // <ScreenPos, soursepos,size
+		ButtonData({14 * fscale+1,g_engine->ScreenHeight() - 18},{629,204},{18,16})
+
+	};
+
+
+}
+
+bool UIQuestIcon::Activate()
+{
+	return g_engine->GetCheckedQuests();
+}
+
+void UIIcons::DrawSelf()
+{
+
+	if (activator)
+	{
+
+
+		float offsetX = (float)SpriteDataAr[Animlayer].SourcePos.x + (index * SpriteDataAr[Animlayer].SourceSize.x);
+
+
+
+	g_engine->DrawPartialDecal(SpriteDataAr[BackLayer].Pos, g_engine->D_FullUi, SpriteDataAr[BackLayer].SourcePos, SpriteDataAr[BackLayer].SourceSize);
+
+	g_engine->DrawPartialDecal(SpriteDataAr[Animlayer].Pos, g_engine->D_FullUi, { offsetX,(float)SpriteDataAr[Animlayer].SourcePos.y }, SpriteDataAr[Animlayer].SourceSize);
+	
+	}
+	else
+	{
+
+		g_engine->DrawPartialDecal(SpriteDataAr[BackLayer].Pos, g_engine->D_FullUi, SpriteDataAr[BackLayer].SourcePos, SpriteDataAr[BackLayer].SourceSize);
+	}
+}
+
+void UIIcons::Update(const float& fElapsedTime, olc::vi2d& mouse )
+{
+	if (activator =Activate())
+	{
+
+
+	animsprite -= fElapsedTime;
+
+	if (animsprite <= 0.0f)
+	{
+		index = (index + 1) % 4; // Увеличиваем индекс и зацикливаем
+		animsprite += 0.2f;      // Добавляем длительность текущего кадра
+	}
+
+	}
+}
+
+UICurrentSpell::UICurrentSpell(std::string name) : cUI(name)
+{
+
+
+}
+
+bool UICurrentSpell::OnInteraction(olc::vi2d& Mouse)
+{
+	if (olc::vi2d{ (offsetX+sourceSize.x/2) - Mouse.x,(offsetY+sourceSize.y/2) - Mouse.y }.mag() < sourceSize.x)
+	{
+		return true;
+
+	}
+	return false;
+
+}
+
+void UICurrentSpell::Update(const float& fElapsedTime, olc::vi2d& mouse )
+{
+
+	
+}
+
+void UICurrentSpell::DrawSelf()
+{
+
+	g_engine->DrawPartialDecal({ (float)offsetX,(float)offsetY }, g_engine->D_FullUi, CurrSPell.first, CurrSPell.second, { 0.57f * g_engine->fscale,0.57f * g_engine->fscale });
+
+}
+
+
+
+UICurrentEnergySpell::UICurrentEnergySpell() : UICurrentSpell("EnergySpell")
+{
+
+	UIGameRect rect;
+
+
+
+	offsetX = rect.GetRectPosX() + 71;
+	offsetY = rect.GetRectPosY() + 39;
+
+	int size = g_engine->CellSize * g_engine->fscale;
+	sourceSize = { size, size };
+
+
+}
+
+void UICurrentEnergySpell::Update(const float& fElapsedTime , olc::vi2d& mouse)
+{
+	CurrSPell.second = { 64,64 };
+
+
+	if (g_engine->checkUiFlag(RPG_Engine::UiFlags::BUISWIRL))
+	{
+		CurrSPell.first = { 512,64 };
+	}
+	else if (g_engine->checkUiFlag(RPG_Engine::UiFlags::BUIBACKSTUB)) {
+
+		CurrSPell.first = { 192,64 };
+	}
+	else if (g_engine->GetEnergy() > 99)
+	{
+		CurrSPell.first = { 128,64 };
+		//	CurrSPell.second = { 64,64 };
+	}
+	else if (g_engine->GetEnergy() > 55)
+	{
+		CurrSPell.first = { 64,64 };
+		//	CurrSPell.second = { 64,64 };
+	}
+	else if (g_engine->GetEnergy() > 35)
+	{
+		CurrSPell.first = { 0,64 };
+		//	CurrSPell.second = { 64,64 };
+	}
+	else
+	{
+		CurrSPell.first = { 0,0 };
+		//	CurrSPell.second = { 0,0 };
+	}
+
+
+}
+
+UICurrRageSpell::UICurrRageSpell() :UICurrentSpell("RageSpell")
+{
+	UIGameRect rect;
+
+	
+
+	offsetX = rect.GetRectPosX() + 119;
+	offsetY = rect.GetRectPosY() + 39;
+
+	int size = g_engine->CellSize * g_engine->fscale;
+	sourceSize = { size, size };
+
+
+}
+
+void UICurrRageSpell::Update(const float& fElapsedTime, olc::vi2d& mouse )
+{
+	g_engine->CheckVerticalDirection();
+	CurrSPell.second = { 64,64 };
+
+	switch (g_engine->CheckVerticalDirection())
+	{
+	case 1:   // < --Up
+
+	//	if (g_engine->GetLearnedTalent(13))
+	//	{
+
+			if (g_engine->GetRage() > 35)
+			{
+				CurrSPell.first = { 384,64 };
+			}
+			else
+			{
+				CurrSPell.first = { 384,0 };
+			}
+	//	}
+		break;
+	case 0:    // <--Down
+		if (g_engine->GetbOnGraund())
+		{
+			if (g_engine->GetRage() > 35)
+			{
+				CurrSPell.first = { 448,64 };
+
+			}
+			else
+			{
+				CurrSPell.first = { 448,0 };
+			}
+
+		}
+		else
+		{ 
+	
+		//	if (g_engine->GetLearnedTalent(14))
+		//	{
+				if (g_engine->GetRage() > 35)
+				{
+					CurrSPell.first = { 320,64 };
+				}
+				else
+				{
+					CurrSPell.first = { 320,0 };
+				}
+	//	}
+		}
+
+		break;
+
+	default:
+
+		if (g_engine->GetRage() > 35)
+		{
+			CurrSPell.first = { 256,64 };
+			//	CurrSPell.second = { 64,64 };
+		}
+		else
+		{
+			CurrSPell.first = { 256,0 };
+		}
+
+
+		break;
+	}
+
+
+}
+
+UIEnergyIndicator::UIEnergyIndicator() : UIMainIndicator("GameEnergy")
+{
+	UIGameRect rect;
+
+
+	MAX = 30;
+	MaxSoursePos = 194;
+	sourcePos = { 449,MaxSoursePos };
+	sourceSize = { 15,MAX };
+
+	offsetX = rect.GetRectPosX() + 96;
+	offsetY = rect.GetRectPosY() + 34;
+
+}
+
+
+uint16_t UIEnergyIndicator::GetIndicator()
+{
+	return g_engine->GetEnergy() * (MAX / 100.0f);
+}
+
+void UIMainIndicator::Update(const float& fElapsedTime , olc::vi2d& mouse)
+{
+	//       30//               0 -- 30 
+	int Mainproportion = GetIndicator(); // <-- 0 до 30 
+
+	proportion = MAX - Mainproportion;   // когда proportion будет 30 даст 0
+
+
+	sourceSize = { sourceSize.x,static_cast<int>(Mainproportion) };
+	sourcePos = { sourcePos.x,MaxSoursePos + static_cast<int>(proportion) };
+
+
+}
+
+void UIMainIndicator::DrawSelf()
+{
+	g_engine->DrawPartialDecal({ (float)offsetX,(float)offsetY+proportion  }, g_engine->D_FullUi, sourcePos, sourceSize, { 2 * g_engine->fscale,2 * g_engine->fscale });
+
+	
+}
+
+UIRageIndicator::UIRageIndicator() : UIMainIndicator("GameRage")
+{
+	UIGameRect rect;
+	MAX = 31;
+	MaxSoursePos = 193;
+	sourcePos = { 464,MaxSoursePos };
+	sourceSize = { 13,MAX };
+
+	offsetX = rect.GetRectPosX() + 147;
+	offsetY = rect.GetRectPosY() + 33;
+}
+
+uint16_t UIRageIndicator::GetIndicator()
+{
+	return g_engine->GetRage() * (MAX / 100.0f);
+}
+
+UIFastSlot::UIFastSlot(std::string name,uint16_t offsetX, uint16_t offsetY) : cUI (name)
+{
+	UIGameRect rect;
+
+	this->offsetX = rect.GetRectPosX() + offsetX;
+	this->offsetY = rect.GetRectPosY() + offsetY;
+
+	int size = g_engine->CellSize * g_engine->fscale;
+	sourceSize = { size ,size };
+}
+
+bool UIFastSlot::OneClick(cDynamic* player)
+{
+	if (Item !=nullptr)
+	{
+		Item = (Item->Item->OnUse(player, Item)) ? nullptr : Item;
+
+		return false;
+	}
+
+	return true;
+}
+
+void UIFastSlot::DrawSelf()
+{
+	if (Item != nullptr)
+	{
+		if (Item->Item!=nullptr)
+		{
+
+		float sprcoordX = Item->Item->spriteindex % 32 * 64;
+		float sprcoordY = Item->Item->spriteindex / 32 * 64;
+		g_engine->DrawPartialDecal({ (float)offsetX,(float)offsetY }, Item->Item->pSprite, { sprcoordX, sprcoordY }, { 64,64 }, { 0.5f * g_engine->fscale,0.5f * g_engine->fscale });
+		}
+	}
+
+}
+
+bool UIFastSlot::OnInteraction(const olc::vi2d& Mouse)
+{
+	if (olc::vi2d{ (offsetX+sourceSize.x/2) - Mouse.x,(offsetY+sourceSize.y/2) - Mouse.y }.mag() < 8)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+void UIFastSlot::ConnectSlot(const olc::vi2d& mouse, InventaryItem* grabitem)
+{
+	if (OnInteraction(mouse) && grabitem !=nullptr)
+	{
+		if (grabitem->Item->consumable)
+		{
+
+		Item = grabitem;
+	
+		}
+	}
+
+}
+
+UITalentRect::UITalentRect() : UiRect("TalentRect", 1.0f)
+{
+
+
+	sourcePos = { 0,142 };
+	sourceSize = { 446,446 };
+
+	offsetX = g_engine->ScreenWidth() / 2 - (sourceSize.x/4);
+	offsetY = g_engine->ScreenHeight() / 2 - (sourceSize.y/4);
+}
+
+UIExperienceIndicator::UIExperienceIndicator() : UIMainIndicator("ExperienceIndicator")
+{
+
+	MAX = 115;
+
+	sourcePos = { 960,142 };
+	sourceSize = {115,17 };
+
+	offsetX = 0;
 	offsetY = 0;
+
 }
 
-void  cNumber::DrawSelf(olc::PixelGameEngine* gfx, float px, float py)
+void UIExperienceIndicator::Update(const float& fElapsedTime , olc::vi2d& mouse )
 {
-	int i = 0;
-	int x = g_engine->GetLvl();
-	std::string sText =  std::to_string(x);
 
-	float pix = 10;
-	float piy = 10;
+	proportion = g_engine->GetCurrExp() * (MAX / 100);
 
 
-	g_engine->DrawBigText(sText, (pix + (offsetX * g_engine->fscale)), (piy + (offsetY * g_engine->fscale)), 0.5f * g_engine->fscale, 0.5f * g_engine->fscale, olc::YELLOW);
+}
 
-	//gfx->DrawPartialDecal({ ((float)px + offsetX),((float)py + offsetY) }, pSpriteFull, { 0,0 }, { (float)pSpriteFull->sprite->width,(float)pSpriteFull->sprite->height });   //offset pulling player back into the screen
-
+void UIExperienceIndicator::DrawSelf()
+{
+	g_engine->DrawPartialDecal({ (float)offsetX,(float)offsetY }, g_engine->D_FullUi, sourcePos, sourceSize, { 2 * g_engine->fscale,2 * g_engine->fscale });
+	g_engine->DrawPartialDecal({ (float)offsetX,(float)offsetY }, g_engine->D_FullUi, { (float)sourcePos.x,sourcePos.y + (float)17 }, { proportion, (float)sourceSize.y }, { 2 * g_engine->fscale,2 * g_engine->fscale });
+}
+uint16_t UIExperienceIndicator::GetIndicator()
+{
+	return proportion = g_engine->GetCurrExp() * (MAX / 100);
 }

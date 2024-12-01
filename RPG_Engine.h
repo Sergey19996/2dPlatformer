@@ -16,12 +16,14 @@
 #include <cstdio>
 #include <windows.h> // Include the Windows header for RECT and GetWindowRect
 #include "PerlinNoise.h"
-#include <mutex>
 #include <unordered_map>
+#include <queue>
+#include "InventorySocket.h"
+#include "TalentController.h"
 //#include "stb_image.h"
 //#include "ParallaxManager.h"
 
-#define DEBUG_MODE  // Включить режим отладки
+//#define DEBUG_MODE  // Включить режим отладки
 
 
 
@@ -33,53 +35,62 @@ struct TileInfo {
 	olc::vi2d size{ 64,64 };
 };
 
-struct InventaryItem
+class  UiController
 {
-	cItem* Item = nullptr;
-
-
-	uint8_t Uiindex = 0;
-	uint8_t index = 0;  // Index in inventory
-
-
-	// Переменная для хранения всех флагов
+public:
 	
-	// Объявляем флаги через enum
-	enum InventaryFlagsEnum {
-		Breserved = 1 << 0,  // 1-й бит
-		Babsorbed = 1 << 1,  // 2-й бит
-		Grabitem = 1 << 2,  // 3-й бит
-		Highlighted = 1 << 3,  // 4-й бит
-		binWarehouse = 1 << 4,  // 5-й бит
-		bEquiped = 1 << 5,  // 6-й бит
-		Objectselected = 1 << 6,
 
-	};
 
-	// Методы для установки и проверки флагов
-	void setFlag(InventaryFlagsEnum flag) {
-		InventaryFlags |= flag;  // Устанавливаем флаг
-	}
+	void QueueCommand(std::function<void()> comand);
+	void ProcessCommand();
 
-	void clearFlag(InventaryFlagsEnum flag) {
-		InventaryFlags &= ~flag;  // Сбрасываем флаг //revers number
-	}
+//	void AddButton(UIButton* button);
+//	void AddRect(UiRect* Rect);
+//	void AddScroller(UIScroller* UIScroller);
+//	void AddUiIcons(UIIcons* Icons);
+//	void AddCurrentSpell(UICurrentSpell* CurreSpell);
+//	void AddMainIndicator(UIMainIndicator* Indicator);
+	void AddUI(cUI* UI);
 
-	bool checkFlag(InventaryFlagsEnum flag) const {
-		return InventaryFlags & flag;  // Проверяем флаг
-	}
-	void resetsocket()
-	{
-		currStacks = 1;
-		Gold = 0;
-		Item = nullptr;
-	}
-	uint8_t currStacks = 1;
-	uint8_t Gold = 0;
+	void AddFastSlots(UIFastSlot* SLots);
+	void AddEvent(Event* event);
+
+	void ConnectFastSlot(olc::vi2d& mouse,InventaryItem* GrabItem);
+
+	void Update(olc::vi2d& mouse,float& fElapsedTIme);
+	
+	 void Draw(olc::vi2d& mouse);
+
+	 bool OnClick(olc::vi2d& mouse);
+	 bool UseFastButtons(cDynamic* player,int Index);
+	// bool OnClick(olc::vi2d& mouse, cUI* Highlighted);
+
+	 void Reset();
+
+	 void LoadMainMainMenu();
+	 void LoadPauseFunctional();
+	 void LoadGameFunctional();
+
+	 void LoadTalentFunctional();
+
 private:
-unsigned int InventaryFlags = 0;
 
+	// Очередь команд, которые должны быть выполнены после завершения цикла
+	std::queue<std::function<void()>> uiCommands;
+	
+//	std::vector<UICurrentSpell*> UiCurrentSpellsVec;
+//	std::vector<UIIcons*> UiIconsVec;
+//	std::vector<UIButton*> UiButtonsVec;
+//	std::vector<UiRect*> UiRectVec;
+//	std::vector<UIScroller*> UiScrollerVec;
+//	std::vector< UIMainIndicator*> UiMainIndicatorVec;
+	std::vector<cUI*> UIVec;
+	std::vector<UIFastSlot*> UiFastSlotsVec;
+	std::vector<Event*> UiEventsVec;
 };
+
+
+
 
 class RPG_Engine : public olc::PixelGameEngine
 {
@@ -131,7 +142,7 @@ public:
 		MapFire,
 		MapMonastery,
 		MapBridge,
-		ProfessionBack,
+		
 		UIMainBox,
 		UiQuestsButton,
 		UiInventoryButton,
@@ -139,26 +150,20 @@ public:
 		UiEnergy,
 		UiRage,
 
-		SpellEnergyLow,
-		SpellEnergyMid,
-		SpellEnergyHigh,
-		SpellEnergyBackstab,
-		SpellEnergySwirl,
-
-		SpellRageDown,
-		SpellRageUp,
-		SpellRageFligh,
-		SpellRageFall,
-
-
-		SpellEmpty,
-
+		
 
 		FxDust,
 		FXDeflect,
 		FxTalentButton,
 
 		QuestBook,
+		
+		QuestCompletedText,
+	//	NotEnoughEnergyText,
+	//	NotEnoughRageText,
+		ChargeSpell,
+
+
 
 	};
 
@@ -194,8 +199,14 @@ public:
 	{
 		BanditBoss
 	};
-
-
+	enum UiFlags {
+		BUIBACKSTUB = 1 << 0,  // 1-й бит
+		BUISWIRL = 1 << 1,  // 2-й бит
+		BPRESSF = 1 << 2  // 3-й бит
+	};
+	void clearBackstabUiFlags() {
+		Flags &= ~(BUIBACKSTUB | BUISWIRL );  // Сбрасываем все установленные флаги
+	}
 private:
 
 
@@ -208,12 +219,12 @@ private:
 	//std::vector<cDynamic*> wolfPool;
 
 	int bOpenTravelAsk : 1; // Map Logic
-	int bPause : 1;
+	bool bPause = false;
 
 	int SelectedTeleport = 0;
 	//
 
-
+	
 
 
 
@@ -223,7 +234,6 @@ private:
 	// MainMenu
 	float MainMenuX = 0.0f;
 	float MainMenuY = 0.0f;
-	float MainMenuAnim = 0.0f;
 	int MainMenuCalc = 0;
 
 
@@ -245,6 +255,9 @@ private:
 
 	
 	int TalentPoint = 0;
+	bool QuestChecked = false;
+	bool InventoryChecked = false;
+
 	uint16_t  Money = 0;
 
 
@@ -252,16 +265,25 @@ private:
 	float animsprite = 0.0f;
 	int frameIndex = 0;
 
+	const float FRAME_SPEED = 0.1f; // Скорость смены кадров (секунды на кадр)
+	const int MAX_FRAMES = 8;       // Количество кадров в анимации
+	const int MAIN_MENU_LIMIT = 10; // Лимит для MainMenuCalc
 
 
 
+	
 
+	uint8_t Flags;
 
+	
+
+	
 	//
 
 	//bool bFinishLoading = false;
-	int bUibackstub : 1;
-	int PressF : 1;
+	//int bUibackstub : 1;
+	//int bUiSwirl : 1;
+	//int PressF : 1;
 //	uint32_t layer = 0;
 //	uint32_t layerOne = 1;
 //	uint32_t layerTwo = 2;
@@ -323,15 +345,17 @@ private:
 
 	std::vector<cDynamic*> m_vecParticles;
 
-	std::vector<cUI*> m_vecUiBars;  //Transient
-	std::vector<cUI*> m_vecTalentsBars;  //Transient
-	std::vector<int > m_vecSaveTalents;
 	std::vector<cDynamic*> m_vecFightText;  //Fight text
 	
 	cScriptProcessor m_script;
 
+	//std::vector<Button*> MainMenuButtons;
+
+	UiController UiController;
+	TalentController TalentController;
+
 	std::vector<InventaryItem*> m_vecEquip;
-	std::vector<InventaryItem*> m_vecUi;
+	
 
 	std::vector<InventaryItem*> m_listStoreItems;
 	std::vector<InventaryItem*> m_listBlackSmithItems;
@@ -340,6 +364,7 @@ private:
 
 	std::list<cQuest*> m_listQusets;
 	std::list<cQuest*> m_CompletedQuest;
+	cQuest* CurrQuest =nullptr;
 	uint8_t DescrqstIndex = 0;
 
 	enum
@@ -358,11 +383,21 @@ private:
 
 
 	};
+
+
+	enum FastSLotsIndexes
+	{
+		UpSLot =0,
+		DownSlot =1
+
+	};
 	int n_nGameMode = MODE_TITLE;
 
 
 private:
 
+	int SoundVolume = 50;
+	
 	int lvl = 1;
 	int ExpRequred = 0;     //Amount
 	int currExp = 0;
@@ -397,10 +432,10 @@ private:
 		olc::vi2d{347,333},      //Map Monastery  destination on map
 	};
 
-	std::array<olc::vi2d, 10> UIPosOnScreenAr;   // ui describe equal screensize, onusercreate 
+	//std::array<olc::vi2d, 10> UIPosOnScreenAr;   // ui describe equal screensize, onusercreate 
 
 
-	std::array< cDynamic_creature_NPC*, 8> NPC_Ar;
+	std::array< cDynamic_creature_NPC*, 9> NPC_Ar;
 
 
 	std::array<cDynamic*, 1>BossAr;
@@ -445,7 +480,7 @@ private:
 		{DataStruct::inventarySockets, SpriteData{olc::vi2d{0, 256}, olc::vi2d{512, 192}}}, // InventorySockets
 		//
 
-		{DataStruct::UiPlatform, SpriteData{olc::vi2d{832, 0}, olc::vi2d{334, 144}}},    // UiPlatform
+		{DataStruct::UiPlatform, SpriteData{olc::vi2d{832, 0}, olc::vi2d{334, 142}}},    // UiPlatform
 
 		//Decal Mao
 		{DataStruct::Map, SpriteData{olc::vi2d{259,0},olc::vi2d{479,523}}},
@@ -455,43 +490,17 @@ private:
 		{DataStruct::MapFire, SpriteData{olc::vi2d{0,0},olc::vi2d{177,118}}},
 		{DataStruct::MapMonastery, SpriteData{olc::vi2d{177,0},olc::vi2d{71,87}}},
 		{DataStruct::MapBridge, SpriteData{olc::vi2d{62,237},olc::vi2d{82,94}}},
-		//
-		{DataStruct::UIMainBox, SpriteData{olc::vi2d{448,128},olc::vi2d{167,65}}},
-		{DataStruct::UiQuestsButton, SpriteData{olc::vi2d{704,0},olc::vi2d{65,16}}},
-		{DataStruct::UiInventoryButton, SpriteData{olc::vi2d{704,18},olc::vi2d{82,16}}},
-		{DataStruct::UiTalentButton, SpriteData{olc::vi2d{704,36},olc::vi2d{67,18}}},
-		{DataStruct::ProfessionBack, SpriteData{olc::vi2d{0,142},olc::vi2d{449,768}}},
-		{DataStruct::UiEnergy, SpriteData{olc::vi2d{449,194},olc::vi2d{15,30}}},
-		{DataStruct::UiRage, SpriteData{olc::vi2d{464,193},olc::vi2d{13,31}}},
-
-		{DataStruct::UIMainBox, SpriteData{olc::vi2d{448,128},olc::vi2d{167,65}}},
-		{DataStruct::UiQuestsButton, SpriteData{olc::vi2d{704,0},olc::vi2d{65,16}}},
-		{DataStruct::UiInventoryButton, SpriteData{olc::vi2d{704,18},olc::vi2d{82,16}}},
-		{DataStruct::UiTalentButton, SpriteData{olc::vi2d{704,36},olc::vi2d{67,18}}},
-		{DataStruct::ProfessionBack, SpriteData{olc::vi2d{0,142},olc::vi2d{449,768}}},
-		{DataStruct::UiEnergy, SpriteData{olc::vi2d{449,194},olc::vi2d{15,30}}},
-		{DataStruct::UiRage, SpriteData{olc::vi2d{464,193},olc::vi2d{13,31}}},
-
-		//spells
-		{DataStruct::SpellEnergyLow, SpriteData{olc::vi2d{0,64},olc::vi2d{64,64}}},
-		{DataStruct::SpellEnergyMid, SpriteData{olc::vi2d{64,64},olc::vi2d{64,64}}},
-		{DataStruct::SpellEnergyHigh, SpriteData{olc::vi2d{128,64},olc::vi2d{64,64}}},
-		{DataStruct::SpellEnergyBackstab, SpriteData{olc::vi2d{192,64},olc::vi2d{64,64}}},
-		{DataStruct::SpellEnergySwirl, SpriteData{olc::vi2d{64*8,64},olc::vi2d{64,64}}},
-		{DataStruct::SpellRageDown, SpriteData{olc::vi2d{64*4,64},olc::vi2d{64,64}}},
-		{DataStruct::SpellRageUp, SpriteData{olc::vi2d{64*7,64},olc::vi2d{64,64}}},
-		{DataStruct::SpellRageFligh, SpriteData{olc::vi2d{64*6,64},olc::vi2d{64,64}}},
-		{DataStruct::SpellRageFall, SpriteData{olc::vi2d{64*5,64},olc::vi2d{64,64}}},
-
-		{ DataStruct::SpellEmpty, SpriteData{olc::vi2d{0,0},olc::vi2d{0,0}} },
-
-
+	
 		//FX
 		{ DataStruct::FxDust, SpriteData{olc::vi2d{0,0},olc::vi2d{52,10}} },
 		{ DataStruct::FXDeflect, SpriteData{olc::vi2d{50,25},olc::vi2d{25,25}} },
 		{ DataStruct::FxTalentButton, SpriteData{olc::vi2d{486,204},olc::vi2d{18,17}} },
 
 		{ DataStruct::QuestBook, SpriteData{olc::vi2d{449,224},olc::vi2d{300,200}} },
+
+
+		{ DataStruct::QuestCompletedText, SpriteData{olc::vi2d{480,465},olc::vi2d{151,17}} },
+		{ DataStruct::ChargeSpell, SpriteData{olc::vi2d{704,64},olc::vi2d{59,61}} },
 
 	};
 
@@ -508,20 +517,6 @@ private:
 
 	SpriteData energyRageEmpty{ olc::vi2d{0, 0}, olc::vi2d{0, 0} };
 
-	const SpriteData* CurrEnergy = &GetSpriteData(DataStruct::SpellEmpty);
-	const SpriteData* CurrRage = &GetSpriteData(DataStruct::SpellEmpty);
-
-
-	std::array<const SpriteData*, 2>SpellsUiAr =   // describe current available spells
-	{
-		CurrEnergy,
-		CurrRage
-	};
-	 
-
-
-
-
 	
 	const SpriteData& GetSpriteData(DataStruct ds)
 	{
@@ -530,11 +525,12 @@ private:
 
 
 
-	void DrawElement(DataStruct ds, olc::vf2d position, float scale, olc::Decal* Decal);
+	void DrawElement(DataStruct ds, olc::vf2d position, float fscale, olc::Decal* Decal);
 
 
 
 	HWND hWnd; // Store the window handle internally
+
 	float fAccumulatedTime = 0.0f;
 
 	 int nFrames = 0;
@@ -542,11 +538,25 @@ private:
 	 void Drawcursor(olc::vi2d mouse);
 public:
 
+	// Методы для установки и проверки флагов
+	void setUiFlag(UiFlags flag) {
+		Flags |= flag;  // Устанавливаем флаг
+	}
+
+	void clearUiFlag(UiFlags flag) {
+		Flags &= ~flag;  // Сбрасываем флаг //revers number
+	}
+
+	bool checkUiFlag(UiFlags flag) const {
+		return Flags & flag;  // Проверяем флаг  вернет true если там будет 1 и 1 и ноль во всех других вариантах 
+	}
+
+
 	cDynamic* SpawnBoss(BossStruct name);
 	cDynamic* GetBoss(BossStruct name);
 
 
-	void setUiCurrSpell(DataStruct Name, bool toogle);  // for present current spell in ui window
+
 
 	// Геттеры, возвращающие ссылки на массивы
 	std::array<cDynamic*, 30>& getBanditsPool() {
@@ -591,8 +601,14 @@ public:
 		return MirrorsFx;
 	}
 
+	bool OptionSettings();
+	bool ReturnBackSettings();
+
 	bool getScriptActive() { return m_script.bUserControlEnabled; }
 	void ClearDisplayText() { vecdisplayText.clear(); currentLine.clear(); rowIndex = 0; chartIndex = 0; textCounter = 0.0f; };
+
+	void setSoundVolume(int sound) { SoundVolume = sound; };
+	//void setMuscVolume(int sound) { RPMuscVolume = sound; };
 
 
      template<std::size_t N>
@@ -621,8 +637,8 @@ public:
 	void SetGameMode(int set) {  n_nGameMode = set; };
 	int GetGameMode() { return n_nGameMode; }
 
-	int GetLearnedTalent(int talentsave);
-	void SetLearnedTalent(cUI* Talent);
+//	int GetLearnedTalent(int talentsave);
+//	void SetLearnedTalent(cUI* Talent);
 
 	void SetPause(int set) { bPause = set; };
 
@@ -637,14 +653,14 @@ public:
 	bool UpdateProfession(float fElapsedTime, olc::vi2d& mouse);
 	bool UpdateMap(float FelapsedTime, olc::vi2d& mouse);
 	bool UpdateBlackSmith(float FelapsedTime,olc::vi2d& Mouse);
-	void uiCellUpdate(olc::vi2d& mouse);
+	void uiCellUpdate(olc::vi2d& mouse, float& FelapsedTime);
 	void UpdateQuestLog(float fElapsedTime, olc::vi2d& Mouse);
 
 	bool SetMouseTarget(olc::vi2d& mouse);
 
 
 	void DrawWarehouse(const float squex, const float squeYm, olc::vf2d mouse, olc::vf2d mousefix, InventaryItem*& highlighted, InventaryItem*& Grabitem,int moneyamount);
-	void DrawInventoryFastCells(olc::vi2d mouse,uint8_t Selobjectsize, olc::vi2d mousefix);
+//	void DrawInventoryFastCells(olc::vi2d mouse,uint8_t Selobjectsize, olc::vi2d mousefix);
 	void DrawInventory(float offestX,float offsetY, olc::vi2d mouse, InventaryItem*& highlighted);
 	void DrawInventory(float offestX, float offsetY, olc::vi2d mouse, olc::vi2d mouseFixed,  InventaryItem*& highlighted, InventaryItem*& Grabitem);
 	void moveIItems(olc::vi2d mouse, float x, float y, InventaryItem*& grabitem, std::vector<InventaryItem*>& vector);
@@ -655,8 +671,15 @@ public:
 	void FillBatch(int TileLayer, int layer, int x, int y,std::vector<TileInfo>& Before, std::vector<TileInfo>& After);
 	
 
-	bool DrawPause(olc::vi2d mouse);
+	bool DrawPause(olc::vi2d mouse,float& fElapsedTime);
 
+
+	void SetQuestChecked(bool check) { QuestChecked = check; };
+	void SetInventoryChecked(bool check) { InventoryChecked = check; };
+
+	bool GetTalentPoint() { return (TalentPoint > 0) ? true : false; };
+	bool GetCheckedQuests() { return QuestChecked; };
+	bool GetInventoryChecked() { return InventoryChecked; };
 
 	void ClearAbsorbedSlots(std::vector<InventaryItem*>& m_listItems);  // find absorbed objects in sockets and change them on empty sockets
 	bool SaleItem(int Price,InventaryItem* Sale);
@@ -669,6 +692,8 @@ public:
 	void DrawDescriptionPattern(InventaryItem* highlighted, olc::vi2d mouse, olc::vf2d mousefix);
 	void AddMoney(int money) { this->Money += money; };
 	int  CheckMoney() { return Money; };
+
+	int CheckVerticalDirection() { return m_pPlayer->GetFacingDirectionVertical(); };
 
 	std::vector<InventaryItem*>& Getequip() { return m_vecEquip; };
 	float CellSize;
@@ -741,7 +766,6 @@ public:
 	std::vector<InventaryItem*> GetListWarehouseItem() { return  m_listWarehouseItems; };  // Get invntory
 	int GetFreespaceInventory();
 	std::list<cQuest*> GetListQuest() {return  m_listQusets;};
-	std::vector<int>& GetLearnedTalentVector() { return m_vecSaveTalents; };    // indexes of learned talent 
 	std::vector<InventaryItem*> GetListStoreItem() { return  m_listStoreItems; };  // Get invntory
 	std::vector<InventaryItem*> GetListBlackSmithItem() { return  m_listBlackSmithItems; };  // Get invntory
 
@@ -758,8 +782,8 @@ public:
 	void AddEnvironment(Environment* env);
 	
 
-	void AddUi(cUI* Ui);
-	void AddTalentUi(cUI* Ui);
+//	void AddUi(cUI* Ui);
+//	void AddTalentUi(cUI* Ui);
 
 	int GetLvl();
 	void SetLvl(int lvl);
@@ -774,8 +798,10 @@ public:
 	int GetRage();
 	int8_t GetEnergy();
 
-	bool GetBackStab();
-	void SetBackStab(bool toggle);
+//	bool GetBackStab();
+
+	bool GetSwirl();
+	//void SetBackStab(bool toggle);
 
 	bool GetTarget();
 	bool GetbOnGraund();

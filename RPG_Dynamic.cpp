@@ -367,8 +367,8 @@ void cDynamic_Creature::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)
 	if (frameIndicator > m_nGraphicCounterX + m_nGraphicAmountFrames || frameIndicator <= m_nGraphicCounterX)   // <==
 	{
 
-		frameIndicator = m_nGraphicCounterX;
-	//	setEnum();
+		setEnum();        // when indicator higher than should be we update animation
+		frameIndicator = m_nGraphicCounterX;  // sit frame indicator in start 
 	}
 
 	int NextRow = frameIndicator / spriteWidth;
@@ -377,7 +377,7 @@ void cDynamic_Creature::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy)
 	nSheetOffsetY = (m_nGraphicCounterY+NextRow) *nSheetSizeX;
 
 
-	//std::cout << nSheetOffsetY/ nSheetSizeY <<'\t'<< nSheetOffsetX / nSheetSizeY << std::endl;
+	
 
 	/// //////
 
@@ -1409,6 +1409,7 @@ void cDynamic_creature_Bandit::ReturnToPool()
 		this->sName = "Bandit";
 		this->nHealth = this->nHealthMax;
 		g_engine->PoolsController(g_engine->getBanditsPool(), this);
+		g_engine->PlaySounds("BanditDeathSound");
 	};
 }
 
@@ -2048,7 +2049,7 @@ void cDynamic_creature_Pantir::Behaviour(float fElapsedTime, cDynamic* player)
 	else
 	{
 	energyCount += fElapsedTime * 35.0f;
-	rageCount += fElapsedTime * 2.5f;
+	rageCount += fElapsedTime * 4.5f;
 
 	if (Combocounter >0)    // logic for combos
 	{
@@ -2066,14 +2067,14 @@ void cDynamic_creature_Pantir::Behaviour(float fElapsedTime, cDynamic* player)
 	{
 		
 		energyAmount += (int)energyCount;
-		energyCount = 0.0f;		
+		energyCount -= 1.0f;		
 	}
 
 
 	if (rageCount >= 1)
 	{
 		rageAmount -= (int)rageCount;
-		rageCount = 0.0f;
+		rageCount -= 1.0f;
 	}
 
 	if (energyAmount >= MaxEnergy )
@@ -2083,12 +2084,7 @@ void cDynamic_creature_Pantir::Behaviour(float fElapsedTime, cDynamic* player)
 	if (energyAmount <= 0 )
 		energyAmount = 0;	
 	
-	if (!checkFlag(isAttack))
-	{
 
-	EnergyUIManagment();
-	RageUIManagment();
-	}
 
 	if ( rageAmount >= MaxRage)
 		rageAmount = MaxRage;
@@ -2115,8 +2111,7 @@ void cDynamic_creature_Pantir::Behaviour(float fElapsedTime, cDynamic* player)
 
 	}
 	
-
-	g_engine->SetBackStab(false);
+	g_engine->clearBackstabUiFlags();
 }
 
 
@@ -2368,7 +2363,7 @@ void cDynamic_creature_BanditArcher::ReturnToPool()
 		g_engine->PoolsController(g_engine->getBanditsArcherPool(), this);
 
 
-		g_engine->PlaySounds("BanditDeathSound");
+
 	}
 }
 
@@ -2665,18 +2660,18 @@ void cDynamic_Projectile::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy
 		animspr -= framespeed;
 	}
 
-	if (agrsr != nullptr && repitable == true)
-	{
-		Frameindicator = Frameindicator % 6;  // make a cycle
-			//fDuration = Frameindicator *0.1f+1;
-		
-	}
+
 	
 
 	if (checkFlag(IsThrow))  // when projectile on air we calculate angle 
 	{
-	
-	
+		if (agrsr != nullptr)
+		{
+			Frameindicator = Frameindicator % 6;  // make a cycle
+			//fDuration = Frameindicator *0.1f+1;
+
+		}
+		
 
 		gfx->DrawPartialRotatedDecal({ (px - ox) * (64.0f*g_engine->fscale),(py - oy) * (64.0f*g_engine->fscale) }, pSpriteRight, angle, { nSheetSize / 2 ,nSheetSize / 2 }, { (float)Frameindicator * nSheetSize,(float)m_GraphicState * nSheetSize }, { nSheetSize,nSheetSize });
 
@@ -2707,6 +2702,8 @@ void cDynamic_Projectile::DrawSelf(olc::PixelGameEngine* gfx, float ox, float oy
 
 void cDynamic_Projectile::Update(float fElapsedTime, cDynamic* player)
 {
+
+
 
 		animspr += fElapsedTime;
 		fDuration -= fElapsedTime;
@@ -2745,10 +2742,6 @@ void cDynamic_Projectile::Update(float fElapsedTime, cDynamic* player)
 	}
 
 
-		if (repitable)
-		{
-			fDuration = 0.3f;
-		}
 
 		if (checkFlag(bOnGround))  
 		{
@@ -2914,7 +2907,8 @@ void cDynamic_Projectile::SetFollowProjPos()
 
 	if (checkFlag(isprojfollow))
 	{
-
+		
+		
 
 		py = agrsr->py;
 		if (checkFlag(isprojEqualX)==false)
@@ -3625,8 +3619,8 @@ void cDynamic_creature_Pantir::RageMoveAttck()
 
 		FxColumn =4;
 
-		if ((g_engine->GetLearnedTalent(5)))
-			setFlag(Btarget);// <--- Set projectile take target enemy for blink or other
+	//	if ((g_engine->GetLearnedTalent(5)))
+	//		setFlag(Btarget);// <--- Set projectile take target enemy for blink or other
 
 
 		targetTime = 0.2f;
@@ -3651,8 +3645,8 @@ void cDynamic_creature_Pantir::RageMoveAttackUp()
 		rageset = 0;
 		Hittimes = 2;
 		//
-		if ((g_engine->GetLearnedTalent(5)))	
-		setFlag(Btarget);// <--- Set projectile take target enemy for blink or other
+	//	if ((g_engine->GetLearnedTalent(5)))	
+	//	setFlag(Btarget);// <--- Set projectile take target enemy for blink or other
 
 
 		targetTime = 0.2f;
@@ -4201,75 +4195,7 @@ bool cDynamic_creature_Pantir::ReductionAcceleration(float fElapsedTime)
 	return run;
 }
 
-void cDynamic_creature_Pantir::EnergyUIManagment()
-{
-	
 
-	if (g_engine->GetBackStab() == 1)
-	{
-		g_engine->setUiCurrSpell(RPG_Engine::DataStruct::SpellEnergyBackstab, 0);
-
-	}else if (energyAmount > 99)
-	{
-		g_engine->setUiCurrSpell(RPG_Engine::DataStruct::SpellEnergyHigh,0);
-
-	}
-	else if (energyAmount >66)
-	{
-		g_engine->setUiCurrSpell(RPG_Engine::DataStruct::SpellEnergyMid, 0);
-	}
-	else if (energyAmount >33)
-	{
-		g_engine->setUiCurrSpell(RPG_Engine::DataStruct::SpellEnergyLow, 0);
-	}else
-	{
-		g_engine->setUiCurrSpell(RPG_Engine::DataStruct::SpellEmpty, 0);
-	}
-
-}
-
-bool cDynamic_creature_Pantir::RageUIManagment()
-{
-	if (rageAmount > 35)
-	{
-
-	//	GetFacingDirectionVertical()
-
-		switch (GetFacingDirectionVertical())
-		{
-		case 1:  // <---Up
-
-
-			g_engine->setUiCurrSpell(RPG_Engine::DataStruct::SpellRageFligh, 1);
-			return true;
-			break;
-
-		case 0:  //<--Down
-			if (checkFlag(bOnGround))
-			{
-				g_engine->setUiCurrSpell(RPG_Engine::DataStruct::SpellRageUp, 1);
-				return true;
-				break;
-			}
-			g_engine->setUiCurrSpell(RPG_Engine::DataStruct::SpellRageFall, 1);
-			return true;
-			break;
-
-		case 3:
-			break;
-		}
-	
-		g_engine->setUiCurrSpell(RPG_Engine::DataStruct::SpellRageDown, 1);
-		return true;
-
-	}
-	else
-	{
-		g_engine->setUiCurrSpell(RPG_Engine::DataStruct::SpellEmpty, 1);
-		return true;
-	}
-	
-}
 
 void cDynamic_creature_Pantir::TakeAttributes(unsigned int attributes)
 {
@@ -4296,7 +4222,7 @@ void cDynamic_creature_Pantir::TakeAttributes(unsigned int attributes)
 
 void cDynamic_creature_Pantir::SubstracAttributes(unsigned int attributes)
 {
-
+	
 	// pEquipedBack->Attributes
 	uint8_t objAggil = (attributes >> 0) & 0xF;
 	uint8_t objInteleg = (attributes >> 4) & 0xF;
@@ -5257,7 +5183,7 @@ cDynamic_creature_Boar::cDynamic_creature_Boar() : cDynamic_creature_Enemy("Fore
 	setBasicStrength(30);
 	setBasicInt(13);
 	
-	SetEndMovement(20);
+	SetEndMovement(15);
 	calculateStats();
 	EndAverageAttack = LvlAverageAttack;
 
@@ -5271,14 +5197,11 @@ void cDynamic_creature_Boar::SpecAttack(float targetX, float targetY, float Dist
 {
 	setFlag(isAttack) ;
 	enumCounter = 4;     //  <---Attack
-	framespeed = 0.12f;
-
-
-	setFlag(bAnimAction);
-
 	
+	framespeed = 0.12f *0.5f;
+	setFlag(bAnimAction);
 	setFlag(isprojfollow);
-	 
+	setFlag(isprojEqualX);
 	
 	
 	
@@ -5343,6 +5266,15 @@ void cDynamic_creature_Boar::SpecAttack(float targetX, float targetY, float Dist
 	
 }
 
+void cDynamic_creature_Boar::PrepareProjectileData()
+{
+	setFlag(bAnimAction);
+	setFlag(isprojfollow);
+	setFlag(isprojEqualX);
+
+
+}
+
 void cDynamic_creature_Boar::Behaviour(float fElapsedTime, cDynamic* player)
 {
 
@@ -5359,7 +5291,7 @@ void cDynamic_creature_Boar::Behaviour(float fElapsedTime, cDynamic* player)
 		{
 			if (nHealth > 0)
 			{
-				if (fDistance < 9.0f && player->m_layer == Friend) // before target
+				if (fDistance < 9.0f ) // before target
 				{
 					
 
@@ -5373,7 +5305,11 @@ void cDynamic_creature_Boar::Behaviour(float fElapsedTime, cDynamic* player)
 
 							if (BRunready)
 							{
-								vx = savedFx * (getEndMovement() / 2);
+								vx = savedFx * getEndMovement();
+
+								PrepareProjectileData();
+								PerformAttack();
+
 
 							}
 							else
@@ -5483,10 +5419,9 @@ void cDynamic_creature_Boar::Behaviour(float fElapsedTime, cDynamic* player)
 		if (checkFlag(bOnGround))
 		{
 
-			if (M_nFacingDirection == EAST)
-			{
+			
 
-				if (!g_engine->CheckPosition(px + CollbordersXF + (vx * fElapsedTime), py + CollbordersY))
+				if (!g_engine->CheckPosition(px + CollbordersXF + (vx * fElapsedTime), py + CollbordersY) || !g_engine->CheckPosition(px + CollbordersX + (vx * fElapsedTime), py + CollbordersY))
 				{
 
 					vx = 0;
@@ -5497,22 +5432,8 @@ void cDynamic_creature_Boar::Behaviour(float fElapsedTime, cDynamic* player)
 					}
 
 				}
-			}
-			else
-			{
-
-				if (!g_engine->CheckPosition(px + CollbordersX + (vx * fElapsedTime), py + CollbordersY))
-				{
-
-					vx = 0;
-
-					if (BRunready)
-					{
-						obsticleReaction();
-					}
-				}
-
-			}
+			
+		
 
 		}
 
@@ -5575,7 +5496,7 @@ void cDynamic_creature_Boar::IndicateAnim()
 	switch (M_nGraphicState)
 	{
 	case Idle:
-		framespeed = 0.12f;
+		
 		enumCounter = 0;
 		m_nGraphicCounterY = 0;
 		m_nGraphicCounterX = 0;
@@ -5594,24 +5515,17 @@ void cDynamic_creature_Boar::IndicateAnim()
 
 		if (Run)
 		{
-			framespeed = 0.12f*0.5f;
+		
+			framespeed = 0.12f * 0.5f;
 			m_nGraphicCounterY = 1;
 			m_nGraphicCounterX = 10;
 			m_nGraphicAmountFrames = 16;
 		
 
-
-
-			if (animspr >= framespeed - EndHaste)                 //it's speed of frames
-			{
-			//std::cout << frameIndicator << std::endl;
-			PerformAttack();
-
-			}
 		}
 		else
 		{
-			framespeed = 0.12f;
+			
 			m_nGraphicCounterY = 5;
 			m_nGraphicCounterX = 0;
 			m_nGraphicAmountFrames = 9;
@@ -5625,7 +5539,7 @@ void cDynamic_creature_Boar::IndicateAnim()
 
 		break;
 	case Jump:
-		framespeed = 0.12f;
+		
 		enumCounter = 2;
 		m_nGraphicCounterY = 3;
 		m_nGraphicCounterX = 4;
@@ -5633,7 +5547,7 @@ void cDynamic_creature_Boar::IndicateAnim()
 	
 		break;
 	case JumpZenit:
-		framespeed = 0.12f;
+		
 		enumCounter = 10;
 		m_nGraphicCounterY = 0;
 		m_nGraphicCounterX = 8;
@@ -5661,7 +5575,7 @@ void cDynamic_creature_Boar::IndicateAnim()
 		
 		break;
 	case Attack:        // <-- (Horizontal Attack)
-		framespeed = 0.12f;
+	
 		enumCounter = 3;
 
 
@@ -5670,7 +5584,7 @@ void cDynamic_creature_Boar::IndicateAnim()
 		
 
 		
-
+		framespeed = 0.12f;
 		enumCounter = 4;
 		
 		
@@ -5744,6 +5658,7 @@ void cDynamic_creature_Boar::ReturnToPool()
 		Run = false;
 		BRunready = false;
 		savedFx = 0.0f;
+		framespeed = 0.12f;
 		g_engine->PoolsController(g_engine->getBoarPool(), this);
 	}
 }
@@ -5794,23 +5709,24 @@ void VfxDeath::Update(float fElapsedTime, cDynamic* player)
 		AlphaColor = 0;
 	}
 	
+	if (currpicturePos != framepositions.second)
+	{
+		this->vx += vxMult * fElapsedTime;
+		this->vy += 32 * fElapsedTime;
 
-	this->vx += vxMult * fElapsedTime;
-	this->vy += 32 * fElapsedTime;
-	
-	
-	float fNewObjectPosX = this->px + this->vx * fElapsedTime;
-	float fNewObjectPosY = this->py + this->vy * fElapsedTime;
-	
 
-		if (g_engine->CheckParticlePosition(fNewObjectPosX+(CollbordersXF-CollbordersX), fNewObjectPosY+CollbordersYF)) // checkPosition on solidblocks  if @true@ means that we can teleport
+		float fNewObjectPosX = this->px + this->vx * fElapsedTime;
+		float fNewObjectPosY = this->py + this->vy * fElapsedTime;
+
+
+		if (g_engine->CheckParticlePosition(fNewObjectPosX + (CollbordersXF - CollbordersX), fNewObjectPosY + CollbordersYF)) // checkPosition on solidblocks  if @true@ means that we can teleport
 		{
-		//	object->vy += object->mass * fElapsedTime;
+			//	object->vy += object->mass * fElapsedTime;
 
-			
-			this->px =fNewObjectPosX;
-			this->py =fNewObjectPosY;
-		
+
+			this->px = fNewObjectPosX;
+			this->py = fNewObjectPosY;
+
 			currpicturePos = framepositions.first;
 		}
 		else
@@ -5818,7 +5734,7 @@ void VfxDeath::Update(float fElapsedTime, cDynamic* player)
 			//float fAngle = atan2f(this->vy, this->vx);
 
 			//
-		
+
 			//	fResponseX = cosf(fAngle);
 			//	fResponseY = sinf(fAngle);
 
@@ -5833,11 +5749,12 @@ void VfxDeath::Update(float fElapsedTime, cDynamic* player)
 
 			//setFlag(bOnGround);
 
-			this->vy -= vxMult * fElapsedTime;
-			this->vx -= 32 * fElapsedTime;
+			this->vy = 0;
+			this->vx = 0;
 			currpicturePos = framepositions.second;
+			clearFlag(gravity);
 		}
-	
+	}
 	
 }
 

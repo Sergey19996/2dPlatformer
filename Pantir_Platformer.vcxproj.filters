@@ -54,6 +54,9 @@
     <ClCompile Include="PerlinNoise.cpp">
       <Filter>Файлы ресурсов</Filter>
     </ClCompile>
+    <ClCompile Include="TalentController.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RPG_Engine.h">
@@ -95,6 +98,15 @@
     <ClInclude Include="PerlinNoise.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="InventorySocket.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="TalentController.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\config.lua">
@@ -108,5 +120,18 @@
     <Text Include="vertex_shader.glsl">
       <Filter>Файлы заголовков</Filter>
     </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="resources.rc">
+      <Filter>Файлы ресурсов</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="icon1.ico">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="Pantir%27sDagger.ico">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
   </ItemGroup>
 </Project>

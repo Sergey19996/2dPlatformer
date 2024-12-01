@@ -396,7 +396,7 @@ int main()
 #include <algorithm>
 #include <array>
 #include <cstring>
-
+#include "resource.h"
 #pragma endregion
 
 #define PGE_VER 224
@@ -921,7 +921,7 @@ namespace olc
 		virtual void       DisplayFrame() = 0;
 		virtual void       PrepareDrawing() = 0;
 		virtual void	   SetDecalMode(const olc::DecalMode& mode) = 0;
-		virtual void       DrawLayerQuad(const olc::vf2d& offset, const olc::vf2d& scale, const olc::Pixel tint) = 0;
+		virtual void       DrawLayerQuad(const olc::vf2d& offset, const olc::vf2d& fscale, const olc::Pixel tint) = 0;
 		virtual void       DrawDecal(const olc::DecalInstance& decal) = 0;
 		virtual uint32_t   CreateTexture(const uint32_t width, const uint32_t height, const bool filtered = false, const bool clamp = true) = 0;
 		virtual void       UpdateTexture(uint32_t id, olc::Sprite* spr) = 0;
@@ -1041,7 +1041,7 @@ namespace olc
 		void EnableLayer(uint8_t layer, bool b);
 		void SetLayerOffset(uint8_t layer, const olc::vf2d& offset);
 		void SetLayerOffset(uint8_t layer, float x, float y);
-		void SetLayerScale(uint8_t layer, const olc::vf2d& scale);
+		void SetLayerScale(uint8_t layer, const olc::vf2d& fscale);
 		void SetLayerScale(uint8_t layer, float x, float y);
 		void SetLayerTint(uint8_t layer, const olc::Pixel& tint);
 		void SetLayerCustomRenderFunction(uint8_t layer, std::function<void()> f);
@@ -1091,28 +1091,28 @@ namespace olc
 		void FillTexturedTriangle(std::vector<olc::vf2d> vPoints, std::vector<olc::vf2d> vTex, std::vector<olc::Pixel> vColour, olc::Sprite* sprTex);
 		void FillTexturedPolygon(const std::vector<olc::vf2d>& vPoints, const std::vector<olc::vf2d>& vTex, const std::vector<olc::Pixel>& vColour, olc::Sprite* sprTex, olc::DecalStructure structure = olc::DecalStructure::LIST);
 		// Draws an entire sprite at location (x,y)
-		void DrawSprite(int32_t x, int32_t y, Sprite* sprite, uint32_t scale = 1, uint8_t flip = olc::Sprite::NONE);
-		void DrawSprite(const olc::vi2d& pos, Sprite* sprite, uint32_t scale = 1, uint8_t flip = olc::Sprite::NONE);
+		void DrawSprite(int32_t x, int32_t y, Sprite* sprite, uint32_t fscale = 1, uint8_t flip = olc::Sprite::NONE);
+		void DrawSprite(const olc::vi2d& pos, Sprite* sprite, uint32_t fscale = 1, uint8_t flip = olc::Sprite::NONE);
 		// Draws an area of a sprite at location (x,y), where the
 		// selected area is (ox,oy) to (ox+w,oy+h)
-		void DrawPartialSprite(int32_t x, int32_t y, Sprite* sprite, int32_t ox, int32_t oy, int32_t w, int32_t h, uint32_t scale = 1, uint8_t flip = olc::Sprite::NONE);
-		void DrawPartialSprite(const olc::vi2d& pos, Sprite* sprite, const olc::vi2d& sourcepos, const olc::vi2d& size, uint32_t scale = 1, uint8_t flip = olc::Sprite::NONE);
+		void DrawPartialSprite(int32_t x, int32_t y, Sprite* sprite, int32_t ox, int32_t oy, int32_t w, int32_t h, uint32_t fscale = 1, uint8_t flip = olc::Sprite::NONE);
+		void DrawPartialSprite(const olc::vi2d& pos, Sprite* sprite, const olc::vi2d& sourcepos, const olc::vi2d& size, uint32_t fscale = 1, uint8_t flip = olc::Sprite::NONE);
 		// Draws a single line of text - traditional monospaced
-		void DrawString(int32_t x, int32_t y, const std::string& sText, Pixel col = olc::WHITE, uint32_t scale = 1);
-		void DrawString(const olc::vi2d& pos, const std::string& sText, Pixel col = olc::WHITE, uint32_t scale = 1);
+		void DrawString(int32_t x, int32_t y, const std::string& sText, Pixel col = olc::WHITE, uint32_t fscale = 1);
+		void DrawString(const olc::vi2d& pos, const std::string& sText, Pixel col = olc::WHITE, uint32_t fscale = 1);
 		olc::vi2d GetTextSize(const std::string& s);
 		// Draws a single line of text - non-monospaced
-		void DrawStringProp(int32_t x, int32_t y, const std::string& sText, Pixel col = olc::WHITE, uint32_t scale = 1);
-		void DrawStringProp(const olc::vi2d& pos, const std::string& sText, Pixel col = olc::WHITE, uint32_t scale = 1);
+		void DrawStringProp(int32_t x, int32_t y, const std::string& sText, Pixel col = olc::WHITE, uint32_t fscale = 1);
+		void DrawStringProp(const olc::vi2d& pos, const std::string& sText, Pixel col = olc::WHITE, uint32_t fscale = 1);
 		olc::vi2d GetTextSizeProp(const std::string& s);
 
 		// Decal Quad functions
 		void SetDecalMode(const olc::DecalMode& mode);
 		void SetDecalStructure(const olc::DecalStructure& structure);
 		// Draws a whole decal, with optional scale and tinting
-		void DrawDecal(const olc::vf2d& pos, olc::Decal* decal, const olc::vf2d& scale = { 1.0f,1.0f }, const olc::Pixel& tint = olc::WHITE);
+		void DrawDecal(const olc::vf2d& pos, olc::Decal* decal, const olc::vf2d& fscale = { 1.0f,1.0f }, const olc::Pixel& tint = olc::WHITE);
 		// Draws a region of a decal, with optional scale and tinting
-		void DrawPartialDecal(const olc::vf2d& pos, olc::Decal* decal, const olc::vf2d& source_pos, const olc::vf2d& source_size, const olc::vf2d& scale = { 1.0f,1.0f }, const olc::Pixel& tint = olc::WHITE);
+		void DrawPartialDecal(const olc::vf2d& pos, olc::Decal* decal, const olc::vf2d& source_pos, const olc::vf2d& source_size, const olc::vf2d& fscale = { 1.0f,1.0f }, const olc::Pixel& tint = olc::WHITE);
 		void DrawPartialDecal(const olc::vf2d& pos, const olc::vf2d& size, olc::Decal* decal, const olc::vf2d& source_pos, const olc::vf2d& source_size, const olc::Pixel& tint = olc::WHITE);
 		
 		// Extend DrawPartialDecal to accept batches
@@ -1155,11 +1155,11 @@ namespace olc
 		void DrawPartialWarpedDecal(olc::Decal* decal, const olc::vf2d* pos, const olc::vf2d& source_pos, const olc::vf2d& source_size, const olc::Pixel& tint = olc::WHITE);
 		void DrawPartialWarpedDecal(olc::Decal* decal, const std::array<olc::vf2d, 4>& pos, const olc::vf2d& source_pos, const olc::vf2d& source_size, const olc::Pixel& tint = olc::WHITE);
 		// Draws a decal rotated to specified angle, wit point of rotation offset
-		void DrawRotatedDecal(const olc::vf2d& pos, olc::Decal* decal, const float fAngle, const olc::vf2d& center = { 0.0f, 0.0f }, const olc::vf2d& scale = { 1.0f,1.0f }, const olc::Pixel& tint = olc::WHITE);
-		void DrawPartialRotatedDecal(const olc::vf2d& pos, olc::Decal* decal, const float fAngle, const olc::vf2d& center, const olc::vf2d& source_pos, const olc::vf2d& source_size, const olc::vf2d& scale = { 1.0f, 1.0f }, const olc::Pixel& tint = olc::WHITE);
+		void DrawRotatedDecal(const olc::vf2d& pos, olc::Decal* decal, const float fAngle, const olc::vf2d& center = { 0.0f, 0.0f }, const olc::vf2d& fscale = { 1.0f,1.0f }, const olc::Pixel& tint = olc::WHITE);
+		void DrawPartialRotatedDecal(const olc::vf2d& pos, olc::Decal* decal, const float fAngle, const olc::vf2d& center, const olc::vf2d& source_pos, const olc::vf2d& source_size, const olc::vf2d& fscale = { 1.0f, 1.0f }, const olc::Pixel& tint = olc::WHITE);
 		// Draws a multiline string as a decal, with tiniting and scaling
-		void DrawStringDecal(const olc::vf2d& pos, const std::string& sText, const Pixel col = olc::WHITE, const olc::vf2d& scale = { 1.0f, 1.0f });
-		void DrawStringPropDecal(const olc::vf2d& pos, const std::string& sText, const Pixel col = olc::WHITE, const olc::vf2d& scale = { 1.0f, 1.0f });
+		void DrawStringDecal(const olc::vf2d& pos, const std::string& sText, const Pixel col = olc::WHITE, const olc::vf2d& fscale = { 1.0f, 1.0f });
+		void DrawStringPropDecal(const olc::vf2d& pos, const std::string& sText, const Pixel col = olc::WHITE, const olc::vf2d& fscale = { 1.0f, 1.0f });
 		// Draws a single shaded filled rectangle as a decal
 		void DrawRectDecal(const olc::vf2d& pos, const olc::vf2d& size, const olc::Pixel col = olc::WHITE);
 		void FillRectDecal(const olc::vf2d& pos, const olc::vf2d& size, const olc::Pixel col = olc::WHITE);
@@ -1172,8 +1172,8 @@ namespace olc
 		void DrawPolygonDecal(olc::Decal* decal, const std::vector<olc::vf2d>& pos, const std::vector<olc::vf2d>& uv, const std::vector<olc::Pixel>& colours, const olc::Pixel tint);
 		// Draws a line in Decal Space
 		void DrawLineDecal(const olc::vf2d& pos1, const olc::vf2d& pos2, Pixel p = olc::WHITE);
-		void DrawRotatedStringDecal(const olc::vf2d& pos, const std::string& sText, const float fAngle, const olc::vf2d& center = { 0.0f, 0.0f }, const olc::Pixel col = olc::WHITE, const olc::vf2d& scale = { 1.0f, 1.0f });
-		void DrawRotatedStringPropDecal(const olc::vf2d& pos, const std::string& sText, const float fAngle, const olc::vf2d& center = { 0.0f, 0.0f }, const olc::Pixel col = olc::WHITE, const olc::vf2d& scale = { 1.0f, 1.0f });
+		void DrawRotatedStringDecal(const olc::vf2d& pos, const std::string& sText, const float fAngle, const olc::vf2d& center = { 0.0f, 0.0f }, const olc::Pixel col = olc::WHITE, const olc::vf2d& fscale = { 1.0f, 1.0f });
+		void DrawRotatedStringPropDecal(const olc::vf2d& pos, const std::string& sText, const float fAngle, const olc::vf2d& center = { 0.0f, 0.0f }, const olc::Pixel col = olc::WHITE, const olc::vf2d& fscale = { 1.0f, 1.0f });
 		// Clears entire draw target to Pixel
 		void Clear(Pixel p);
 		// Clears the rendering back buffer
@@ -5467,6 +5467,8 @@ namespace olc
 
 
 	public:
+
+
 		virtual olc::rcode ApplicationStartUp() override { return olc::rcode::OK; }
 		virtual olc::rcode ApplicationCleanUp() override { return olc::rcode::OK; }
 		virtual olc::rcode ThreadStartUp() override { return olc::rcode::OK; }
@@ -5493,10 +5495,10 @@ namespace olc
 		{
 			// Настраиваем параметры класса окна
 			WNDCLASS wc;
-			wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);   // Иконка окна
 			wc.hCursor = LoadCursor(NULL, IDC_ARROW);     // Курсор по умолчанию
 			wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC; // Стили окна для перерисовки при изменении размеров
 			wc.hInstance = GetModuleHandle(nullptr);      // Получаем идентификатор текущего модуля
+			wc.hIcon = LoadIcon(wc.hInstance, MAKEINTRESOURCE(IDI_ICON));   // Иконка окна
 			wc.lpfnWndProc = olc_WindowEvent;             // Функция для обработки событий окна
 			wc.cbClsExtra = 0;
 			wc.cbWndExtra = 0;

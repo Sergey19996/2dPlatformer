@@ -466,12 +466,12 @@ STBIDEF stbi_us *stbi_load_from_file_16(FILE *f, int *x, int *y, int *channels_i
 
 #ifndef STBI_NO_HDR
    STBIDEF void   stbi_hdr_to_ldr_gamma(float gamma);
-   STBIDEF void   stbi_hdr_to_ldr_scale(float scale);
+   STBIDEF void   stbi_hdr_to_ldr_scale(float fscale);
 #endif // STBI_NO_HDR
 
 #ifndef STBI_NO_LINEAR
    STBIDEF void   stbi_ldr_to_hdr_gamma(float gamma);
-   STBIDEF void   stbi_ldr_to_hdr_scale(float scale);
+   STBIDEF void   stbi_ldr_to_hdr_scale(float fscale);
 #endif // STBI_NO_LINEAR
 
 // stbi_is_hdr is always defined, but always returns false if STBI_NO_HDR
@@ -1573,13 +1573,13 @@ STBIDEF int      stbi_is_hdr_from_callbacks(stbi_io_callbacks const *clbk, void 
 static float stbi__l2h_gamma=2.2f, stbi__l2h_scale=1.0f;
 
 STBIDEF void   stbi_ldr_to_hdr_gamma(float gamma) { stbi__l2h_gamma = gamma; }
-STBIDEF void   stbi_ldr_to_hdr_scale(float scale) { stbi__l2h_scale = scale; }
+STBIDEF void   stbi_ldr_to_hdr_scale(float fscale) { stbi__l2h_scale = fscale; }
 #endif
 
 static float stbi__h2l_gamma_i=1.0f/2.2f, stbi__h2l_scale_i=1.0f;
 
 STBIDEF void   stbi_hdr_to_ldr_gamma(float gamma) { stbi__h2l_gamma_i = 1/gamma; }
-STBIDEF void   stbi_hdr_to_ldr_scale(float scale) { stbi__h2l_scale_i = 1/scale; }
+STBIDEF void   stbi_hdr_to_ldr_scale(float fscale) { stbi__h2l_scale_i = 1/fscale; }
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -4788,7 +4788,7 @@ static int stbi__create_png_image_raw(stbi__png *a, stbi_uc *raw, stbi__uint32 r
 
       // expand decoded bits in cur to dest, also adding an extra alpha channel if desired
       if (depth < 8) {
-         stbi_uc scale = (color == 0) ? stbi__depth_scale_table[depth] : 1; // scale grayscale values to 0..255 range
+         stbi_uc fscale = (color == 0) ? stbi__depth_scale_table[depth] : 1; // scale grayscale values to 0..255 range
          stbi_uc *in = cur;
          stbi_uc *out = dest;
          stbi_uc inb = 0;
@@ -4798,20 +4798,20 @@ static int stbi__create_png_image_raw(stbi__png *a, stbi_uc *raw, stbi__uint32 r
          if (depth == 4) {
             for (i=0; i < nsmp; ++i) {
                if ((i & 1) == 0) inb = *in++;
-               *out++ = scale * (inb >> 4);
+               *out++ = fscale * (inb >> 4);
                inb <<= 4;
             }
          } else if (depth == 2) {
             for (i=0; i < nsmp; ++i) {
                if ((i & 3) == 0) inb = *in++;
-               *out++ = scale * (inb >> 6);
+               *out++ = fscale * (inb >> 6);
                inb <<= 2;
             }
          } else {
             STBI_ASSERT(depth == 1);
             for (i=0; i < nsmp; ++i) {
                if ((i & 7) == 0) inb = *in++;
-               *out++ = scale * (inb >> 7);
+               *out++ = fscale * (inb >> 7);
                inb <<= 1;
             }
          }

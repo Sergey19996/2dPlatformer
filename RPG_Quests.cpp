@@ -93,7 +93,7 @@ bool cQuset_MainQuest::PopulateDynamics(std::vector<cDynamic*>& vecDyns, std::st
 		
 			g_script->AddCommand(new cComand_moveTo(vecDyns[0], 6,25.5, 1));
 			g_script->AddCommand(new cComand_ShowDialog({ "StoryTeller:","And our hero ended up in ","the forest" }));
-		//	g_script->AddCommand(new cComand_SaverFunction());
+			g_script->AddCommand(new cComand_SaverFunction());
 
 
 			m_nPhase = 1;
@@ -519,13 +519,8 @@ cQuset_KeyPointsInVillage::cQuset_KeyPointsInVillage()
 	m_nPhase = 0;
 	sName = "KeyPoints";
 	SaveSlot = 4;
-	sVisLux = g_engine->GetNpc(RPG_Engine::NpcStruct::luxary);
-	sVisMap = g_engine->GetNpc(RPG_Engine::NpcStruct::Map);
-	sVisSave = g_engine->GetNpc(RPG_Engine::NpcStruct::SaveMan);
-	sVisBlackSmith = g_engine->GetNpc(RPG_Engine::NpcStruct::blacksmith);
-	sVisTrainer = g_engine->GetNpc(RPG_Engine::NpcStruct::proffesion);
-	sVisWerehouse = g_engine->GetNpc(RPG_Engine::NpcStruct::Warehouse);
-	updateQuestNaming();
+	makeActual();
+	
 }
 
 bool cQuset_KeyPointsInVillage::OnInteraction(std::vector<cDynamic*>& vecDynobs, cDynamic* target, NATURE Nature)
@@ -536,6 +531,7 @@ bool cQuset_KeyPointsInVillage::OnInteraction(std::vector<cDynamic*>& vecDynobs,
 
 		VisitSave = true;
 		sVisSave = nullptr;
+		namesAr[3] = "-";
 		updateQuestNaming();
 	}
 
@@ -543,46 +539,51 @@ bool cQuset_KeyPointsInVillage::OnInteraction(std::vector<cDynamic*>& vecDynobs,
 	{
 		g_script->AddCommand(new cComand_ShowDialog({ "Warehouse:","Here we can Keep Our Goods..." }));
 		g_script->AddCommand((new cComand_SetNgameMod(2)));
-		g_script->AddCommand((new cComand_SetPause(1)));
+	//	g_script->AddCommand((new cComand_SetPause(1)));
 		VisitWerehouse = true;
-		sVisWerehouse = nullptr;
+		namesAr[4] = "-";
 		updateQuestNaming();
+		sVisWerehouse = nullptr;
 	}
 	if (target == sVisLux && Nature == TALK&& VisitiLux ==false)   // After Killing Bandit Boss in Village of fire
 	{
 		g_script->AddCommand(new cComand_ShowDialog({ "Luxary:","Here we can Bye Usefool items..." }));
 		g_script->AddCommand((new cComand_SetNgameMod(4)));
-		g_script->AddCommand((new cComand_SetPause(1)));
+	//	g_script->AddCommand((new cComand_SetPause(1)));
 		VisitiLux = true;
-		sVisLux = nullptr;
+		namesAr[0] = "-";
 		updateQuestNaming();
+		sVisLux = nullptr;
 	}
 	if (target == sVisBlackSmith && Nature == TALK && VisitBlacksmith ==false)   // After Killing Bandit Boss in Village of fire
 	{
 		g_script->AddCommand(new cComand_ShowDialog({ "BlackSmith:","Here we can Craft items..." }));
 		VisitBlacksmith = true;
-		sVisBlackSmith =nullptr;
+		namesAr[1] = "-";
 		updateQuestNaming();
+		sVisBlackSmith =nullptr;
 	}
 	if (target == sVisMap && Nature == TALK && VisitMap == false)   // After Killing Bandit Boss in Village of fire
 	{
 		g_script->AddCommand(new cComand_ShowDialog({ "Map:","Here we can Travel in other places..." }));
 		g_script->AddCommand(new cComand_ShowDialog({ "Map:","But beware...","Must be strong enough to get in other places"}));
 		g_script->AddCommand((new cComand_SetNgameMod(5)));
-		g_script->AddCommand((new cComand_SetPause(1)));
+	//	g_script->AddCommand((new cComand_SetPause(1)));
 		VisitMap = true;
-		sVisMap = nullptr;
+		namesAr[5] = "-";
 		updateQuestNaming();
+		sVisMap = nullptr;
 	}
 	if (target== sVisTrainer && Nature == TALK && VisitTrainer == false)   // After Killing Bandit Boss in Village of fire
 	{
 		g_script->AddCommand(new cComand_ShowDialog({ "ProfessionTrainer:","Hello..." }));
 		g_script->AddCommand(new cComand_ShowDialog({ "ProfessionTrainer:","I help you Teach...","New abilities..." }));
 		g_script->AddCommand((new cComand_SetNgameMod(6)));
-		g_script->AddCommand((new cComand_SetPause(1)));
+	//	g_script->AddCommand((new cComand_SetPause(1)));
 		VisitTrainer = true;
-		sVisTrainer = nullptr;
+		namesAr[2] = "-";
 		updateQuestNaming();
+		sVisTrainer = nullptr;
 	}
 
 	if (VisitMap && VisitBlacksmith && VisitiLux && VisitWerehouse && VisitSave && VisitTrainer)
@@ -599,6 +600,26 @@ bool cQuset_KeyPointsInVillage::OnInteraction(std::vector<cDynamic*>& vecDynobs,
 void cQuset_KeyPointsInVillage::updateQuestNaming()
 {
 	
-		sDescription = sVisLux->sName + "\n" + sVisBlackSmith->sName + "\n" + sVisTrainer->sName + "\n" + sVisSave->sName + "\n" + sVisWerehouse->sName + "\n" + sVisMap->sName;
+		sDescription = namesAr[0] + "\n" + namesAr[1] + "\n" + namesAr[2] + "\n" + namesAr[3] + "\n" + namesAr[4] + "\n" + namesAr[5];
 
+
+}
+
+void cQuset_KeyPointsInVillage::makeActual()
+{
+
+	sVisLux = g_engine->GetNpc(RPG_Engine::NpcStruct::luxary);
+	sVisMap = g_engine->GetNpc(RPG_Engine::NpcStruct::Map);
+	sVisSave = g_engine->GetNpc(RPG_Engine::NpcStruct::SaveMan);
+	sVisBlackSmith = g_engine->GetNpc(RPG_Engine::NpcStruct::blacksmith);
+	sVisTrainer = g_engine->GetNpc(RPG_Engine::NpcStruct::proffesion);
+	sVisWerehouse = g_engine->GetNpc(RPG_Engine::NpcStruct::Warehouse);
+	
+	namesAr[0] = sVisLux->sName;
+	namesAr[1] = sVisBlackSmith->sName;
+	namesAr[2] = sVisTrainer->sName;
+	namesAr[3] = sVisSave->sName;
+	namesAr[4] = sVisWerehouse->sName;
+	namesAr[5] = sVisMap->sName;
+	updateQuestNaming();
 }

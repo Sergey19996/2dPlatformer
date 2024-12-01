@@ -114,7 +114,7 @@ void RPG_Assets::playMusic(const std::string& filename, bool loop)
 {
 	if (music.openFromFile(filename)) {
 		music.setLoop(loop);
-		music.setVolume(10);
+		//music.setVolume(50);
 		music.play();
 	}
 	else {
@@ -356,9 +356,11 @@ void RPG_Assets::LoadItems()
 //	load(new  cBaseNeck());
 //	load(new  cBaseBoots());
 
+	load(new cItem("Broken Sword", RPG_Assets::get().GetSprite("Items"), "it seems the sword was\nbroken quite a long time\nago\n",67, true));
 
 	load(new cWeapon("Pantir's Dagger", RPG_Assets::get().GetSprite("Items"), RPG_Assets::get().GetSprite("Pantir's DaggerLeftFx"), RPG_Assets::get().GetSprite("Pantir's DaggerRightFx"), "+5 Dmg        \n", 5, 0, 0, 0, 0, 64, 3,1));
-	load(new cWeapon("Broken Sword", RPG_Assets::get().GetSprite("Items"), RPG_Assets::get().GetSprite("Pantir's DaggerLeftFx"), RPG_Assets::get().GetSprite("Pantir's DaggerRightFx"), "it seems the sword was\nbroken quite a long time\nago\n", 10, 0, 0, 0, 0, 67, 3,1));
+
+	//load(new cWeapon("Broken Sword", RPG_Assets::get().GetSprite("Items"), RPG_Assets::get().GetSprite("Pantir's DaggerLeftFx"), RPG_Assets::get().GetSprite("Pantir's DaggerRightFx"), "it seems the sword was\nbroken quite a long time\nago\n", 10, 0, 0, 0, 0, 67, 3,1));
 	load(new cWeapon("Bandit Sword", RPG_Assets::get().GetSprite("Items"), RPG_Assets::get().GetSprite("Bandit SwordLeftFx"), RPG_Assets::get().GetSprite("Bandit SwordRightFx"), "usually these kind of swords\nare used by bandits", 8, 0, 0, 0, 0,67,3,1));
 	load(new cWeapon("Bandit Boss Sword", RPG_Assets::get().GetSprite("Items"), RPG_Assets::get().GetSprite("Bandit Boss SwordLeftFx"), RPG_Assets::get().GetSprite("Bandit Boss SwordRightFx"), "usually these kind of swords \nare used by bandits\n", 10, 0, 0, 0, 0,67,3,3));
 
@@ -390,39 +392,44 @@ void RPG_Assets::LoadUiElements()
 		m_mapUiElements[z->sName] = z;
 	};
 
-	//
-	load(new cExperience());
-	load(new cLevel());
-	load(new cNumber());
-	//
 
+	//load(new NotEnergyEvent());
+	//load(new NotRageEvent());
+	//load(new QuestCompleted());
+	load(new Event("NotEnergy", { 480,431 }, { 160,17 }));
+	load(new Event("NotRage", { 480,449 }, { 141,16 }));
+	load(new Event("QuestCompleted", { 480,465 }, { 151,17 }));
 
-	load(new cRightAttackAir());
-	load(new cRightAttack());
-	load(new cRightFlightUp());
-	load(new cRightEpicLanding());
+	load(new UIMainRect());    //  <-- бэк в мейн меню  важно, что бы был выше кнопок, так как у них есть ссылки на него
+	load(new UIOptionRect());
 
+	load(new UIStartButton());
+	load(new UIContinueButton());
+	load(new UIOptionButton());
+	load(new UIQuitButton());
+	load(new UIFullScreenButton());
+	load(new UIExitButton());
 
-	load(new cAttacBack());
-	load(new cSwirlAttack());
+	load(new UISoundScroller());
+	load(new UIMusicScroller());
 
+	load(new UIGameRect());
 
-	load(new cAttackHigh());
-	load(new cAttackLow());
-	load(new cAttackMid());
+	load(new UITalentIcon());
+	load(new UIInventoryIcon());
+	load(new UIQuestIcon());
 
-	load(new cVanish());
+	load(new UITalentRect);
 
-	load(new cStepBack());
+	load(new UICurrentEnergySpell());
+	load(new UICurrRageSpell());
 
-	load(new cNewEnergyIndicator( 0, 33, -86, "_1"));   //Easy indicator
-	load(new cNewEnergyIndicator(1, 50 - (0.6 * 50)+33,-86,"_2"));  // Mid
-	load(new cNewEnergyIndicator(2, 2 * (50 - (0.6 * 50))+33,-86,"_3")); //Hard
+	load(new UIEnergyIndicator());
+	load(new UIRageIndicator());
+	load(new UIExperienceIndicator());
 
-	load(new cNewRageIndicator(0, 33, -26, "_1"));   //Easy indicator
-	load(new cNewRageIndicator(1, 50 - (0.6 * 50) + 33, -26, "_2"));  // Mid
-	load(new cNewRageIndicator(2, 2 * (50 - (0.6 * 50)) + 33,  -26, "_3")); //Hard
-
+	load(new UIFastSlot("FirstSlot",14,14));
+	load(new UIFastSlot("SecondSlot", 14, 33));
 
 	//load(new cSpellPlace());
 

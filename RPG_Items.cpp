@@ -4,9 +4,9 @@
 RPG_Engine* cItem::g_engine = nullptr;
 
 
-cItem::cItem(std::string name, olc::Decal* decal, std::string desc)
+cItem::cItem(std::string name, olc::Decal* decal, std::string desc,  uint32_t sprtindex,bool keyitem)
 {
-	sName = name; pSprite = decal; sDescription = desc;
+	sName = name; pSprite = decal; sDescription = desc; bKeyItem = keyitem; spriteindex = sprtindex;
 }
 
 cItem::cItem(const cItem& p)
@@ -152,13 +152,13 @@ bool cWeapon::OnUse(cDynamic* object, bool toggle)
 	return false;
 }
 
-cGold::cGold(std::string name, olc::Decal* sprite, std::string desc, int amount) : cItem(name, sprite, desc)
+cGold::cGold(std::string name, olc::Decal* sprite, std::string desc, int amount) : cItem(name, sprite, desc,3)
 {
 	this->GoldCount = amount;
 
-	spriteindex = 3;
+	//spriteindex = 3;
 
-	bKeyItem = true;
+	//bKeyItem = true;
 
 	Gold = 0;   // when we take it in inventary we add it
 	
@@ -318,7 +318,7 @@ bool cSmallWallet::OnSell()
 	return false;
 }
 
-cEquip::cEquip(std::string name, olc::Decal* sprite, std::string desc, uint8_t dmg, uint8_t aglty, uint8_t inteleg, uint8_t versality, uint8_t strength, uint32_t sprtindex, uint8_t equipindex, uint8_t price ) : cItem(name, sprite, desc)
+cEquip::cEquip(std::string name, olc::Decal* sprite, std::string desc, uint8_t dmg, uint8_t aglty, uint8_t inteleg, uint8_t versality, uint8_t strength, uint32_t sprtindex, uint8_t equipindex, uint8_t price ) : cItem(name, sprite, desc, sprtindex,false)
 {
 
 	// Ограничим значения 4 битами (диапазон от 0 до 15)
@@ -330,7 +330,6 @@ cEquip::cEquip(std::string name, olc::Decal* sprite, std::string desc, uint8_t d
 
 
 	equipIndex = equipindex;
-	spriteindex = sprtindex;
 	sTradePrice = price;
 
 
@@ -389,7 +388,7 @@ bool cEquip::OnCraft(bool click)
 
 
 
-cEmptySlot::cEmptySlot() : cItem("Empty", nullptr, "Empty SLot\n")
+cEmptySlot::cEmptySlot() : cItem("Empty", nullptr, "Empty SLot\n",0)
 {
 	Attributes = 0;
 
@@ -400,15 +399,17 @@ bool cEmptySlot::OnUse(cDynamic* object)
 	return false;
 }
 
-cHealthElixir::cHealthElixir() : cItem("Health Elixir", RPG_Assets::get().GetSprite("Items"), "Good Smelling Elixir,\nRecover 100 Helth\n")
+cHealthElixir::cHealthElixir() : cItem("Health Elixir", RPG_Assets::get().GetSprite("Items"), "Good Smelling Elixir,\nRecover 100 Helth\n",1)
 {
-	spriteindex = 1;
+	
 	MaxStack = 10;
 	sTradePrice = 2;       // за сколько продать в магаз
 	sTradeBuyPrice = sTradePrice * 10;    //сколько стоит в магазе
+
+	consumable = true;
 }
 
-bool cHealthElixir::OnUse(cDynamic* object, std::vector<InventaryItem*>& m_listItems, InventaryItem* socket)
+bool cHealthElixir::OnUse(cDynamic* object, InventaryItem* socket)
 {
 	int currHealth = object->GetHealth();
 	currHealth += 100;
@@ -433,15 +434,16 @@ bool cHealthElixir::OnUse(cDynamic* object, std::vector<InventaryItem*>& m_listI
 	return true;  // <--Return true  when object will die
 }
 
-cEnergyElixir::cEnergyElixir() : cItem("Energy Elixir", RPG_Assets::get().GetSprite("Items"), "Rare Elixir,\nRecover 60 Energy\n")
+cEnergyElixir::cEnergyElixir() : cItem("Energy Elixir", RPG_Assets::get().GetSprite("Items"), "Rare Elixir,\nRecover 60 Energy\n",2)
 {
-	spriteindex = 2;
+	
 	MaxStack = 10;
 	sTradePrice = 3;       // за сколько продать в магаз
 	sTradeBuyPrice = sTradePrice * 10;    //сколько стоит в магазе
+	consumable = true;
 }
 
-bool cEnergyElixir::OnUse(cDynamic* object, std::vector<InventaryItem*>& m_listItems, InventaryItem* socket)
+bool cEnergyElixir::OnUse(cDynamic* object, InventaryItem* socket)
 {
 	cDynamic_creature_Pantir* user = (cDynamic_creature_Pantir*)object;
 
@@ -473,15 +475,16 @@ bool cEnergyElixir::OnUse(cDynamic* object, std::vector<InventaryItem*>& m_listI
 	
 }
 
-cRageElixir::cRageElixir() : cItem("Rage Elixir", RPG_Assets::get().GetSprite("Items"), "Very Rare Elixir,\nRecover 30 Rage\n")
+cRageElixir::cRageElixir() : cItem("Rage Elixir", RPG_Assets::get().GetSprite("Items"), "Very Rare Elixir,\nRecover 30 Rage\n",0)
 {
-	spriteindex = 0;
+	
 	MaxStack = 10;
 	sTradePrice = 5;       // за сколько продать в магаз
 	sTradeBuyPrice = sTradePrice * 10;    //сколько стоит в магазе
+	consumable = true;
 }
 
-bool cRageElixir::OnUse(cDynamic* object, std::vector<InventaryItem*>& m_listItems, InventaryItem* socket)
+bool cRageElixir::OnUse(cDynamic* object, InventaryItem* socket)
 {
 	cDynamic_creature_Pantir* user = (cDynamic_creature_Pantir*)object;
 
@@ -520,33 +523,33 @@ cWeaponBanditBoss::cWeaponBanditBoss() : cWeapon("Bandit Boss Sword", RPG_Assets
 
 }
 
-PieceOfLeather::PieceOfLeather() : cItem("Piece Of Leather", RPG_Assets::get().GetSprite("Items"), "ingredient for,\nCraft\n")
+PieceOfLeather::PieceOfLeather() : cItem("Piece Of Leather", RPG_Assets::get().GetSprite("Items"), "ingredient for,\nCraft\n", 32 * 4)
 {
-	spriteindex = 32 * 4;
+	//spriteindex = 32 * 4;
 	MaxStack = 10;
 	sTradePrice = 3;
 	sTradeBuyPrice = sTradePrice * 3;    //сколько стоит в магазе
 }
 
-WhiteNuggets::WhiteNuggets() : cItem("White Nuggets", RPG_Assets::get().GetSprite("Items"), "ingredient for,\nCraft\n")
+WhiteNuggets::WhiteNuggets() : cItem("White Nuggets", RPG_Assets::get().GetSprite("Items"), "ingredient for,\nCraft\n", 32 * 3 + 1)
 {
-	spriteindex = 32 * 3 + 1;
+	//spriteindex = 32 * 3 + 1;
 	MaxStack = 10;
 	sTradePrice = 10;
 	sTradeBuyPrice = sTradePrice * 3;    //сколько стоит в магазе
 }
 
-RedSample::RedSample() : cItem("Red Sample", RPG_Assets::get().GetSprite("Items"), "ingredient for,\nCraft\n")
+RedSample::RedSample() : cItem("Red Sample", RPG_Assets::get().GetSprite("Items"), "ingredient for,\nCraft\n", 32 * 3 + 2)
 {
-	spriteindex = 32 * 3 + 2;
+	//spriteindex = 32 * 3 + 2;
 	MaxStack = 10;
 	sTradePrice = 13;
 	sTradeBuyPrice = sTradePrice *3;    //сколько стоит в магазе
 }
 
-copper::copper() : cItem("Cooper", RPG_Assets::get().GetSprite("Items"), "ingredient for,\nCraft\n")
+copper::copper() : cItem("Cooper", RPG_Assets::get().GetSprite("Items"), "ingredient for,\nCraft\n",5)
 {
-	spriteindex = 5;
+	//spriteindex = 5;
 	MaxStack = 1;
 	sTradePrice = 20;
 	sTradeBuyPrice = 60;    //сколько стоит в магазе

@@ -6,13 +6,14 @@ class InventaryItem;
 class cItem
 {
 public:
-	cItem(std::string name, olc::Decal* decal, std::string desc);
+	cItem(std::string name, olc::Decal* decal, std::string desc,  uint32_t spriteindex, bool KeyItem = false);
 
 	cItem(const cItem &p);
 
-	virtual bool OnInteract(cDynamic* object) { return false; }
+	virtual bool OnInteract(cDynamic* object) { return true; }
 	virtual bool OnUse(cDynamic* object, std::vector<InventaryItem*>& m_listItems, InventaryItem* socket =nullptr) { return false; }
-	virtual bool OnUse(cDynamic* object) { return false; }
+	virtual bool OnUse(cDynamic* object, InventaryItem* socket = nullptr) { return false; };
+	virtual bool OnUse(cDynamic* object) { return false; };
 	virtual bool OnUse(cDynamic * object, bool toggle = true) { return false; };
 	virtual bool OnSell() ;
 	virtual bool OnBuy();
@@ -25,6 +26,7 @@ public:
 	uint8_t sTradeBuyPrice; // <--Price for buy
 	olc::Decal* pSprite;
 	bool bKeyItem = false;
+	bool consumable = false;
 
 	unsigned int Attributes = 0;  // 15 - 1111   255 - 1111 1111
 
@@ -32,15 +34,14 @@ public:
 	static RPG_Engine* g_engine;
 	
 
-	uint32_t spriteindex = 0;
-	int UiIndex = 0;
+	uint32_t spriteindex;  // index how object looks like 
+	//int UiIndex = 0;
 
 	uint8_t equipIndex = 0; // Index in equipment
 	uint8_t MaxStack = 0;  // maxamount of stack in inventory
 	uint8_t Gold = 0;
 
 };
-
 
 
 
@@ -177,7 +178,7 @@ class cHealthElixir : public cItem
 public:
 	cHealthElixir();
 
- bool OnUse(cDynamic* object, std::vector<InventaryItem*>& m_listItems, InventaryItem* socket =nullptr) override;
+ bool OnUse(cDynamic* object, InventaryItem* socket =nullptr) override;
 private:
 
 	
@@ -189,7 +190,7 @@ class cEnergyElixir : public cItem
 public:
 	cEnergyElixir();
 
-	bool OnUse(cDynamic* object, std::vector<InventaryItem*>& m_listItems, InventaryItem* socket =nullptr) override;
+	bool OnUse(cDynamic* object, InventaryItem* socket =nullptr) override;
 private:
 
 	
@@ -201,7 +202,7 @@ class cRageElixir : public cItem
 public:
 	cRageElixir();
 
-	bool OnUse(cDynamic* object, std::vector<InventaryItem*>& m_listItems, InventaryItem* socket =nullptr) override;
+	bool OnUse(cDynamic* object,  InventaryItem* socket =nullptr) override;
 private:
 
 	
